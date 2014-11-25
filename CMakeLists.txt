@@ -383,11 +383,11 @@ if(NOT VOLK_GNSSSDR_FOUND)
          BUILD_COMMAND ${VOLK_GNSSSDR_BUILD_COMMAND} volk_gnsssdr_profile
          INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/volk_gnsssdr_module/install
          )
-    find_package(ORC)
-    if(NOT ORC_FOUND)
+    # find_package(ORC)
+    # if(NOT ORC_FOUND)
          set(ORC_LIBRARIES "")
          set(ORC_INCLUDE_DIRS "")
-    endif(NOT ORC_FOUND)
+    # endif(NOT ORC_FOUND)
         
     add_library(volk_gnsssdr UNKNOWN IMPORTED)
     set_property(TARGET volk_gnsssdr PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/volk_gnsssdr_module/install/lib/libvolk_gnsssdr.a)

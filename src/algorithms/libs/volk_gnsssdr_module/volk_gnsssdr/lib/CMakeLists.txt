@@ -240,10 +240,10 @@ endif(NOT CPU_IS_x86)
 # implement overruling in the ORC case,
 # since ORC always passes flag detection
 ########################################################################
-find_package(ORC)
-if(NOT ORC_FOUND)
+# find_package(ORC)
+# if(NOT ORC_FOUND)
     OVERRULE_ARCH(orc "ORC support not found")
-endif()
+# endif()
 
 ########################################################################
 # implement overruling in the non-multilib case
