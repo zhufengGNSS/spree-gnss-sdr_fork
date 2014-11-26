@@ -117,6 +117,31 @@ DECLARE_string(log_dir);
 concurrent_queue<Gps_Acq_Assist> global_gps_acq_assist_queue;
 concurrent_map<Gps_Acq_Assist> global_gps_acq_assist_map;
 
+//For spoofing detection
+struct GPS_time_t{
+    int week;
+    double TOW;
+    double timestamp;    
+    int subframe_id;
+};
+
+concurrent_map<GPS_time_t> global_gps_time;
+concurrent_map<double> global_last_gps_time;
+concurrent_map<std::map<std::string, int>> global_code_phase;
+//concurrent_map<bool> global_channel_status;
+concurrent_map<int> global_channel_status;  //status 0: newly acquired, status 1: received the first 3 subframes, 
+                                            //status 2: reset by PVT because no spoofing detected 
+struct Subframe{
+    std::string subframe;
+    int id;
+    double timestamp;    
+};
+
+concurrent_map<Subframe> global_channel_to_subframe;
+concurrent_map<bool> global_channel_spoofed_checked;
+concurrent_queue<Spoofing_Message> global_spoofing_queue;
+
+
 int main(int argc, char **argv)
 {
     std::cout << "Running GNSS-SDR Tests..." << std::endl;
