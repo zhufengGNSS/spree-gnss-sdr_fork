@@ -26,6 +26,7 @@ set(ACQ_GR_BLOCKS_SOURCES
     pcps_tong_acquisition_cc.cc
     pcps_cccwsr_acquisition_cc.cc
     pcps_quicksync_acquisition_cc.cc
+    pcps_sd_acquisition_cc.cc
     galileo_pcps_8ms_acquisition_cc.cc
     galileo_e5a_noncoherent_iq_acquisition_caf_cc.cc
 ) 
