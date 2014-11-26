@@ -65,6 +65,20 @@ public:
         lock.unlock();
     }
 
+    void add(int key, Data const& data)
+    {
+        boost::mutex::scoped_lock lock(the_mutex);
+        the_map[key] = data;
+        lock.unlock();
+    }
+
+    void remove(int key)
+    {
+        boost::mutex::scoped_lock lock(the_mutex);
+        the_map.erase(key);
+        lock.unlock();
+    }
+
     std::map<int,Data> get_map_copy()
     {
         boost::mutex::scoped_lock lock(the_mutex);
