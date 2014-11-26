@@ -182,3 +182,13 @@ void Channel::start_acquisition()
     channel_fsm_.Event_start_acquisition();
 }
 
+void Channel::stop_tracking()
+{
+    trk_->stop_tracking();
+    nav_->reset();
+}
+
+void Channel::set_peak(unsigned int peak_)
+{
+    acq_->set_peak(peak_);
+}

@@ -54,6 +54,8 @@ public:
     virtual Gnss_Signal get_signal() const = 0;
     virtual void start_acquisition() = 0;
     virtual void set_signal(const Gnss_Signal&) = 0;
+    virtual void stop_tracking() = 0;
+    virtual void set_peak() = 0;
 };
 
 #endif /* GNSS_SDR_CHANNEL_INTERFACE_H_ */
