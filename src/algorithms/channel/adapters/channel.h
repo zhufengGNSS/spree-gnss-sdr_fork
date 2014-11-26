@@ -85,6 +85,8 @@ public:
 
     void msg_handler_events(pmt::pmt_t msg);
 
+    void stop_tracking();
+    void set_peak(unsigned int peak_); //!< set whether the satellite of this channel is already acquired
 
 private:
     channel_msg_receiver_cc_sptr channel_msg_rx;
