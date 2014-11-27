@@ -104,6 +104,11 @@ GalileoE1DllPllVemlTracking::GalileoE1DllPllVemlTracking(
 GalileoE1DllPllVemlTracking::~GalileoE1DllPllVemlTracking()
 {}
 
+void GalileoE1DllPllVemlTracking::stop_tracking()
+{
+    tracking_->stop_tracking();
+}
+
 void GalileoE1DllPllVemlTracking::start_tracking()
 {
     tracking_->start_tracking();

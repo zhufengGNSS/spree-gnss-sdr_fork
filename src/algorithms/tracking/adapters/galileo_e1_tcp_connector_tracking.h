@@ -94,6 +94,7 @@ public:
 
 
     void start_tracking();
+    void stop_tracking();
 
 private:
     galileo_e1_tcp_connector_tracking_cc_sptr tracking_;

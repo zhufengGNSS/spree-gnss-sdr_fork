@@ -72,6 +72,7 @@ public:
     void set_channel(unsigned int channel);
     void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro);
     void start_tracking();
+    void stop_tracking();
 
     /*
      * \brief just like gr_block::general_work, only this arranges to call consume_each for you

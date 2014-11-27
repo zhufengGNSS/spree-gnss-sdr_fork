@@ -229,6 +229,10 @@ Galileo_E5a_Dll_Pll_Tracking_cc::~Galileo_E5a_Dll_Pll_Tracking_cc ()
     multicorrelator_cpu_I.free();
 }
 
+void Galileo_E5a_Dll_Pll_Tracking_cc::stop_tracking()
+{
+    //d_enable_tracking = false;
+}
 
 void Galileo_E5a_Dll_Pll_Tracking_cc::start_tracking()
 {

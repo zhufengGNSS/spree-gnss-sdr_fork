@@ -91,6 +91,7 @@ public:
     void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro);
 
     void start_tracking();
+    void stop_tracking();
 
 private:
     gps_l1_ca_dll_pll_tracking_cc_sptr tracking_;

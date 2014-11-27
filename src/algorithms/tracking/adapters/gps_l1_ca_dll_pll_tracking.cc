@@ -99,6 +99,10 @@ GpsL1CaDllPllTracking::GpsL1CaDllPllTracking(
 GpsL1CaDllPllTracking::~GpsL1CaDllPllTracking()
 {}
 
+void GpsL1CaDllPllTracking::stop_tracking()
+{
+    tracking_->stop_tracking();
+}
 
 void GpsL1CaDllPllTracking::start_tracking()
 {

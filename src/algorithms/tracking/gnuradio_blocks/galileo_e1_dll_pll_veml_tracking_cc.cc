@@ -199,6 +199,11 @@ galileo_e1_dll_pll_veml_tracking_cc::galileo_e1_dll_pll_veml_tracking_cc(
     d_acc_code_phase_secs = 0.0;
 }
 
+void galileo_e1_dll_pll_veml_tracking_cc::stop_tracking()
+{
+    d_enable_tracking = false;
+}
+
 void galileo_e1_dll_pll_veml_tracking_cc::start_tracking()
 {
     d_acq_code_phase_samples = d_acquisition_gnss_synchro->Acq_delay_samples;

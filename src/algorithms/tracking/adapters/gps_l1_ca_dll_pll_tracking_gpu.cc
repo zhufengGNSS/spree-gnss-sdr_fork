@@ -106,6 +106,11 @@ void GpsL1CaDllPllTrackingGPU::start_tracking()
     tracking_->start_tracking();
 }
 
+void GpsL1CaDllPllOptimTracking::stop_tracking()
+{
+    tracking_->stop_tracking();
+}
+
 /*
  * Set tracking channel unique ID
  */
