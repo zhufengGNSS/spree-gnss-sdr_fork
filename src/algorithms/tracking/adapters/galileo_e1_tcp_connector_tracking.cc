@@ -104,6 +104,10 @@ GalileoE1TcpConnectorTracking::GalileoE1TcpConnectorTracking(
 GalileoE1TcpConnectorTracking::~GalileoE1TcpConnectorTracking()
 {}
 
+void GalileoE1TcpConnectorTracking::stop_tracking()
+{
+    tracking_->stop_tracking();
+}
 
 void GalileoE1TcpConnectorTracking::start_tracking()
 {

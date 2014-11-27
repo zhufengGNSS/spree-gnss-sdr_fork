@@ -94,6 +94,7 @@ public:
 
 
     void start_tracking();
+    void stop_tracking();
 
 private:
     gps_l1_ca_dll_pll_c_aid_tracking_cc_sptr tracking_cc;

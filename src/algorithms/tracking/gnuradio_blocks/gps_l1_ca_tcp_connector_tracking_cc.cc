@@ -189,6 +189,12 @@ Gps_L1_Ca_Tcp_Connector_Tracking_cc::Gps_L1_Ca_Tcp_Connector_Tracking_cc(
     d_code_phase_step_chips = 0.0;
 }
 
+
+void Gps_L1_Ca_Tcp_Connector_Tracking_cc::stop_tracking()
+{
+    d_enable_tracking = false;
+}
+
 void Gps_L1_Ca_Tcp_Connector_Tracking_cc::start_tracking()
 {
     /*

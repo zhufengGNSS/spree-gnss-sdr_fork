@@ -94,6 +94,7 @@ public:
 
 
     void start_tracking();
+    void stop_tracking();
 
 private:
 

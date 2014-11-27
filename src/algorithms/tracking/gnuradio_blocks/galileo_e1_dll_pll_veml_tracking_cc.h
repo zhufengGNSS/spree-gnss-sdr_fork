@@ -68,6 +68,7 @@ public:
     void set_channel(unsigned int channel);
     void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro);
     void start_tracking();
+    void stop_tracking();
 
     /*!
      * \brief Code DLL + carrier PLL according to the algorithms described in:

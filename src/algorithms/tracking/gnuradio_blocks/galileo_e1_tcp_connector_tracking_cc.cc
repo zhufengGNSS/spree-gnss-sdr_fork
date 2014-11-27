@@ -196,6 +196,10 @@ Galileo_E1_Tcp_Connector_Tracking_cc::Galileo_E1_Tcp_Connector_Tracking_cc(
     d_carrier_doppler_hz = 0.0;
 }
 
+void Galileo_E1_Tcp_Connector_Tracking_cc::stop_tracking()
+{
+    d_enable_tracking = false;
+}
 
 
 void Galileo_E1_Tcp_Connector_Tracking_cc::start_tracking()

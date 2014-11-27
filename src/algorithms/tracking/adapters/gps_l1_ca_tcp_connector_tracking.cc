@@ -97,6 +97,10 @@ GpsL1CaTcpConnectorTracking::GpsL1CaTcpConnectorTracking(
 GpsL1CaTcpConnectorTracking::~GpsL1CaTcpConnectorTracking()
 {}
 
+void GpsL1CaTcpConnectorTracking::stop_tracking()
+{
+    tracking_->stop_tracking();
+}
 
 void GpsL1CaTcpConnectorTracking::start_tracking()
 {

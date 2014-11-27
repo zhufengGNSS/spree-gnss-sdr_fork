@@ -182,6 +182,19 @@ Gps_L1_Ca_Dll_Pll_Tracking_cc::Gps_L1_Ca_Dll_Pll_Tracking_cc(
     set_relative_rate(1.0 / static_cast<double>(d_vector_length));
 }
 
+void Gps_L1_Ca_Dll_Pll_Tracking_cc::stop_tracking()
+    {
+        DLOG(INFO) << "stopped tracking";
+        std::cout << "stopped tracking" << std::endl;
+        ControlMessageFactory* cmf = new ControlMessageFactory();
+        if (d_queue != gr::msg_queue::sptr())
+        {
+            d_queue->handle(cmf->GetQueueMessage(d_channel, 2));
+        }
+        delete cmf;
+        d_enable_tracking = false; 
+    }
+
 
 void Gps_L1_Ca_Dll_Pll_Tracking_cc::start_tracking()
 {

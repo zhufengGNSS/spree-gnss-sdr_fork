@@ -92,6 +92,7 @@ public:
 
 
     void start_tracking();
+    void stop_tracking();
 
 private:
     galileo_e5a_dll_pll_tracking_cc_sptr tracking_;
