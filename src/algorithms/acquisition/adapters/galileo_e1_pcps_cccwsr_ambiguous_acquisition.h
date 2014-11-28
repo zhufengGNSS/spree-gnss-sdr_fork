@@ -84,6 +84,12 @@ public:
     void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro);
 
     /*!
+     * \brief Set which peak the channel is acquiring
+     * 
+     */
+    void set_peak(unsigned int peak);
+
+    /*!
      * \brief Set acquisition channel unique ID
      */
     void set_channel(unsigned int channel);
@@ -147,6 +153,7 @@ private:
     std::complex<float> * code_data_;
     std::complex<float> * code_pilot_;
     Gnss_Synchro * gnss_synchro_;
+    unsigned int peak_;
     std::string role_;
     unsigned int in_streams_;
     unsigned int out_streams_;

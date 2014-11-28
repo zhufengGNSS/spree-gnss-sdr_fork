@@ -86,6 +86,11 @@ public:
     void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro);
 
     /*!
+     * \brief Set which peak the channel is acquiring
+     */
+    void set_peak(unsigned int peak);
+
+    /*!
      * \brief Set acquisition channel unique ID
      */
     void set_channel(unsigned int channel);
@@ -160,6 +165,7 @@ private:
     std::string role_;
     unsigned int in_streams_;
     unsigned int out_streams_;
+    unsigned int peak_;
     float calculate_threshold(float pfa);
 };
 #endif /* GALILEO_E5A_NONCOHERENT_IQ_ACQUISITION_CAF_H_ */

@@ -136,6 +136,7 @@ private:
     unsigned int d_channel;
 
     std::string d_dump_filename;
+    unsigned int d_peak;
 
 public:
     /*!
@@ -152,6 +153,15 @@ public:
     {
         d_gnss_synchro = p_gnss_synchro;
     }
+
+    /*!
+     * \brief Set which peak the channel is acquiring 
+     */
+     void set_peak(unsigned int p_peak)
+     {
+        d_peak = p_peak;
+        d_gnss_synchro->peak = p_peak;
+     }
 
     /*!
      * \brief Returns the maximum peak of grid search.

@@ -210,6 +210,14 @@ void GpsL1CaPcpsQuickSyncAcquisition::set_gnss_synchro(Gnss_Synchro* gnss_synchr
         }
 }
 
+void GpsL1CaPcpsQuickSyncAcquisition::set_peak(unsigned int peak)
+{
+    peak_ = peak;
+    if (item_type_.compare("gr_complex") == 0)
+        {
+            acquisition_cc_->set_peak(peak_);
+        }
+}
 
 signed int GpsL1CaPcpsQuickSyncAcquisition::mag()
 {

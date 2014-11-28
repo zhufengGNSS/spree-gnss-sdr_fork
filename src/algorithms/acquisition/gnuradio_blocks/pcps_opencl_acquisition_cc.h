@@ -143,6 +143,7 @@ private:
     bool d_dump;
     unsigned int d_channel;
     std::string d_dump_filename;
+    unsigned int d_peak;
     gr_complex* d_zero_vector;
     gr_complex** d_in_buffer;
     std::vector<unsigned long int> d_sample_counter_buffer;
@@ -178,6 +179,15 @@ public:
      void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro)
      {
          d_gnss_synchro = p_gnss_synchro;
+     }
+
+    /*!
+     * \brief Set which peak the channel is acquiring 
+     */
+     void set_peak(unsigned int p_peak)
+     {
+        d_peak = p_peak;
+        d_gnss_synchro->peak = p_peak;
      }
 
      /*!
