@@ -115,6 +115,12 @@ GalileoE5aDllPllTracking::~GalileoE5aDllPllTracking()
 void GalileoE5aDllPllTracking::start_tracking()
 {
     tracking_->start_tracking();
+
+}
+
+void GalileoE5aDllPllTracking::stop_tracking()
+{
+    tracking_->stop_tracking();
 }
 
 /*
