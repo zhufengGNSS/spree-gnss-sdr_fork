@@ -76,6 +76,9 @@ public:
     // Pseudorange
     double Pseudorange_m;
     bool Flag_valid_pseudorange;
+
+    //spoofing detection
+    unsigned int peak;
 };
 
 #endif
