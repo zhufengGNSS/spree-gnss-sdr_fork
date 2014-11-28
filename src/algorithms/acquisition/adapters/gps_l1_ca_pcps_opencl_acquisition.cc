@@ -177,6 +177,14 @@ void GpsL1CaPcpsOpenClAcquisition::set_gnss_synchro(Gnss_Synchro* gnss_synchro)
         }
 }
 
+void GpsL1CaPcpsAcquisition::set_peak(unsigned int peak)
+{
+    peak_ = peak;
+    if (item_type_.compare("gr_complex") == 0)
+        {
+            acquisition_cc_->set_peak(peak_);
+        }
+}
 
 signed int GpsL1CaPcpsOpenClAcquisition::mag()
 {

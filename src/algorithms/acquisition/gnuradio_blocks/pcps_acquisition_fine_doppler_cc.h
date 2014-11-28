@@ -110,6 +110,7 @@ private:
 
     int d_num_doppler_points;
     int d_doppler_step;
+<<<<<<< HEAD
     unsigned int d_sampled_ms;
     unsigned int d_fft_size;
     unsigned long int d_sample_counter;
@@ -135,6 +136,7 @@ private:
     unsigned int d_channel;
 
     std::string d_dump_filename;
+    unsigned int d_peak;
 
 public:
     /*!
@@ -151,6 +153,16 @@ public:
     {
         d_gnss_synchro = p_gnss_synchro;
     }
+
+    /*!
+     * \brief Set which peak the channel is acquiring 
+     */
+     void set_peak(unsigned int p_peak)
+     {
+        d_peak = p_peak;
+        d_gnss_synchro->peak = p_peak;
+     }
+
 
     /*!
      * \brief Returns the maximum peak of grid search.
@@ -224,7 +236,6 @@ public:
             gr_vector_void_star &output_items);
 
     void forecast (int noutput_items, gr_vector_int &ninput_items_required);
-
 };
 
 #endif /* pcps_acquisition_fine_doppler_cc*/

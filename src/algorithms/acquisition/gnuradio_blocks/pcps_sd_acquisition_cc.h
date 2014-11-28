@@ -139,6 +139,7 @@ private:
     bool d_dump;
     unsigned int d_channel;
     std::string d_dump_filename;
+    unsigned int d_peak;
 
 public:
     /*!
@@ -157,13 +158,12 @@ public:
      }
 
     /*!
-     * \brief Set whether the satellite the channel is acquiring
-     * has alredy been acquired
+     * \brief Set which peak the channel is acquiring 
      */
-     void set_acquired(unsigned int p_acquired)
+     void set_peak(unsigned int p_peak)
      {
-        acquire_peak= p_acquired;
-    //    d_gnss_synchro->acquired = p_acquired;
+        d_peak = p_peak;
+        d_gnss_synchro->peak = p_peak;
      }
 
      /*!
