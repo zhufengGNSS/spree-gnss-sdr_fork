@@ -62,6 +62,7 @@
 #include "sbas_ionospheric_correction.h"
 #include "sbas_satellite_correction.h"
 #include "sbas_time.h"
+#include "spoofing_message.h"
 
 
 
