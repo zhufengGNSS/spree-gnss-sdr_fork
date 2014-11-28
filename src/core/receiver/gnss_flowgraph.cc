@@ -399,7 +399,7 @@ void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
                     int peak = acquired_peaks.at(PRN).front();
                     DLOG(INFO) << "addign peak " << peak;
                     acquired_peaks.at(PRN).pop_front();
-                    channels_.at(who)->set_acquired(peak);
+                    channels_.at(who)->set_peak(peak);
                     channel_to_peak[who] = peak;
         }
     else
@@ -444,7 +444,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             {
                 peak = channel_to_peak.find(who)->second;
                 nr_acquired_peaks.at(lost_PRN) -= 1;
-                channels_.at(who)->set_acquired(0);
+                channels_.at(who)->set_peak(0);
                 acq_peaks = acquired_peaks.at(lost_PRN);
 
                 //If we lost the channel that was providing the PVT solution and we using the first arrving signal
@@ -590,7 +590,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             peak = channel_to_peak.at(who);
             if(!acquired_peaks.at(PRN).empty())
                 {
-                    channels_.at(who)->set_acquired(acquired_peaks.at(PRN).front());
+                    channels_.at(who)->set_peak(acquired_peaks.at(PRN).front());
                     channel_to_peak[who] = acquired_peaks.at(PRN).front();
                     acquired_peaks.at(PRN).pop_front();
                     acquired_peaks.at(PRN).push_back(peak);
@@ -906,7 +906,7 @@ void GNSSFlowgraph::set_signals_list()
             if (sat == 0) // 0 = not PRN in configuration file
                 {
                     gnss_it++;
-                    channels_.at(i)->set_acquired(0);
+                    channels_.at(i)->set_peak(0);
                     acquired_state[i] = 0;
                 }
             else
