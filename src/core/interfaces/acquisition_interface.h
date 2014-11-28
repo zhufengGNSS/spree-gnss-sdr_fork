@@ -63,6 +63,7 @@ public:
     virtual void set_local_code() = 0;
     virtual signed int mag() = 0;
     virtual void reset() = 0;
+    virtual void set_peak(unsigned int peak) = 0;
 };
 
 #endif /* GNSS_SDR_ACQUISITION_INTERFACE */

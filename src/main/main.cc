@@ -67,6 +67,7 @@
 #include "sbas_satellite_correction.h"
 #include "sbas_ephemeris.h"
 #include "sbas_time.h"
+#include "spoofing_message.h"
 
 #if CUDA_GPU_ACCEL
     // For the CUDA runtime routines (prefixed with "cuda_")
