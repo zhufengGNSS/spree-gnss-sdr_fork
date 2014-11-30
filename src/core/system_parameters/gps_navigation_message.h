@@ -157,9 +157,12 @@ public:
     // satellite identification info
     int i_channel_ID;
     unsigned int i_satellite_PRN;
+    unsigned int unique_id;
+    unsigned int i_acquired;
 
     // time synchro
     double d_subframe_timestamp_ms; //[ms]
+    int d_subframe; //[ms]
 
     // Ionospheric parameters
     bool flag_iono_valid; //!< If set, it indicates that the ionospheric parameters are filled (page 18 has arrived and decoded)
@@ -188,6 +191,13 @@ public:
     double d_satvel_Y;    //!< Earth-fixed velocity coordinate y of the satellite [m]
     double d_satvel_Z;    //!< Earth-fixed velocity coordinate z of the satellite [m]
 
+    //subframes bit strings for spoofing detection (comparison)
+    std::string subframe1 = "";
+    std::string subframe2 = "";
+    std::string subframe3 = "";
+    std::string subframe4 = "";
+    std::string subframe5 = "";
+
     // public functions
     void reset();
 
@@ -211,6 +221,12 @@ public:
      * \brief Decodes the GPS NAV message
      */
     int subframe_decoder(char *subframe);
+    
+    //for spoofing
+    std::string get_subframe(int subframe_ID);
+    double get_TOW();
+    int get_week();
+    double get_sqrtA();
 
     /*!
      * \brief Computes the position of the satellite

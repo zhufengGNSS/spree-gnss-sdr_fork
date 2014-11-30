@@ -79,6 +79,8 @@ public:
 
     //spoofing detection
     unsigned int peak;
+    double rx_of_subframe;
+    unsigned int subframe;
 };
 
 #endif
