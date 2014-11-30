@@ -19,6 +19,7 @@
 set(TELEMETRY_DECODER_ADAPTER_SOURCES 
     gps_l1_ca_telemetry_decoder.cc 
     gps_l2_m_telemetry_decoder.cc 
+	gps_l1_ca_sd_telemetry_decoder.cc 
     galileo_e1b_telemetry_decoder.cc
     sbas_l1_telemetry_decoder.cc
     galileo_e5a_telemetry_decoder.cc
@@ -31,6 +32,7 @@ include_directories(
      ${CMAKE_SOURCE_DIR}/src/core/receiver
      ${CMAKE_SOURCE_DIR}/src/algorithms/telemetry_decoder/gnuradio_blocks
      ${CMAKE_SOURCE_DIR}/src/algorithms/telemetry_decoder/libs
+     ${CMAKE_SOURCE_DIR}/src/algorithms/libs
      ${Boost_INCLUDE_DIRS}
      ${GLOG_INCLUDE_DIRS}
      ${GFlags_INCLUDE_DIRS}
