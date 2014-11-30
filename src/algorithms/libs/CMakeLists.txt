@@ -30,6 +30,7 @@ set(GNSS_SPLIBS_SOURCES
     cshort_to_float_x2.cc
     short_x2_to_cshort.cc
     complex_float_to_complex_byte.cc
+    spoofing_detector.cc
 )
 
 
