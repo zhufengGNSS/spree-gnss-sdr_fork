@@ -18,7 +18,9 @@
 
 set(TELEMETRY_DECODER_LIB_SOURCES 
      gps_l1_ca_subframe_fsm.cc 
+     gps_l1_ca_sd_subframe_fsm.cc 
      viterbi_decoder.cc   
+     ../../libs/spoofing_detector.cc
 )
 
 include_directories(
@@ -26,6 +28,7 @@ include_directories(
      ${CMAKE_SOURCE_DIR}/src/core/system_parameters
      ${CMAKE_SOURCE_DIR}/src/core/interfaces
      ${CMAKE_SOURCE_DIR}/src/core/receiver
+     ${CMAKE_SOURCE_DIR}/src/algorithms/libs
      ${CMAKE_SOURCE_DIR}/src/algorithms/telemetry_decoder/adapters
      ${Boost_INCLUDE_DIRS}
      ${GLOG_INCLUDE_DIRS}
