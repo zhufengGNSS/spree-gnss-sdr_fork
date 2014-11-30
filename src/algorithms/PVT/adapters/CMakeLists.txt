@@ -18,6 +18,7 @@
 
 set(PVT_ADAPTER_SOURCES 
 	gps_l1_ca_pvt.cc
+	gps_l1_ca_sd_pvt.cc
 	galileo_e1_pvt.cc
 	hybrid_pvt.cc
 )
@@ -29,6 +30,7 @@ include_directories(
      ${CMAKE_SOURCE_DIR}/src/core/receiver
      ${CMAKE_SOURCE_DIR}/src/algorithms/PVT/gnuradio_blocks
      ${CMAKE_SOURCE_DIR}/src/algorithms/PVT/libs
+     ${CMAKE_SOURCE_DIR}/src/algorithms/libs
      ${ARMADILLO_INCLUDE_DIRS}
      ${Boost_INCLUDE_DIRS}
      ${GLOG_INCLUDE_DIRS}

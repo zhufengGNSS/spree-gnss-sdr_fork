@@ -18,6 +18,7 @@
 
 set(PVT_GR_BLOCKS_SOURCES 
 	gps_l1_ca_pvt_cc.cc
+	gps_l1_ca_sd_pvt_cc.cc
 	galileo_e1_pvt_cc.cc
 	hybrid_pvt_cc.cc
 )
@@ -27,6 +28,7 @@ include_directories(
      ${CMAKE_SOURCE_DIR}/src/core/system_parameters
      ${CMAKE_SOURCE_DIR}/src/core/interfaces
      ${CMAKE_SOURCE_DIR}/src/core/receiver
+     ${CMAKE_SOURCE_DIR}/src/algorithms/libs
      ${CMAKE_SOURCE_DIR}/src/algorithms/PVT/libs
      ${ARMADILLO_INCLUDE_DIRS}
      ${Boost_INCLUDE_DIRS}
