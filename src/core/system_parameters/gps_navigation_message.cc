@@ -95,9 +95,11 @@ void Gps_Navigation_Message::reset()
     // info
     i_channel_ID = 0;
     i_satellite_PRN = 0;
+    unique_id = 0;
 
     // time synchro
     d_subframe_timestamp_ms = 0;
+    d_subframe = 0;
 
     // flags
     b_alert_flag = false;
@@ -179,8 +181,6 @@ bool Gps_Navigation_Message::read_navigation_bool(std::bitset<GPS_SUBFRAME_BITS>
 }
 
 
-
-
 unsigned long int Gps_Navigation_Message::read_navigation_unsigned(std::bitset<GPS_SUBFRAME_BITS> bits, const std::vector<std::pair<int,int>> parameter)
 {
     unsigned long int value = 0;
@@ -198,9 +198,6 @@ unsigned long int Gps_Navigation_Message::read_navigation_unsigned(std::bitset<G
         }
     return value;
 }
-
-
-
 
 
 signed long int Gps_Navigation_Message::read_navigation_signed(std::bitset<GPS_SUBFRAME_BITS> bits, const std::vector<std::pair<int,int>> parameter)
@@ -263,9 +260,6 @@ signed long int Gps_Navigation_Message::read_navigation_signed(std::bitset<GPS_S
 }
 
 
-
-
-
 double Gps_Navigation_Message::check_t(double time)
 {
     double corrTime;
@@ -283,8 +277,6 @@ double Gps_Navigation_Message::check_t(double time)
 }
 
 
-
-
 // 20.3.3.3.3.1 User Algorithm for SV Clock Correction.
 double Gps_Navigation_Message::sv_clock_correction(double transmitTime)
 {
@@ -294,9 +286,6 @@ double Gps_Navigation_Message::sv_clock_correction(double transmitTime)
     double correctedTime = transmitTime - d_satClkCorr;
     return correctedTime;
 }
-
-
-
 
 
 void Gps_Navigation_Message::satellitePosition(double transmitTime)
@@ -393,9 +382,43 @@ void Gps_Navigation_Message::satellitePosition(double transmitTime)
     d_satvel_Z = d_satpos_Y * sin(i);
 }
 
+double Gps_Navigation_Message::get_TOW()
+{
+    return d_TOW;
+}
 
+int Gps_Navigation_Message::get_week()
+{
+    return i_GPS_week;
+}
 
+double Gps_Navigation_Message::get_sqrtA()
+{
+    return d_sqrt_A ;
+}
 
+std::string Gps_Navigation_Message::get_subframe(int subframe_ID)
+{
+    switch (subframe_ID)
+    {
+    case 1:
+        return subframe1;
+        break;
+    case 2:
+        return subframe2;
+        break;
+    case 3:
+        return subframe3;
+        break;
+    case 4:
+        return subframe4;
+        break;
+    case 5:
+        return subframe5;
+        break;
+    }
+    
+}
 
 int Gps_Navigation_Message::subframe_decoder(char *subframe)
 {
@@ -417,8 +440,13 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                     subframe_bits[GPS_WORD_BITS * (9 - i) + j] = word_bits[j];
                 }
         }
+    
+    std::string subframe_string = subframe_bits.to_string<char,std::string::traits_type,std::string::allocator_type>();
 
     subframe_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, SUBFRAME_ID));
+
+    std::ostringstream os;
+    os.precision(15);
 
     // Decode all 5 sub-frames
     switch (subframe_ID)
@@ -456,6 +484,25 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
         d_A_f2 = static_cast<double>(read_navigation_signed(subframe_bits, A_F2));
         d_A_f2 = d_A_f2 * A_F2_LSB;
 
+        os << " " << d_TOW;
+        os << " " << b_integrity_status_flag;
+        os << " " << b_alert_flag; 
+        os << " " << b_antispoofing_flag;
+        os << " " << i_GPS_week; 
+        os << " " << i_SV_accuracy;
+        os << " " << i_SV_health;
+        os << " " << b_L2_P_data_flag;
+        os << " " << i_code_on_L2; 
+        os << " " << d_TGD; 
+        os << " " << d_TGD; 
+        os << " " << d_IODC; 
+        os << " " << d_Toc; 
+        os << " " << d_A_f0; 
+        os << " " << d_A_f1; 
+        os << " " << d_A_f2;
+        subframe1 = os.str(); 
+        //std::cout << "subframe 1: " << os.str() <<std::endl;
+
         break;
 
     case 2:  //--- It is subframe 2 -------------------
@@ -486,6 +533,25 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
         i_AODO = static_cast<int>(read_navigation_unsigned(subframe_bits, AODO));
         i_AODO = i_AODO * AODO_LSB;
 
+
+        os << " " << d_TOW;
+        os << " " << b_integrity_status_flag;
+        os << " " << b_alert_flag; 
+        os << " " << b_antispoofing_flag;
+        os << " " << d_IODE_SF2; 
+        os << " " << d_Crs;
+        os << " " << d_Delta_n; 
+        os << " " << d_M_0; 
+        os << " " << d_Cuc; 
+        os << " " << d_e_eccentricity; 
+        os << " " << d_Cus; 
+        os << " " << d_sqrt_A; 
+        os << " " << d_Toe; 
+        os << " " << b_fit_interval_flag; 
+        os << " " << i_AODO; 
+        subframe2 = os.str(); 
+        //std::cout << "subframe 2: " << os.str() <<std::endl;
+
         break;
 
     case 3: // --- It is subframe 3 -------------------------------------
@@ -513,6 +579,22 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
         d_IDOT = static_cast<double>(read_navigation_signed(subframe_bits, I_DOT));
         d_IDOT = d_IDOT * I_DOT_LSB;
 
+        os << " " << d_TOW; 
+        os << " " << b_integrity_status_flag; 
+        os << " " << b_alert_flag; 
+        os << " " << b_antispoofing_flag; 
+        os << " " << d_Cic; 
+        os << " " << d_OMEGA0;
+        os << " " << d_Cis; 
+        os << " " << d_i_0; 
+        os << " " << d_Crc; 
+        os << " " << d_OMEGA; 
+        os << " " << d_OMEGA_DOT; 
+        os << " " << d_IODE_SF3; 
+        os << " " << d_IDOT; 
+        subframe3 = os.str(); 
+        //std::cout << "subframe 3: " << os.str() <<std::endl;
+
         break;
 
     case 4: // --- It is subframe 4 ---------- Almanac, ionospheric model, UTC parameters, SV health (PRN: 25-32)
@@ -531,6 +613,13 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 //! \TODO read almanac
                 if(SV_data_ID){}
             }
+
+        os << " " << d_TOW; 
+        os << " " << b_integrity_status_flag; 
+        os << " " << b_alert_flag; 
+        os << " " << b_antispoofing_flag; 
+        os << " " << SV_data_ID; 
+        os << " " << SV_page; 
 
         if (SV_page == 52) // Page 13 (from Table 20-V. Data IDs and SV IDs in Subframes 4 and 5, IS-GPS-200H, page 110)
             {
@@ -569,6 +658,23 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 d_DeltaT_LSF = static_cast<double>(read_navigation_signed(subframe_bits, DELTAT_LSF));
                 flag_iono_valid = true;
                 flag_utc_model_valid = true;
+
+                os << " " << d_alpha0; 
+                os << " " << d_alpha1; 
+                os << " " << d_alpha2; 
+                os << " " << d_alpha3; 
+                os << " " << d_beta0; 
+                os << " " << d_beta1; 
+                os << " " << d_beta2; 
+                os << " " << d_beta3; 
+                os << " " << d_A1; 
+                os << " " << d_A0; 
+                os << " " << d_t_OT; 
+                os << " " << i_WN_T; 
+                os << " " << d_DeltaT_LS; 
+                os << " " << i_WN_LSF; 
+                os << " " << i_DN; 
+                os << " " << d_DeltaT_LSF; 
             }
         if (SV_page == 57)
             {
@@ -589,6 +695,9 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 almanacHealth[32] = static_cast<int>(read_navigation_unsigned(subframe_bits, HEALTH_SV32));
             }
 
+        subframe4 = os.str(); 
+        //std::cout << "subframe 4: " << os.str() <<std::endl;
+
         break;
 
     case 5://--- It is subframe 5 -----------------almanac health (PRN: 1-24) and Almanac reference week number and time.
@@ -602,6 +711,14 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
         b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
         SV_data_ID_5 = static_cast<int>(read_navigation_unsigned(subframe_bits, SV_DATA_ID));
         SV_page_5 = static_cast<int>(read_navigation_unsigned(subframe_bits, SV_PAGE));
+
+        os << " " << d_TOW; 
+        os << " " << b_integrity_status_flag; 
+        os << " " << b_alert_flag; 
+        os << " " << b_antispoofing_flag; 
+        os << " " << SV_data_ID_5; 
+        os << " " << SV_page_5; 
+
         if (SV_page_5 < 25)
             {
                 //! \TODO read almanac
@@ -612,6 +729,9 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 d_Toa = static_cast<double>(read_navigation_unsigned(subframe_bits, T_OA));
                 d_Toa = d_Toa * T_OA_LSB;
                 i_WN_A = static_cast<int>(read_navigation_unsigned(subframe_bits, WN_A));
+                os << " " << d_Toa; 
+                os << " " << i_WN_A; 
+
                 almanacHealth[1] = static_cast<int>(read_navigation_unsigned(subframe_bits, HEALTH_SV1));
                 almanacHealth[2] = static_cast<int>(read_navigation_unsigned(subframe_bits, HEALTH_SV2));
                 almanacHealth[3] = static_cast<int>(read_navigation_unsigned(subframe_bits, HEALTH_SV3));
@@ -637,6 +757,8 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 almanacHealth[23] = static_cast<int>(read_navigation_unsigned(subframe_bits, HEALTH_SV23));
                 almanacHealth[24] = static_cast<int>(read_navigation_unsigned(subframe_bits, HEALTH_SV24));
             }
+        subframe5 = os.str(); 
+        //std::cout << "subframe 4: " << os.str() <<std::endl;
         break;
 
     default:
@@ -645,8 +767,6 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
 
     return subframe_ID;
 }
-
-
 
 
 double Gps_Navigation_Message::utc_time(const double gpstime_corrected) const
@@ -719,7 +839,9 @@ double Gps_Navigation_Message::utc_time(const double gpstime_corrected) const
 Gps_Ephemeris Gps_Navigation_Message::get_ephemeris()
 {
     Gps_Ephemeris ephemeris;
+    ephemeris.unique_id = unique_id;
     ephemeris.i_satellite_PRN = i_satellite_PRN;
+    ephemeris.i_acquired = i_acquired;
     ephemeris.d_TOW = d_TOW;
     ephemeris.d_Crs = d_Crs;
     ephemeris.d_Delta_n = d_Delta_n;
@@ -765,6 +887,11 @@ Gps_Ephemeris Gps_Navigation_Message::get_ephemeris()
     ephemeris.d_satvel_X = d_satvel_X;
     ephemeris.d_satvel_Y = d_satvel_Y;
     ephemeris.d_satvel_Z = d_satvel_Z;
+    ephemeris.subframe1 = subframe1;
+    ephemeris.subframe2 = subframe2;
+    ephemeris.subframe3 = subframe3;
+    ephemeris.subframe4 = subframe4;
+    ephemeris.subframe5 = subframe5;
 
     return ephemeris;
 }
