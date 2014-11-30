@@ -65,6 +65,7 @@
 #include "beamformer_filter.h"
 #include "gps_l1_ca_pcps_acquisition.h"
 #include "gps_l2_m_pcps_acquisition.h"
+#include "gps_l1_ca_pcps_sd_acquisition.h"
 #include "gps_l1_ca_pcps_multithread_acquisition.h"
 #include "gps_l1_ca_pcps_tong_acquisition.h"
 #include "gps_l1_ca_pcps_assisted_acquisition.h"
@@ -85,6 +86,7 @@
 #include "gps_l2_m_dll_pll_tracking.h"
 #include "gps_l1_ca_telemetry_decoder.h"
 #include "gps_l2_m_telemetry_decoder.h"
+#include "gps_l1_ca_sd_telemetry_decoder.h"
 #include "galileo_e1b_telemetry_decoder.h"
 #include "galileo_e5a_telemetry_decoder.h"
 #include "sbas_l1_telemetry_decoder.h"
@@ -92,6 +94,7 @@
 #include "galileo_e1_observables.h"
 #include "hybrid_observables.h"
 #include "gps_l1_ca_pvt.h"
+#include "gps_l1_ca_sd_pvt.h"
 #include "galileo_e1_pvt.h"
 #include "hybrid_pvt.h"
 
@@ -845,6 +848,12 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
                     out_streams));
             block = std::move(block_);
         }
+    else if (implementation.compare("GPS_L1_CA_PCPS_SD_Acquisition") == 0)
+        {
+            std::unique_ptr<GNSSBlockInterface> block_(new GpsL1CaPcpsSdAcquisition(configuration.get(), role, in_streams,
+                    out_streams, queue));
+            block = std::move(block_);
+        }
     else if (implementation.compare("GPS_L1_CA_PCPS_Assisted_Acquisition") == 0)
         {
             std::unique_ptr<GNSSBlockInterface> block_(new GpsL1CaPcpsAssistedAcquisition(configuration.get(), role, in_streams,
@@ -984,6 +993,12 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
                     out_streams));
             block = std::move(block_);
         }
+    else if (implementation.compare("GPS_L1_CA_SD_Telemetry_Decoder") == 0)
+        {
+            std::unique_ptr<GNSSBlockInterface> block_(new GpsL1CaSdTelemetryDecoder(configuration.get(), role, in_streams,
+                    out_streams, queue));
+            block = std::move(block_);
+        }
     else if (implementation.compare("Galileo_E1B_Telemetry_Decoder") == 0)
         {
             std::unique_ptr<GNSSBlockInterface> block_(new GalileoE1BTelemetryDecoder(configuration.get(), role, in_streams,
@@ -1030,6 +1045,12 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
                     out_streams));
             block = std::move(block_);
         }
+    else if (implementation.compare("GPS_L1_CA_SD_PVT") == 0)
+        {
+            std::unique_ptr<GNSSBlockInterface> block_(new GpsL1CaSdPvt(configuration.get(), role, in_streams,
+                    out_streams, queue));
+            block = std::move(block_);
+        }
     else if (implementation.compare("GALILEO_E1_PVT") == 0)
         {
             std::unique_ptr<GNSSBlockInterface> block_(new GalileoE1Pvt(configuration.get(), role, in_streams,
@@ -1071,6 +1092,12 @@ std::unique_ptr<AcquisitionInterface> GNSSBlockFactory::GetAcqBlock(
         {
             std::unique_ptr<AcquisitionInterface> block_(new GpsL1CaPcpsAcquisition(configuration.get(), role, in_streams,
                     out_streams));
+            block = std::move(block_);
+        }
+    if (implementation.compare("GPS_L1_CA_PCPS_SD_Acquisition") == 0)
+        {
+            std::unique_ptr<AcquisitionInterface> block_(new GpsL1CaPcpsSdAcquisition(configuration.get(), role, in_streams,
+                    out_streams, queue));
             block = std::move(block_);
         }
     else if (implementation.compare("GPS_L1_CA_PCPS_Assisted_Acquisition") == 0)
@@ -1246,6 +1273,12 @@ std::unique_ptr<TelemetryDecoderInterface> GNSSBlockFactory::GetTlmBlock(
         {
             std::unique_ptr<TelemetryDecoderInterface> block_(new GpsL1CaTelemetryDecoder(configuration.get(), role, in_streams,
                     out_streams));
+            block = std::move(block_);
+        }
+    if (implementation.compare("GPS_L1_CA_SD_Telemetry_Decoder") == 0)
+        {
+            std::unique_ptr<TelemetryDecoderInterface> block_(new GpsL1CaSdTelemetryDecoder(configuration.get(), role, in_streams,
+                    out_streams, queue));
             block = std::move(block_);
         }
     else if (implementation.compare("Galileo_E1B_Telemetry_Decoder") == 0)

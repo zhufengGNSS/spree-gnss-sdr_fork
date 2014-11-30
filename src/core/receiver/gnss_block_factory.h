@@ -76,6 +76,7 @@ public:
             unsigned int in_streams, unsigned int out_streams,
             boost::shared_ptr<gr::msg_queue> queue = nullptr);
 
+
 private:
 
     std::unique_ptr<GNSSBlockInterface> GetChannel_1C(std::shared_ptr<ConfigurationInterface> configuration,
