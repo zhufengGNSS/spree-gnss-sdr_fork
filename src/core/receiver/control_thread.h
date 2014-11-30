@@ -121,6 +121,9 @@ private:
     int supl_lac; // Current network LAC (Location area code),16 bits, 1-65520 are valid values.
     int supl_ci;  // Cell Identity (16 bits, 0-65535 are valid values).
 
+    //spoofing detection
+    bool detect_spoofing;
+
     void init();
 
     // Read {ephemeris, iono, utc, ref loc, ref time} assistance from a local XML file previously recorded
