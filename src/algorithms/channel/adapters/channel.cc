@@ -165,6 +165,7 @@ gr::basic_block_sptr Channel::get_right_block()
 
 void Channel::set_signal(const Gnss_Signal& gnss_signal)
 {
+    DLOG(INFO) << "set singal in adapters/channel";
     gnss_signal_ = gnss_signal;
     std::string str_aux = gnss_signal_.get_signal_str();
     const char * str = str_aux.c_str(); // get a C style null terminated string
@@ -173,6 +174,7 @@ void Channel::set_signal(const Gnss_Signal& gnss_signal)
     gnss_synchro_.PRN = gnss_signal_.get_satellite().get_PRN();
     gnss_synchro_.System = gnss_signal_.get_satellite().get_system_short().c_str()[0];
     acq_->set_local_code();
+    DLOG(INFO) << "set_satellite " << gnss_signal_.get_satellite();
     nav_->set_satellite(gnss_signal_.get_satellite());
 }
 

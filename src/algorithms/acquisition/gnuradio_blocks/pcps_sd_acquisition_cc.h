@@ -123,7 +123,6 @@ private:
     gr::fft::fft_complex* d_ifft;
     Gnss_Synchro *d_gnss_synchro;
     unsigned int d_code_phase;
-    unsigned int acquire_peak;
     float d_doppler_freq;
     float d_mag;
     float d_mag_2nd_highest;

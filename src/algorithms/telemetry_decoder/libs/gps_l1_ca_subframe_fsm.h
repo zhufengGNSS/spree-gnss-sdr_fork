@@ -75,7 +75,7 @@ public:
     // channel and satellite info
     int i_channel_ID;              //!< Channel id
     unsigned int i_satellite_PRN;  //!< Satellite PRN number
-    unsigned int i_acquired;  //!< whether this is the channel trk the highest or next highest peak 
+    unsigned int i_peak;  //!< which peak this channel is tracking 
 
     Gps_Navigation_Message d_nav; //!< GPS L1 C/A navigation message object
 

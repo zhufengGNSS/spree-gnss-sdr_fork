@@ -150,6 +150,7 @@ void GpsL1CaPcpsAcquisitionFineDoppler::init()
 
 void GpsL1CaPcpsAcquisitionFineDoppler::set_local_code()
 {
+    DLOG(INFO) << "set local code";
     gps_l1_ca_code_gen_complex_sampled(code_, gnss_synchro_->PRN, fs_in_, 0);
     acquisition_cc_->set_local_code(code_);
 }

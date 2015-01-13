@@ -266,7 +266,6 @@ void GpsL1CaSubframeFsm::gps_subframe_to_nav_msg()
               << Gnss_Satellite(std::string("GPS"), i_satellite_PRN) << std::endl;
     d_nav.i_satellite_PRN = i_satellite_PRN;
     d_nav.i_channel_ID = i_channel_ID;
-    d_nav.i_acquired = i_acquired; 
 
     d_flag_new_subframe=true;
 }

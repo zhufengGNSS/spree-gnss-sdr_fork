@@ -385,7 +385,7 @@ bool GNSSFlowgraph::send_telemetry_msg(pmt::pmt_t msg)
     return true;
 =======
 // Assigns which peak a channel should acquire
-// nr_acquired_peaks is a vecor where the value x in index i
+// nr_acquired_peaks is a vector where the value x in index i
 // determines whether a channel is trakcing the xth highest peak
 // acquired_state maps a channel to value x which indicates that
 // this channel is tracking the xth highest peak.
@@ -399,7 +399,6 @@ void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
             //find xth highest peak that is not being tracked.
                     nr_acquired_peaks.at(PRN) += 1;
                     int peak = acquired_peaks.at(PRN).front();
-                    DLOG(INFO) << "addign peak " << peak;
                     acquired_peaks.at(PRN).pop_front();
                     channels_.at(who)->set_peak(peak);
                     channel_to_peak[who] = peak;
@@ -439,8 +438,6 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
     case 0:
         LOG(INFO) << "Channel " << who << " ACQ FAILED satellite " << channels_.at(who)->get_signal().get_satellite() << ", Signal " << channels_.at(who)->get_signal().get_signal_str();
         lost_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
-        DLOG(INFO) << "peak " << channel_to_peak.at(who);
-
        
         if(spoofing_detection)
             {
@@ -505,7 +502,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 =======
         DLOG(INFO) << "peak " << channel_to_peak.at(who);
 
-        if(spoofing_detection){
+        if(spoofing_detection && acq_PRN == 7){
             nr_acq_peaks = nr_acquired_peaks.at(acq_PRN);
             acquire_sat_again = false;
             inactive = std::count(available_GNSS_signals_.begin(), available_GNSS_signals_.end(), channels_.at(who)->get_signal());  //number of availble instances of the sat
@@ -516,6 +513,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                     acquire_sat_again = true;
                 }   
         }
+
 
         if (acq_channels_count_ < max_acq_channels_)
 >>>>>>> Changed the flowgraph to assign auxiliary peaks for spoofing detection
@@ -533,17 +531,22 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                                 channels_.at(i)->set_signal(available_GNSS_signals_.front());
                                 available_GNSS_signals_.pop_front();
                                 acq_channels_count_++;
+                                /*
                                 if(spoofing_detection){
                                  //unnecessary just so acq of lower peaks happens faster
-                                    if(i == 0 && acquire_sat_again)
+                                    DLOG(INFO) << "assign same satellite again? " << acquire_sat_again << " " << i;
+                                    if(acquire_sat_again)
                                         {
+                                            acquire_sat_again = false;
+                                            DLOG(INFO) << "assign same satellite again?";
                                             PRN = channels_.at(i)->get_signal().get_satellite().get_PRN(); 
                                             nr_acquired_peaks.at(PRN) -= 1;
                                             acquired_peaks.at(PRN).push_front(channel_to_peak.at(i));
                                             channels_.at(i)->set_signal(channels_.at(who)->get_signal());
+                                            DLOG(INFO) << "PRN " << PRN << " channel: " << channels_.at(i);
                                             AssignACQState(PRN, i);
                                         }
-                                }
+                                }*/
                                 channels_.at(i)->start_acquisition();
                                 break;
                             }
@@ -551,6 +554,10 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                     }
             }
 
+        for (unsigned int i = 0; i < channels_count_; i++)
+            {
+                DLOG(INFO) << "Channel " << i << " in state " << channels_state_[i] << std::endl;
+            }
         break;
 
     case 2:

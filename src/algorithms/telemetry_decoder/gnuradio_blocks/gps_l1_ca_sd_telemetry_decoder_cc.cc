@@ -188,7 +188,7 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
 
     // ########### Output the tracking data to navigation and PVT ##########
     const Gnss_Synchro **in = (const Gnss_Synchro **)  &input_items[0]; //Get the input samples pointer
-    d_GPS_FSM.i_acquired = in[0][0].peak;
+    d_GPS_FSM.i_peak= in[0][0].peak;
     
 
     // TODO Optimize me!

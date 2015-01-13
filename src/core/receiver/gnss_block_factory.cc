@@ -1094,7 +1094,7 @@ std::unique_ptr<AcquisitionInterface> GNSSBlockFactory::GetAcqBlock(
                     out_streams));
             block = std::move(block_);
         }
-    if (implementation.compare("GPS_L1_CA_PCPS_SD_Acquisition") == 0)
+    else if (implementation.compare("GPS_L1_CA_PCPS_SD_Acquisition") == 0)
         {
             std::unique_ptr<AcquisitionInterface> block_(new GpsL1CaPcpsSdAcquisition(configuration.get(), role, in_streams,
                     out_streams, queue));
@@ -1267,7 +1267,7 @@ std::unique_ptr<TelemetryDecoderInterface> GNSSBlockFactory::GetTlmBlock(
         unsigned int out_streams)
 {
     std::unique_ptr<TelemetryDecoderInterface> block;
-
+    
     // TELEMETRY DECODERS ----------------------------------------------------------
     if (implementation.compare("GPS_L1_CA_Telemetry_Decoder") == 0)
         {
@@ -1275,7 +1275,7 @@ std::unique_ptr<TelemetryDecoderInterface> GNSSBlockFactory::GetTlmBlock(
                     out_streams));
             block = std::move(block_);
         }
-    if (implementation.compare("GPS_L1_CA_SD_Telemetry_Decoder") == 0)
+    else if (implementation.compare("GPS_L1_CA_SD_Telemetry_Decoder") == 0)
         {
             std::unique_ptr<TelemetryDecoderInterface> block_(new GpsL1CaSdTelemetryDecoder(configuration.get(), role, in_streams,
                     out_streams, queue));

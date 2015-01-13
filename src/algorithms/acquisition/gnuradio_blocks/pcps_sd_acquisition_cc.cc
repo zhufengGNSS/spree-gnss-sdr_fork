@@ -264,14 +264,14 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             file.open (filename,  ios::out);
 
             bool acquire_auxiliary_peaks = false;
-            if(acquire_peak > 1)  
+            if(d_peak > 1)  
                 {
                     acquire_auxiliary_peaks = true;
                 }
 
             if(d_gnss_synchro->PRN == 7) // || d_gnss_synchro->PRN == 25 || d_gnss_synchro->PRN == 2)
                 {
-                    std::cout << "ACQUIRED : " << acquire_peak << " channel " << d_channel << std::endl;
+                    std::cout << "ACQUIRED : " << d_peak << " channel " << d_channel << std::endl;
                 }
 
             
@@ -410,7 +410,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                     map<string, double> values = rit->second;
                                     double code_phase = values.find("code phase")->second;
                                     double c_doppler = values.find("doppler")->second;
-                                    if(i < acquire_peak)
+                                    if(i < d_peak)
                                         {
                                             higher_peaks.insert(pair<int,int> (code_phase, c_doppler));
                                             i += 1;
