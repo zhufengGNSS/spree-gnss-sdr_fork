@@ -502,7 +502,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 =======
         DLOG(INFO) << "peak " << channel_to_peak.at(who);
 
-        if(spoofing_detection && acq_PRN == 7){
+        if(spoofing_detection){
             nr_acq_peaks = nr_acquired_peaks.at(acq_PRN);
             acquire_sat_again = false;
             inactive = std::count(available_GNSS_signals_.begin(), available_GNSS_signals_.end(), channels_.at(who)->get_signal());  //number of availble instances of the sat
