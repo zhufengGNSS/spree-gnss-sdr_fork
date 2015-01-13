@@ -60,7 +60,7 @@ public:
     unsigned int unique_id;  // unique id since we are acq/trk more than one instance of the same sat
     double timestamp;        // when was the ephemeris last updated 
     unsigned int i_satellite_PRN; // SV PRN NUMBER
-    unsigned int i_acquired; // SV PRN NUMBER
+    unsigned int i_peak; 
     double d_TOW;            //!< Time of GPS Week of the ephemeris set (taken from subframes TOW) [s]
     double d_Crs;            //!< Amplitude of the Sine Harmonic Correction Term to the Orbit Radius [m]
     double d_Delta_n;        //!< Mean Motion Difference From Computed Value [semi-circles/s]

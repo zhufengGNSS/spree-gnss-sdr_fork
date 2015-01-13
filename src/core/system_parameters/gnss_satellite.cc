@@ -146,16 +146,16 @@ void Gnss_Satellite::set_PRN(unsigned int PRN_)
             PRN = 0;
         }
     if (system.compare("GPS") == 0)
-        {
+        {/*
             if (PRN_ < 1 or PRN_ > 32)
                 {
                     DLOG(INFO) << "This PRN is not defined";
                     PRN = 0;
                 }
             else
-                {
+                {*/
                     PRN = PRN_;
-                }
+               // }
         }
     else if (system.compare("Glonass") == 0)
            {

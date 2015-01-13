@@ -224,8 +224,15 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             std::string tmp = std::to_string(in[i][0].PRN);
             tmp += "0"+std::to_string(in[i][0].peak)+"0"+std::to_string(i);
             int unique_id = std::stoi(tmp);
-
-            gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(unique_id, in[i][0])); // store valid pseudoranges in a map
+            
+            if(d_detect_spoofing)
+                {
+                    gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(unique_id, in[i][0])); // store valid pseudoranges in a map
+                }
+            else
+                {
+                    gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(in[i][0].PRN, in[i][0])); // store valid pseudoranges in a map
+                }
             //Is this a bug, this is the transmitt time not the RX time??????
             d_rx_time = in[i][0].d_TOW_at_current_symbol; // all the channels have the same RX timestamp (common RX time pseudoranges)
             //DLOG(INFO) << "PVT sat " << tmp << " CN0 " << in[i][0].CN0_dB_hz;
@@ -370,7 +377,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
         }
 
-    DLOG(INFO) << "calculate the PVT";
+    //DLOG(INFO) << "calculate the PVT";
     // ############ 2 COMPUTE THE PVT ################################
     if (gnss_pseudoranges_map.size() > 0 and d_ls_pvt->gps_ephemeris_map.size() >0)
         {

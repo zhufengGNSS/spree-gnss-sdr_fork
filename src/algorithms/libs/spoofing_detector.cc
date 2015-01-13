@@ -476,7 +476,7 @@ std::list<unsigned int> Spoofing_Detector::RX_TX_ephemeris_check(std::list<unsig
     set<double> tx_times;
     double rx_time;
     unsigned int PRN;
-    DLOG(INFO) << "spoofing detection1";
+    //DLOG(INFO) << "spoofing detection1";
     unsigned int i = 0;
     for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
         {
@@ -518,7 +518,7 @@ std::list<unsigned int> Spoofing_Detector::RX_TX_ephemeris_check(std::list<unsig
                         {
                             std::map<string, rx_time_t> rx = rx_times.at(PRN);
                             if(rx.at("smallest").time > rx_time)// && 
-                            //    !(rx.at("smallest").second == rx_time && in[i][0].acquired > peak.at(PRN))) 
+                            //    !(rx.at("smallest").second == rx_time && in[i][0].peak> peak.at(PRN))) 
                                 {
                                     rx_times.at(PRN)["smallest"] = p;
                                     peak.at(PRN) = in[i][0].peak;

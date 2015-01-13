@@ -841,7 +841,7 @@ Gps_Ephemeris Gps_Navigation_Message::get_ephemeris()
     Gps_Ephemeris ephemeris;
     ephemeris.unique_id = unique_id;
     ephemeris.i_satellite_PRN = i_satellite_PRN;
-    ephemeris.i_acquired = i_acquired;
+    ephemeris.i_peak = i_peak;
     ephemeris.d_TOW = d_TOW;
     ephemeris.d_Crs = d_Crs;
     ephemeris.d_Delta_n = d_Delta_n;

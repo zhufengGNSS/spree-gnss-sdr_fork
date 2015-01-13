@@ -158,7 +158,7 @@ public:
     int i_channel_ID;
     unsigned int i_satellite_PRN;
     unsigned int unique_id;
-    unsigned int i_acquired;
+    unsigned int i_peak;
 
     // time synchro
     double d_subframe_timestamp_ms; //[ms]
