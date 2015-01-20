@@ -493,7 +493,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
     case 1:
         LOG(INFO) << "Channel " << who << " ACQ SUCCESS satellite " << channels_.at(who)->get_signal().get_satellite();
         acq_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
-        global_channel_status.add(who, 0);
+        //global_channel_status.add(who, 0);
 
         channels_state_[who] = 2;
         acq_channels_count_--;
@@ -562,6 +562,8 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 
     case 2:
         LOG(INFO) << "Channel " << who << " TRK FAILED satellite " << channels_.at(who)->get_signal().get_satellite();
+        //channel should not be used for spoofing or pvt calculation
+        global_channel_status.add(who, 2);
 
         PRN = channels_.at(who)->get_signal().get_satellite().get_PRN(); 
 

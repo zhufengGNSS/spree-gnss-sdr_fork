@@ -54,7 +54,7 @@
  * \todo Include in definition header file
  */
 #define CN0_ESTIMATION_SAMPLES 20
-#define MINIMUM_VALID_CN0 40
+#define MINIMUM_VALID_CN0 25
 #define MAXIMUM_LOCK_FAIL_COUNTER 50
 #define CARRIER_LOCK_THRESHOLD 0.85
 
@@ -439,6 +439,14 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
             current_synchro_data.CN0_dB_hz = d_CN0_SNV_dB_Hz;
             current_synchro_data.Flag_valid_symbol_output = true;
             current_synchro_data.correlation_length_ms = 1;
+
+            if (floor(d_sample_counter / d_fs_in) != d_last_seg)
+            {
+                d_last_seg = floor(d_sample_counter / d_fs_in);
+                DLOG(INFO) << "GPS L1 C/A Tracking CH " << d_channel <<  ": Satellite " << Gnss_Satellite(systemName[sys], d_acquisition_gnss_synchro->PRN)
+                    << ", CN0 = " << d_CN0_SNV_dB_Hz << " [dB-Hz]" << ", lock = " << d_carrier_lock_test;
+            }
+
         }
     else
         {

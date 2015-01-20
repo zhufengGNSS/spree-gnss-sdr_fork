@@ -294,6 +294,7 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
                     if (gps_l1_ca_sd_telemetry_decoder_cc::gps_word_parityCheck(d_GPS_frame_4bytes))
                         {
                             memcpy(&d_GPS_FSM.d_GPS_frame_4bytes, &d_GPS_frame_4bytes, sizeof(char)*4);
+                            DLOG(INFO) << "set preamble time channel: " << d_channel << " to: " << d_preamble_time_seconds*1000.0; 
                             d_GPS_FSM.d_preamble_time_ms = d_preamble_time_seconds*1000.0;
                             d_GPS_FSM.Event_gps_word_valid();
                             d_flag_parity = true;

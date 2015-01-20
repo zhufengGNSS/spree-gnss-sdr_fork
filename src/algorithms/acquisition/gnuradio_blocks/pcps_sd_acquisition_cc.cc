@@ -271,7 +271,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
 
             if(d_gnss_synchro->PRN == 7) // || d_gnss_synchro->PRN == 25 || d_gnss_synchro->PRN == 2)
                 {
-                    std::cout << "ACQUIRED : " << d_peak << " channel " << d_channel << std::endl;
+                    //std::cout << "ACQUIRED : " << d_peak << " channel " << d_channel << std::endl;
                 }
 
             
@@ -323,21 +323,23 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     float tmp = 0.0;
                     for(unsigned int i = 0; i < d_fft_size; i++)
                     {
-                        if(d_magnitude[i] > threshold_spoofing)
+                        if(d_magnitude[i] > threshold_spoofing/2)
                             {
                                 tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
                                 map<string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
                                 peaks[tmp] = mtmp;
                             }
-                       
-                        if(d_gnss_synchro->PRN == 7)
+                      /* 
+                        if(d_gnss_synchro->PRN == 28 || d_gnss_synchro->PRN == 2 || d_gnss_synchro->PRN == 10)
                             {
                                 tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
                                 file << doppler << " " 
                                     << (double)(i % d_samples_per_code) << " " 
-                                    << tmp << " " << endl; 
+                                    << tmp/d_input_power << " " << endl; 
                             }
                         //tmp = 0;
+                       */
+
                     }
 
                     // 4- record the maximum peak and the associated synchronization parameters
@@ -410,6 +412,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                     map<string, double> values = rit->second;
                                     double code_phase = values.find("code phase")->second;
                                     double c_doppler = values.find("doppler")->second;
+                                    DLOG(INFO) << "peaks: " << code_phase << "   " << c_doppler;
                                     if(i < d_peak)
                                         {
                                             higher_peaks.insert(pair<int,int> (code_phase, c_doppler));
@@ -421,9 +424,8 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                     for (it=higher_peaks.begin(); it!=higher_peaks.end(); ++it)
                                         {
                                             int next_code_phase = it->first; 
-                                            int next_doppler = it->first; 
-                                            DLOG(INFO) << " next peak " << next_code_phase; 
-                                            if( std::abs(next_code_phase - code_phase) < 2*d_samples_per_code && next_doppler == c_doppler)
+                                            int next_doppler = it->second; 
+                                            if( std::abs(next_code_phase - code_phase) < 2  && next_doppler == c_doppler)
                                                 {
                                                     use_this_peak = false;
                                                 } 
@@ -431,7 +433,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
 
                                     if(use_this_peak)
                                         {
-                                            DLOG(INFO) << " 2nd highest peak found";
+                                            DLOG(INFO) << "highest peak found";
                                             DLOG(INFO) << "peak " << rit->first; 
                                             DLOG(INFO) << "code phase " << values.find("code phase")->second; 
                                             DLOG(INFO) << "doppler " << values.find("doppler")->second; 
@@ -448,6 +450,8 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                 }
                         }
                 }
+            
+            DLOG(INFO) << "found peak: " << found_peak;
             if (!d_bit_transition_flag)
                 {
                     if(acquire_auxiliary_peaks && !found_peak)
@@ -455,6 +459,10 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                             d_state = 3; // Negative acquisition
                         }
                     else if (d_test_statistics > d_threshold)
+                        {
+                            d_state = 2; // Positive acquisition
+                        }
+                    else if ( acquire_auxiliary_peaks && d_test_statistics > d_threshold/2)
                         {
                             d_state = 2; // Positive acquisition
                         }
