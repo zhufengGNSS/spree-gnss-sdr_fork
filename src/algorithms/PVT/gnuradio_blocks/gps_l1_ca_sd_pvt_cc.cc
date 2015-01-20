@@ -205,7 +205,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
         }
 
     
-    
     if(d_detect_spoofing)
         {    
             std::list<unsigned int> first_arriving_channels = spoofing_detector->RX_TX_ephemeris_check(channels, 
