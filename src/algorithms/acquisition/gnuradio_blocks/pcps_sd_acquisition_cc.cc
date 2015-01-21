@@ -323,7 +323,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     float tmp = 0.0;
                     for(unsigned int i = 0; i < d_fft_size; i++)
                     {
-                        if(d_magnitude[i] > threshold_spoofing/2)
+                        if(d_magnitude[i] > threshold_spoofing)
                             {
                                 tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
                                 map<string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
@@ -462,10 +462,12 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         {
                             d_state = 2; // Positive acquisition
                         }
+    /*
                     else if ( acquire_auxiliary_peaks && d_test_statistics > d_threshold/2)
                         {
                             d_state = 2; // Positive acquisition
                         }
+*/
                     else if (d_well_count == d_max_dwells)
                         {
                             d_state = 3; // Negative acquisition
