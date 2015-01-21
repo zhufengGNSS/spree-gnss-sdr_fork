@@ -96,13 +96,14 @@ void Spoofing_Detector::check_new_TOW(double current_time_ms, int new_week, doub
     double duration;
     if(old_GPS_time.size() > 2)
     {
+
         old_time = old_GPS_time.at(0)*604800+old_GPS_time.at(1); // 604800=7*24*60*60
         new_time = new_week*604800+new_TOW;
         duration = round((current_time_ms-old_GPS_time.at(2))/1000.0);
         DLOG(INFO) << "check new TOW " << duration << " " << std::abs(new_time-old_time);
 
         //TODO: set configurable max deviation, now is 1 second
-        if( std::abs(std::abs(new_time-old_time)-duration) > 0)
+        if( std::abs(std::abs(new_time-old_time)-duration) > 0 && (round(current_time_ms) != 0 || round(old_GPS_time.at(2)) != 0) )
             {
                 Spoofing_Message msg;
                 msg.spoofing_case = 3; 
