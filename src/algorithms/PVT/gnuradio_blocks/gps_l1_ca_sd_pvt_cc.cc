@@ -177,9 +177,10 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
         {
             if (in[i][0].Flag_valid_pseudorange)
                 {
+                        
                     if(channel_status.count(i) && channel_status.at(i) != 2)
                         {
-                            DLOG(INFO) << "add " << i << " " <<channel_status.at(i);
+                       //     DLOG(INFO) << "add " << i << " " <<channel_status.at(i);
                             
                             channels.push_back(i);
                             //use the channel that is tracking the  highest peak
@@ -189,7 +190,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                 {
                                     if(channel_added.at(in[i][0].PRN) > i)
                                         {
-                                  //          DLOG(INFO) << "add to used "<< in[i][0].PRN << " " << i;
                                             channels_used.remove(channel_added.at(in[i][0].PRN));
                                             channels_used.push_back(i);
                                             channel_added[in[i][0].PRN] = i; 
@@ -220,7 +220,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
     for(std::list<unsigned int>::iterator it = channels_used.begin(); it != channels_used.end(); ++it)
         {
             i = *it; 
-            DLOG(INFO) << "use " << i;
+            //DLOG(INFO) << "use " << i;
             std::string tmp = std::to_string(in[i][0].PRN);
             tmp += "0"+std::to_string(in[i][0].peak)+"0"+std::to_string(i);
             int unique_id = std::stoi(tmp);
@@ -249,10 +249,10 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
                 {
                     i = *it; 
-                    DLOG(INFO) << "check " << i;
+                    //DLOG(INFO) << "check " << i;
                     if (in[i][0].Flag_valid_pseudorange && (channel_status.count(i) && channel_status.at(i) == 1))
                         {
-                            DLOG(INFO) << i << " is valid";
+                            //DLOG(INFO) << i << " is valid";
                             //don't cancel tracking if the channel is tracking the singal that arrives
                             //first even if it is not the highest peak
                             if (std::find(channels_used.begin(), channels_used.end(), i) == channels_used.end())
@@ -263,7 +263,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     if(!spoofing_detector->checked(in[i][0].PRN, unique_id))
                                         {
                                             //        std::cout << "channel was not checked yet" << std::endl;
-                                            DLOG(INFO) << "channel was not checked yet";
+                                            //DLOG(INFO) << "channel was not checked yet";
                                             continue;
                                         }
                                     global_channel_to_subframe.remove(unique_id);
@@ -377,6 +377,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
         }
 
+     
     //DLOG(INFO) << "calculate the PVT";
     // ############ 2 COMPUTE THE PVT ################################
     if (gnss_pseudoranges_map.size() > 0 and d_ls_pvt->gps_ephemeris_map.size() >0)
