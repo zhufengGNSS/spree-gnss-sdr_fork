@@ -231,7 +231,6 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
                             d_preamble_index = d_sample_counter;  //record the preamble sample stamp (t_P)
                             d_preamble_time_seconds = in[0][0].Tracking_timestamp_secs;// - d_preamble_duration_seconds; //record the PRN start sample index associated to the preamble
 
-
                             if (!d_flag_frame_sync)
                                 {
                                     d_flag_frame_sync = true;
@@ -289,13 +288,15 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
                      invert the data bits according to bit 30 of the previous word. */
                     if(d_GPS_frame_4bytes & 0x40000000)
                         {
+
                             d_GPS_frame_4bytes ^= 0x3FFFFFC0; // invert the data bits (using XOR)
                         }
                     if (gps_l1_ca_sd_telemetry_decoder_cc::gps_word_parityCheck(d_GPS_frame_4bytes))
                         {
                             memcpy(&d_GPS_FSM.d_GPS_frame_4bytes, &d_GPS_frame_4bytes, sizeof(char)*4);
-                            DLOG(INFO) << "set preamble time channel: " << d_channel << " to: " << d_preamble_time_seconds*1000.0; 
-                            d_GPS_FSM.d_preamble_time_ms = d_preamble_time_seconds*1000.0;
+                            DLOG(INFO) << "set preamble time channel: " << d_channel << " to: " << in[0][0].Tracking_timestamp_secs*1000.0; 
+                            //d_GPS_FSM.d_preamble_time_ms = d_preamble_time_seconds*1000.0;
+                            d_GPS_FSM.d_preamble_time_ms = in[0][0].Tracking_timestamp_secs*1000.0;
                             d_GPS_FSM.Event_gps_word_valid();
                             d_flag_parity = true;
                         }

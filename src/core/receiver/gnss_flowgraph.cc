@@ -495,6 +495,9 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         acq_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
         //global_channel_status.add(who, 0);
 
+
+    
+
         channels_state_[who] = 2;
         acq_channels_count_--;
 <<<<<<< HEAD
@@ -513,6 +516,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                     acquire_sat_again = true;
                 }   
         }
+        
 
 
         if (acq_channels_count_ < max_acq_channels_)
@@ -836,7 +840,7 @@ void GNSSFlowgraph::set_signals_list()
                         tmp.push_back(i);
                     }
                 //if(!use_first_arriving_signal)
-                //    tmp.push_back(1);
+                tmp.push_back(0);
                 acquired_peaks[*available_gnss_prn_iter] = tmp;  
                 }
         }

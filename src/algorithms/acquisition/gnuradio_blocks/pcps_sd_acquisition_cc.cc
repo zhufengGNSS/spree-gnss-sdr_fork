@@ -241,12 +241,12 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             d_well_count++;
 
             DLOG(INFO) << "Channel: " << d_channel
-                    << " , doing acquisition of satellite: " << d_gnss_synchro->System << " "<< d_gnss_synchro->PRN
-                    << " ,sample stamp: " << d_sample_counter << ", threshold: "
+                    << ", doing acquisition of satellite: " << d_gnss_synchro->System << " "<< d_gnss_synchro->PRN
+                    << ", sample stamp: " << d_sample_counter << ", threshold: "
                     << d_threshold << ", doppler_max: " << d_doppler_max
                     << ", doppler_step: " << d_doppler_step;
 
-    
+   /* 
             ofstream file;
             std::string filename;
             int acq_nr = 0;
@@ -262,18 +262,20 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     acq_nr += 1;
                 }
             file.open (filename,  ios::out);
-
+*/
             bool acquire_auxiliary_peaks = false;
-            if(d_peak > 1)  
+            DLOG(INFO) << "peak to acquire: " << d_peak;
+            if(d_peak != 1)  
                 {
+                    DLOG(INFO) << "acquire aux";
                     acquire_auxiliary_peaks = true;
                 }
-
+    /*
             if(d_gnss_synchro->PRN == 7) // || d_gnss_synchro->PRN == 25 || d_gnss_synchro->PRN == 2)
                 {
                     //std::cout << "ACQUIRED : " << d_peak << " channel " << d_channel << std::endl;
                 }
-
+*/
             
             // 1- Compute the input signal power estimation
             volk_32fc_magnitude_squared_32f_a(d_magnitude, in, d_fft_size);
@@ -384,9 +386,8 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         }
                 }
             
-            file.close();
+            //file.close();
 
-            DLOG(INFO) << "highest values";
             DLOG(INFO) << "satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
             DLOG(INFO) << "sample_stamp " << d_sample_counter;
             DLOG(INFO) << "test statistics value " << d_test_statistics;
@@ -395,10 +396,43 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             DLOG(INFO) << "doppler " << d_gnss_synchro->Acq_doppler_hz;
             DLOG(INFO) << "magnitude " << d_mag;
             DLOG(INFO) << "input signal power " << d_input_power;
+            DLOG(INFO) << "samples per code " << d_samples_per_code;
 
             set<pair<int, int>> higher_peaks; 
             bool found_peak = false;
-            if(acquire_auxiliary_peaks)
+            if(d_peak == 0)
+                {
+                    if( peaks.size() > 0)
+                        {
+                            std::map<double,map<string, double>>::reverse_iterator rit;
+                            bool use_this_peak;
+                            double next_code_phase = d_gnss_synchro->Acq_delay_samples;
+
+                            for (rit=peaks.rbegin(); rit!=peaks.rend(); ++rit)
+                                {
+                                    use_this_peak = true;
+
+                                    map<string, double> values = rit->second;
+                                    double code_phase = values.find("code phase")->second;
+                                    double c_doppler = values.find("doppler")->second;
+                                    DLOG(INFO) << "peaks: " << code_phase << "   " << c_doppler << " " << rit->first/ d_input_power;
+
+                                    if( std::abs(next_code_phase - code_phase) < 3)//  && next_doppler == c_doppler)
+                                    {
+                                        DLOG(INFO) << "found a second peak " << code_phase << " " << next_code_phase;
+                                        use_this_peak = false;
+                                    } 
+
+                                    if(use_this_peak)
+                                        {
+                                            found_peak = true;
+                                            break;
+                                        }
+
+                                }
+                        }
+                }
+            else if(acquire_auxiliary_peaks)
                 {
                     if( peaks.size() > 0)
                         {
@@ -412,7 +446,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                     map<string, double> values = rit->second;
                                     double code_phase = values.find("code phase")->second;
                                     double c_doppler = values.find("doppler")->second;
-                                    DLOG(INFO) << "peaks: " << code_phase << "   " << c_doppler;
+                                    DLOG(INFO) << "peaks: " << code_phase << "   " << c_doppler << " " << rit->first/ d_input_power;
                                     if(i < d_peak)
                                         {
                                             higher_peaks.insert(pair<int,int> (code_phase, c_doppler));
@@ -425,9 +459,10 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                         {
                                             int next_code_phase = it->first; 
                                             int next_doppler = it->second; 
-                                            if( std::abs(next_code_phase - code_phase) < 2  && next_doppler == c_doppler)
+                                            if( std::abs(next_code_phase - code_phase) < 3)//  && next_doppler == c_doppler)
                                                 {
                                                     use_this_peak = false;
+                                                    higher_peaks.insert(pair<int,int> (code_phase, c_doppler));
                                                 } 
                                         }
 
@@ -435,6 +470,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                         {
                                             DLOG(INFO) << "highest peak found";
                                             DLOG(INFO) << "peak " << rit->first; 
+                                            DLOG(INFO) << "d_peak " << d_peak; 
                                             DLOG(INFO) << "code phase " << values.find("code phase")->second; 
                                             DLOG(INFO) << "doppler " << values.find("doppler")->second; 
 
@@ -451,6 +487,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         }
                 }
             
+            
             DLOG(INFO) << "found peak: " << found_peak;
             if (!d_bit_transition_flag)
                 {
@@ -461,13 +498,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     else if (d_test_statistics > d_threshold)
                         {
                             d_state = 2; // Positive acquisition
-                        }
-    /*
-                    else if ( acquire_auxiliary_peaks && d_test_statistics > d_threshold/2)
-                        {
-                            d_state = 2; // Positive acquisition
-                        }
-*/
+                       }
                     else if (d_well_count == d_max_dwells)
                         {
                             d_state = 3; // Negative acquisition
@@ -491,7 +522,6 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                 }
                         }
                 }
-            //??????
             consume_each(1);
 
             break;
