@@ -249,10 +249,10 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
                 {
                     i = *it; 
-                    //DLOG(INFO) << "check " << i;
+                   // DLOG(INFO) << "check " << i;
                     if (in[i][0].Flag_valid_pseudorange && (channel_status.count(i) && channel_status.at(i) == 1))
                         {
-                            //DLOG(INFO) << i << " is valid";
+                    //        DLOG(INFO) << i << " is valid";
                             //don't cancel tracking if the channel is tracking the singal that arrives
                             //first even if it is not the highest peak
                             if (std::find(channels_used.begin(), channels_used.end(), i) == channels_used.end())
@@ -263,7 +263,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     if(!spoofing_detector->checked(in[i][0].PRN, unique_id))
                                         {
                                             //        std::cout << "channel was not checked yet" << std::endl;
-                                            //DLOG(INFO) << "channel was not checked yet";
+                  //                          DLOG(INFO) << "channel was not checked yet";
                                             continue;
                                         }
                                     global_channel_to_subframe.remove(unique_id);
