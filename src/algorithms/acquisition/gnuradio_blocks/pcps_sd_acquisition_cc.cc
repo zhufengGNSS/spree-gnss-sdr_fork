@@ -242,7 +242,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             d_well_count++;
 
 
-            //minimum_sample_difference = (d_samples_per_code/GPS_L1_CA_CODE_LENGTH_CHIPS)
+//            minimum_sample_difference = (d_samples_per_code/GPS_L1_CA_CODE_LENGTH_CHIPS)
 
             DLOG(INFO) << "Channel: " << d_channel
                     << ", doing acquisition of satellite: " << d_gnss_synchro->System << " "<< d_gnss_synchro->PRN
@@ -403,6 +403,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
 
             set<pair<int, int>> higher_peaks; 
             map<int, map<string, double>> high_peaks; 
+            set<int> previous_peaks;
             bool found_peak = false;
 
 
@@ -417,38 +418,32 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         map<string, double> values = rit->second;
                         double code_phase = values.find("code phase")->second;
                         double c_doppler = values.find("doppler")->second;
-                        double c_sample_counter= values.find("sample_counter")->second;
                         double magnitude = rit->first;
 
                         DLOG(INFO) << "peaks: " << code_phase << "   " << c_doppler << " " << rit->first/ d_input_power;
 
-                        map<int, map<string, double>>::iterator it;
-                        for (it=high_peaks.begin(); it!=high_peaks.end(); ++it)
+                        set<int>::iterator it;
+                        for (it=previous_peaks.begin(); it!=previous_peaks.end(); ++it)
                         {
-                            int next_code_phase = it->second.at("code_phase"); 
-                            if( std::abs(next_code_phase - code_phase) < 3)//  && next_doppler == c_doppler)
+                            int next_code_phase = *it; 
+                            if( std::abs(next_code_phase - code_phase) < 2)//  && next_doppler == c_doppler)
                                 {
-                                    DLOG(INFO) << "insert false";
                                     insert_peak = false;
                                 } 
                         }
+                        previous_peaks.insert(code_phase);
 
                         if(insert_peak)
                             {
-                                DLOG(INFO) << "add peak";
                                 i++; 
-                                /*
-                                map<string, double> peak;
-                                peak["code_phase"] = code_phase; 
-                                peak["doppler"] = c_doppler; 
-                                peak["magnitude"] = magnitude; 
-                                high_peaks[i] = peak;
-                                */
                                 high_peaks[i]["code_phase"] = code_phase;
                                 high_peaks[i]["doppler"] = c_doppler;
                                 high_peaks[i]["magnitude"] = magnitude;
                                 high_peaks[i]["sample counter"] = values.find("sample_counter")->second;
                             }
+
+                        if(i > d_peak)
+                            break;
                     }
 
                     for(map<int, map<string, double>>::iterator it =  high_peaks.begin(); it !=  high_peaks.end(); ++it)
