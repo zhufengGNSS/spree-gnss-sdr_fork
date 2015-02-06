@@ -69,10 +69,14 @@ GpsL1CaSdTelemetryDecoder::GpsL1CaSdTelemetryDecoder(ConfigurationInterface* con
     fs_in = configuration->property("GNSS-SDR.internal_fs_hz", 2048000);
 
     //Spoofing detection
-    bool detect_spoofing  = configuration->property("Spoofing.spoofing_detection", true); 
+    bool detect_spoofing = configuration->property("Spoofing.spoofing_detection", false);
+    double max_discrepancy = configuration->property("Spoofing.RX_max_time_diff", 0.1);
+    double max_alt = configuration->property("Spoofing.max_height", 2e3);
+    Spoofing_Detector *spoofing_detector = new Spoofing_Detector(detect_spoofing, max_discrepancy, max_alt);
+
 
     // make telemetry decoder object
-    telemetry_decoder_ = gps_l1_ca_make_sd_telemetry_decoder_cc(satellite_, 0, (long)fs_in, vector_length_, queue_, dump_, detect_spoofing); // TODO fix me
+    telemetry_decoder_ = gps_l1_ca_make_sd_telemetry_decoder_cc(satellite_, 0, (long)fs_in, vector_length_, queue_, dump_, *spoofing_detector); // TODO fix me
     DLOG(INFO) << "telemetry_decoder(" << telemetry_decoder_->unique_id() << ")";
     // set the navigation msg queue;
     telemetry_decoder_->set_ephemeris_queue(&global_gps_ephemeris_queue);

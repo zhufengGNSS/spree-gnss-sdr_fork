@@ -718,7 +718,6 @@ void GNSSFlowgraph::init()
 
 
     spoofing_detection = configuration_->property("Spoofing.spoofing_detection", false);
-    use_first_arriving_signal = configuration_->property("Spoofing.use_first_arriving_signal", false);
     nr_acq = configuration_->property("Spoofing.Nr_acquisitions", 2);
     nr_peaks = configuration_->property("Spoofing.Nr_peaks", 5);
     if(nr_peaks < nr_acq)

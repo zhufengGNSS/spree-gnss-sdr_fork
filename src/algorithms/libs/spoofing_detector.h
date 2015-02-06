@@ -51,6 +51,13 @@ struct rx_time_t {
     int subframe;
 };
 
+struct Satpos{
+    double x;
+    double y;
+    double z;
+    double time;
+};
+
 /*!
  * \brief provides spoofing detection 
  *
@@ -62,17 +69,26 @@ public:
      * \brief Default constructor.
      */
     Spoofing_Detector();
+    Spoofing_Detector(bool detect_spoofing, double max_discrepancy, double max_alt);
 
-    std::list<unsigned int> RX_TX_ephemeris_check(std::list<unsigned int>channels, Gnss_Synchro **in, std::map<int, Gps_Ephemeris> ephemeris_map, double max_discrepancy);
+    void RX_TX_ephemeris_check(std::list<unsigned int>channels, Gnss_Synchro **in, std::map<int, Gps_Ephemeris> ephemeris_map);
     void check_new_TOW(double current_time_ms, int new_week, double new_TOW);
     void check_middle_earth(double sqrtA);
-    bool is_spoofed();
     std::map<unsigned int, unsigned int> used_channel; 
     std::map<unsigned int, bool> checked_rx;
     std::map<unsigned int, bool> checked_channel_rx;
+    std::map<unsigned int, Satpos> Satpos_map;
     //std::map<unsigned int, bool> checked_ephemeris;
     std::map<string, std::map<int, bool>> checked_subframe;
     bool checked(unsigned int PRN, unsigned int channel);
+    void check_position(double lat, double lng, double alt);
+    void check_satpos(unsigned int sat, double time, double x, double y, double z); 
+    bool check_spoofing(std::list<unsigned int>channels, Gnss_Synchro **in);
+    void check_GPS_time();
+
+    bool d_detect_spoofing; 
+    double d_max_discrepancy;
+    double  d_max_alt;
 
     /*!
      * \brief Default destructor.
@@ -80,11 +96,10 @@ public:
     ~Spoofing_Detector();
 
 private:
-    bool spoofed = false;
-    void check_RX(std::set<int> multiples, std::map<int, std::map<std::string, rx_time_t>> rx_times, double max_discrepancy);
+    set<unsigned int> new_subframe;
+    bool check_RX(std::set<int> multiples, std::map<int, std::map<std::string, rx_time_t>> rx_times);
     void check_sat_RX(std::set<int> multiples, std::map<int, std::map<std::string,rx_time_t>> rx_times);
-    void check_GPS_time(std::set<int> unique_ids);
-    void check_subframes(std::map<int, std::list<int>> ids_of_PRN);
+    bool check_subframes(std::map<int, std::list<int>> ids_of_PRN);
     void spoofing_detected(std::string description, int spoofing_case); 
 };
 

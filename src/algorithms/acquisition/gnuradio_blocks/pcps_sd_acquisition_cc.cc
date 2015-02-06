@@ -42,9 +42,11 @@
 #include "control_message_factory.h"
 #include "concurrent_map.h"
 
+#include "persistence1d.hpp"
 #include <iostream>
 #include <fstream>
 using namespace std;
+using namespace p1d;
 extern concurrent_map<map<string, int>> global_code_phase;
 
 
@@ -255,7 +257,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             std::string filename;
             int acq_nr = 0;
             bool write = false;
-            while(!write)
+            while(!write && d_gnss_synchro->PRN == 13)
                 {
                     filename = "acq_data/CH" + std::to_string(d_channel) + "_sat" +  std::to_string(d_gnss_synchro->PRN) + "_" + std::to_string(acq_nr); 
                     ifstream ifile(filename);
@@ -287,6 +289,8 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             d_input_power /= (float)d_fft_size;
             
             map<double, map<string, double>> peaks;
+//            map<int, map<int, float>> peaks2;
+
             
             float threshold_spoofing = d_threshold * d_input_power * (fft_normalization_factor * fft_normalization_factor); 
 
@@ -315,17 +319,24 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     // Search maximum
                     volk_32fc_magnitude_squared_32f_a(d_magnitude, d_ifft->get_outbuf(), d_fft_size);
 
-
-
                     // TODO: write d_magnitude  
                     volk_32f_index_max_16u_a(&indext, d_magnitude, d_fft_size);
 
                     // Normalize the maximum value to correct the scale factor introduced by FFTW
                     magt = d_magnitude[indext] / (fft_normalization_factor * fft_normalization_factor);
                     //?WHY? N^4
-                    
-                    //double sh = 0.0; 
-                    //int si = 0;
+                   /* 
+                    Persistence1D p;
+                    p.RunPersistence(fread(d_magnitude, sizeof(double), );
+                    vector <TPairedExtrema> Extrema;
+                    p.GetPairedExtrema(Extrema, 0);
+
+                    for(vector< TPairedExtrema >::iterator it = Extrema.begin(); it != Extrema.end(); it++)
+                        {
+                            DLOG(INFO)  << " maximum code phase " << (*it).MaxIndex %d_samples_per_code;
+                            //std::cout  << " maximum code phase " << std::to_string(test2) << std::endl; 
+                        }
+*/
                     float tmp = 0.0;
                     for(unsigned int i = 0; i < d_fft_size; i++)
                     {
@@ -334,14 +345,15 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                 tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
                                 map<string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
                                 peaks[tmp] = mtmp;
+                    //            peaks2[doppler][i%d_samples_per_code] = tmp;
                             }
                       /* 
-                        if(d_gnss_synchro->PRN == 28 || d_gnss_synchro->PRN == 2 || d_gnss_synchro->PRN == 10)
+                        if(d_gnss_synchro->PRN == 13) 
                             {
                                 tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
                                 file << doppler << " " 
                                     << (double)(i % d_samples_per_code) << " " 
-                                    << tmp/d_input_power << " " << endl; 
+                                    << tmp<< " " << endl; 
                             }
                         //tmp = 0;
                        */
@@ -351,7 +363,6 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     // 4- record the maximum peak and the associated synchronization parameters
                     if (d_mag < magt)
                         {
-                            d_mag_2nd_highest = d_mag;
                             d_mag = magt;
 
                             // In case that d_bit_transition_flag = true, we compare the potentially
@@ -405,6 +416,34 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             map<int, map<string, double>> high_peaks; 
             set<int> previous_peaks;
             bool found_peak = false;
+            int start, end;
+
+/*
+            Persistence1D p;
+            for(map<int, map<int, float>>::iterator it = peaks2.begin(); it!=peaks2.end(); ++it)
+                {
+                    start = it->second.begin()->second;
+                    end = it->second.end()->second;
+                    vector<float> peaks3 (end-start);
+        
+                    for(map<int, float>::iterator it2 = it->second.begin(); it2!=it->second.end(); ++it2)
+                        {
+                            peaks3[(it2->first-start)] =  it2->second;
+                        } 
+                    p.RunPersistence(peaks3);
+                    vector <TPairedExtrema> Extrema;
+                    p.GetPairedExtrema(Extrema, 0);
+                    DLOG(INFO) << "doppler: " << it->first;
+
+                    for(vector< TPairedExtrema >::iterator it3 = Extrema.begin(); it3 != Extrema.end(); it3++)
+                        {
+                 //           int test2 = code_phases.at((*it3).MaxIndex);
+                            DLOG(INFO)  << " maximum code phase " << start+(*it3).MaxIndex; 
+                            //std::cout  << " maximum code phase " << std::to_string(test2) << std::endl; 
+                        }
+                }
+
+*/
 
 
             if(acquire_auxiliary_peaks && peaks.size() > 0)
@@ -426,12 +465,11 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         for (it=previous_peaks.begin(); it!=previous_peaks.end(); ++it)
                         {
                             int next_code_phase = *it; 
-                            if( std::abs(next_code_phase - code_phase) < 2)//  && next_doppler == c_doppler)
+                            if( std::abs(next_code_phase - code_phase) < 4)//  && next_doppler == c_doppler)
                                 {
                                     insert_peak = false;
                                 } 
                         }
-                        previous_peaks.insert(code_phase);
 
                         if(insert_peak)
                             {
@@ -440,6 +478,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                 high_peaks[i]["doppler"] = c_doppler;
                                 high_peaks[i]["magnitude"] = magnitude;
                                 high_peaks[i]["sample counter"] = values.find("sample_counter")->second;
+                                previous_peaks.insert(code_phase);
                             }
 
                         if(i > d_peak)
@@ -470,11 +509,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                             d_gnss_synchro->Acq_doppler_hz = high_peaks.at(d_peak).at("doppler");
                             d_gnss_synchro->Acq_samplestamp_samples = high_peaks.at(d_peak).at("sample counter"); 
                         }
-            }
-
-
-
-
+                }
 
 
             /*
@@ -567,11 +602,12 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                 }
            */ 
             
-            DLOG(INFO) << "found peak: " << found_peak;
+            DLOG(INFO) << "found peak: " << found_peak << " aux " << acquire_auxiliary_peaks ;
             if (!d_bit_transition_flag)
                 {
                     if(acquire_auxiliary_peaks && !found_peak)
                         {
+                            DLOG(INFO) << "acq + no fpeak found";
                             d_state = 3; // Negative acquisition
                         }
                     else if (d_test_statistics > d_threshold)

@@ -104,8 +104,9 @@ public:
     void Event_gps_word_preamble(); //!< FSM event: word preamble detected
     
     //Spoofing detection
-    Spoofing_Detector *spoofing_detector;
-    bool detect_spoofing = true;
+    Spoofing_Detector spoofing_detector;
+    bool detect_spoofing = false;
+    bool new_subframe = false;
     
 };
 

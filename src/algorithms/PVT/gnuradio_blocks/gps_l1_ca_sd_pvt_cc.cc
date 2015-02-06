@@ -72,9 +72,9 @@ struct GPS_time_t{
 extern concurrent_map<GPS_time_t> global_gps_time;
 
 gps_l1_ca_sd_pvt_cc_sptr
-gps_l1_ca_make_sd_pvt_cc(unsigned int nchannels, boost::shared_ptr<gr::msg_queue> queue, bool dump, std::string dump_filename, int averaging_depth, bool flag_averaging, int output_rate_ms, int display_rate_ms, bool flag_nmea_tty_port, std::string nmea_dump_filename, std::string nmea_dump_devname, double max_discrepancy, bool detect_spoofing, bool use_first_arriving_signal)
+gps_l1_ca_make_sd_pvt_cc(unsigned int nchannels, boost::shared_ptr<gr::msg_queue> queue, bool dump, std::string dump_filename, int averaging_depth, bool flag_averaging, int output_rate_ms, int display_rate_ms, bool flag_nmea_tty_port, std::string nmea_dump_filename, std::string nmea_dump_devname, Spoofing_Detector spoofing_detector)
 {
-    return gps_l1_ca_sd_pvt_cc_sptr(new gps_l1_ca_sd_pvt_cc(nchannels, queue, dump, dump_filename, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, max_discrepancy, detect_spoofing, use_first_arriving_signal));
+    return gps_l1_ca_sd_pvt_cc_sptr(new gps_l1_ca_sd_pvt_cc(nchannels, queue, dump, dump_filename, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, spoofing_detector));
 }
 
 
@@ -88,9 +88,7 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
         bool flag_nmea_tty_port,
         std::string nmea_dump_filename,
         std::string nmea_dump_devname,
-        double max_discrepancy,
-        bool detect_spoofing, 
-        bool use_first_arriving_signal) :
+        Spoofing_Detector spoofing_detector) :
              gr::block("gps_l1_ca_sd_pvt_cc", gr::io_signature::make(nchannels, nchannels,  sizeof(Gnss_Synchro)),
              gr::io_signature::make(1, 1, sizeof(gr_complex)) )
 {
@@ -112,7 +110,6 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
     //initialize nmea_printer
     d_nmea_printer = std::make_shared<Nmea_Printer>(nmea_dump_filename, flag_nmea_tty_port, nmea_dump_devname);
 
-    spoofing_detector = new Spoofing_Detector();
 
     d_dump_filename.append("_raw.dat");
     dump_ls_pvt_filename.append("_ls_pvt.dat");
@@ -125,9 +122,11 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
     d_sample_counter = 0;
     d_last_sample_nav_output = 0;
     d_rx_time = 0.0;
-    d_max_discrepancy = max_discrepancy;
-    d_detect_spoofing = detect_spoofing;
-    d_use_first_arriving_signal = use_first_arriving_signal; 
+
+    //spoofing
+    d_spoofing_detector = spoofing_detector;
+    d_max_discrepancy = d_spoofing_detector.d_max_discrepancy; 
+    d_detect_spoofing = d_spoofing_detector.d_detect_spoofing;
 
     b_rinex_header_writen = false;
     b_rinex_sbs_header_writen = false;
@@ -164,8 +163,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
     d_sample_counter++;
 
     std::map<int, Gnss_Synchro> gnss_pseudoranges_map;
-    //std::map<int, bool> channel_status = global_channel_status.get_map_copy(); 
-    //global_channel_status.write(0, 0);
     std::map<int, int> channel_status = global_channel_status.get_map_copy(); 
 
     Gnss_Synchro **in = (Gnss_Synchro **)  &input_items[0]; //Get the input pointer
@@ -177,50 +174,47 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
         {
             if (in[i][0].Flag_valid_pseudorange)
                 {
-                        
                     if(channel_status.count(i) && channel_status.at(i) != 2)
                         {
-                       //     DLOG(INFO) << "add " << i << " " <<channel_status.at(i);
-                            
+
                             channels.push_back(i);
+
                             //use the channel that is tracking the  highest peak
-                            //if 2 channels are tracking the same peak, the one with
-                            //the lowest channel number will be choosen
                             if(channel_added.count(in[i][0].PRN))
                                 {
-                                    if(channel_added.at(in[i][0].PRN) > i)
+                                    if(channel_added.at(in[i][0].PRN) != 1 && in[i][0].peak < channel_added.at(in[i][0].PRN))
                                         {
                                             channels_used.remove(channel_added.at(in[i][0].PRN));
                                             channels_used.push_back(i);
-                                            channel_added[in[i][0].PRN] = i; 
+                                            channel_added[in[i][0].PRN] = in[i][0].peak; 
                                         }
                                 }
                             else
                                 {
-                                //    DLOG(INFO) << "add to used "<< in[i][0].PRN << " " << i;
                                     channels_used.push_back(i);
-                                    channel_added[in[i][0].PRN] = i; 
+                                    channel_added[in[i][0].PRN] = in[i][0].peak; 
                                 }
                         }
                 }
         }
 
+    bool check_spoofing = d_spoofing_detector.check_spoofing(channels, in);
+    DLOG(INFO) << "check spoofing "<< check_spoofing << " " << channels.size();
     
-    if(d_detect_spoofing)
+    if(d_detect_spoofing && check_spoofing)
         {    
-            std::list<unsigned int> first_arriving_channels = spoofing_detector->RX_TX_ephemeris_check(channels, 
-                                                            in, global_gps_ephemeris_map.get_map_copy(), d_max_discrepancy);
-            if(d_use_first_arriving_signal)
-                channels_used = first_arriving_channels;
+            DLOG(INFO) << "check spoofing " << channels.size();
+            for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
+                {
+                    DLOG(INFO) << "!check " << *it;
+                }
+            d_spoofing_detector.RX_TX_ephemeris_check(channels, in, global_gps_ephemeris_map.get_map_copy());
         }
 
-    std::map<int, int> satId_to_channel;  //unique ids of auxiliary acqusitions to  channel
-    //for (unsigned int i = 0; i < d_nchannels; i++)
     unsigned int i = 0;
     for(std::list<unsigned int>::iterator it = channels_used.begin(); it != channels_used.end(); ++it)
         {
             i = *it; 
-            //DLOG(INFO) << "use " << i;
             std::string tmp = std::to_string(in[i][0].PRN);
             tmp += "0"+std::to_string(in[i][0].peak)+"0"+std::to_string(i);
             int unique_id = std::stoi(tmp);
@@ -233,16 +227,18 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 {
                     gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(in[i][0].PRN, in[i][0])); // store valid pseudoranges in a map
                 }
-            //Is this a bug, this is the transmitt time not the RX time??????
             d_rx_time = in[i][0].d_TOW_at_current_symbol; // all the channels have the same RX timestamp (common RX time pseudoranges)
-            //DLOG(INFO) << "PVT sat " << tmp << " CN0 " << in[i][0].CN0_dB_hz;
-            //DLOG(INFO) << "sat " << tmp << " rx time " << in[i][0].rx_time;
-
-            satId_to_channel[unique_id] = i;
         }
+    
+    bool spoofed = false;
+    Spoofing_Message spm;
+    if(global_spoofing_queue.try_pop(spm))
+        {
+            spoofed = true;
+        } 
 
     //cancel tracking on auxiliary channels if no spoofing has been detected.
-    if(d_detect_spoofing && !spoofing_detector->is_spoofed())
+    if(d_detect_spoofing && !spoofed) 
         {
             ControlMessageFactory* cmf = new ControlMessageFactory();
             //unsigned int i = 0;
@@ -260,7 +256,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     std::string tmp = std::to_string(in[i][0].PRN);
                                     tmp += "0"+std::to_string(in[i][0].peak)+"0"+std::to_string(i);
                                     int unique_id = std::stoi(tmp);
-                                    if(!spoofing_detector->checked(in[i][0].PRN, unique_id))
+                                    if(!d_spoofing_detector.checked(in[i][0].PRN, unique_id))
                                         {
                                             //        std::cout << "channel was not checked yet" << std::endl;
                   //                          DLOG(INFO) << "channel was not checked yet";
@@ -280,41 +276,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
             delete cmf;
         }
-/*
-    //let the flowgraph know which channel's signal is used in the PVT calculation
-    if(d_use_first_arriving_signal)
-        {
-            DLOG(INFO) << "use first arriving";
-            ControlMessageFactory* cmf = new ControlMessageFactory();
-            for(std::list<unsigned int>::iterator it = channels_used.begin(); it != channels_used.end(); ++it)
-                {
-                   // if(
-                    unsigned int channel = *it;
-
-                    if (d_queue != gr::msg_queue::sptr())
-                    {
-                        d_queue->handle(cmf->GetQueueMessage(channel, 5));
-                    }
-                }
-            delete cmf;
-        }
-*/
-
-/*
-    //Let gnss flowgraph know which satellites are returning valid pseudoranges
-    ControlMessageFactory* cmf = new ControlMessageFactory();
-    for(set<int>::iterator it = satellites.begin(); it != satellites.end(); ++it)
-        {
-            if (d_queue != gr::msg_queue::sptr())
-                {
-                    d_queue->handle(cmf->GetQueueMessage(*it, 5));
-                }
-        }
-    delete cmf;
-*/
-
     
-    //if(1){
     // ############ 1. READ EPHEMERIS/UTC_MODE/IONO FROM GLOBAL MAPS ####
 
     d_ls_pvt->gps_ephemeris_map = global_gps_ephemeris_map.get_map_copy();
@@ -424,6 +386,23 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                 }
                         }
                 }
+
+            //Check if the value of the position is logical and if the satellites have movement is probable.
+            if(d_detect_spoofing && check_spoofing)
+                {
+                    if(d_ls_pvt->b_valid_position == true)
+                        d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
+
+                    std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter;
+                    gps_ephemeris_iter = d_ls_pvt->gps_ephemeris_map.begin();
+                    if (gps_ephemeris_iter != d_ls_pvt->gps_ephemeris_map.end())
+                    {
+                        d_spoofing_detector.check_satpos(gps_ephemeris_iter->second.i_satellite_PRN, gps_ephemeris_iter->second.timestamp , 
+                                                        gps_ephemeris_iter->second.d_satpos_X, gps_ephemeris_iter->second.d_satpos_Y, 
+                                                        gps_ephemeris_iter->second.d_satpos_Z);
+                    }
+                }
+
 
             // DEBUG MESSAGE: Display position in console output
             if (((d_sample_counter % d_display_rate_ms) == 0) and d_ls_pvt->b_valid_position == true)
