@@ -104,12 +104,7 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
         {
             // 1- find the ephemeris for the current SV observation. The SV PRN ID is the map key
             gps_ephemeris_iter = gps_ephemeris_map.find(gnss_pseudoranges_iter->first);
-            /*
-            for(std::map<int,Gps_Ephemeris>::iterator it = gps_ephemeris_map.begin(); it != gps_ephemeris_map.end(); ++it)
-                {
-                    DLOG(INFO) << it->first;
-                }
-*/
+            
             if (gps_ephemeris_iter != gps_ephemeris_map.end())
                 {
                     /*!

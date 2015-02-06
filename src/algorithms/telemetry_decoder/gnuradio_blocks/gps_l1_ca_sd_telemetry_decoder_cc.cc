@@ -57,10 +57,10 @@ using google::LogMessage;
  */
 gps_l1_ca_sd_telemetry_decoder_cc_sptr
 gps_l1_ca_make_sd_telemetry_decoder_cc(Gnss_Satellite satellite, long if_freq, long fs_in, unsigned
-        int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, bool detect_spoofing)
+        int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, Spoofing_Detector spoofing_detector)
 {
     return gps_l1_ca_sd_telemetry_decoder_cc_sptr(new gps_l1_ca_sd_telemetry_decoder_cc(satellite, if_freq,
-            fs_in, vector_length, queue, dump, detect_spoofing));
+            fs_in, vector_length, queue, dump, spoofing_detector));
 }
 
 
@@ -82,7 +82,7 @@ gps_l1_ca_sd_telemetry_decoder_cc::gps_l1_ca_sd_telemetry_decoder_cc(
         int vector_length,
         boost::shared_ptr<gr::msg_queue> queue,
         bool dump,
-        bool detect_spoofing) :
+        Spoofing_Detector spoofing_detector) :
         gr::block("gps_navigation_cc", gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
         gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
 {
@@ -93,7 +93,6 @@ gps_l1_ca_sd_telemetry_decoder_cc::gps_l1_ca_sd_telemetry_decoder_cc(
     d_samples_per_bit = ( GPS_L1_CA_CODE_RATE_HZ / GPS_L1_CA_CODE_LENGTH_CHIPS ) / GPS_CA_TELEMETRY_RATE_BITS_SECOND;
     d_fs_in = fs_in;
 
-    d_detect_spoofing = detect_spoofing;
     //d_preamble_duration_seconds = (1.0 / GPS_CA_TELEMETRY_RATE_BITS_SECOND) * GPS_CA_PREAMBLE_LENGTH_BITS;
     //std::cout<<"d_preamble_duration_seconds="<<d_preamble_duration_seconds<<"\r\n";
     // set the preamble
@@ -120,6 +119,7 @@ gps_l1_ca_sd_telemetry_decoder_cc::gps_l1_ca_sd_telemetry_decoder_cc(
                     n++;
                 }
         }
+
     d_sample_counter = 0;
     //d_preamble_code_phase_seconds = 0;
     d_stat = 0;
@@ -138,8 +138,8 @@ gps_l1_ca_sd_telemetry_decoder_cc::gps_l1_ca_sd_telemetry_decoder_cc(
     d_average_count=0;
 
     //set_history(d_samples_per_bit*8); // At least a history of 8 bits are needed to correlate with the preamble
-    d_detect_spoofing = detect_spoofing;
-    d_GPS_FSM.detect_spoofing = detect_spoofing;
+     d_GPS_FSM.detect_spoofing = spoofing_detector.d_detect_spoofing; 
+     d_GPS_FSM.spoofing_detector = spoofing_detector; 
 }
 
 
@@ -346,6 +346,12 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
     current_synchro_data.Prn_timestamp_at_preamble_ms = Prn_timestamp_at_preamble_ms;
     current_synchro_data.rx_of_subframe = d_GPS_FSM.d_nav.d_subframe_timestamp_ms;
     current_synchro_data.subframe = d_GPS_FSM.d_nav.d_subframe;
+    if(d_GPS_FSM.new_subframe && current_synchro_data.Flag_valid_word)
+    {
+        DLOG(INFO) << "new subframe " << current_synchro_data.PRN;
+        current_synchro_data.new_subframe = true;
+        d_GPS_FSM.new_subframe = false;
+    }
 
     if(d_dump == true)
         {

@@ -49,7 +49,7 @@ typedef boost::shared_ptr<gps_l1_ca_sd_telemetry_decoder_cc> gps_l1_ca_sd_teleme
 
 gps_l1_ca_sd_telemetry_decoder_cc_sptr
 gps_l1_ca_make_sd_telemetry_decoder_cc(Gnss_Satellite satellite, long if_freq, long fs_in, unsigned
-    int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, bool detect_spoofing);
+    int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, Spoofing_Detector spoofing_detector);
 
 /*!
  * \brief This class implements a block that decodes the NAV data defined in IS-GPS-200E
@@ -93,10 +93,10 @@ public:
 private:
     friend gps_l1_ca_sd_telemetry_decoder_cc_sptr
     gps_l1_ca_make_sd_telemetry_decoder_cc(Gnss_Satellite satellite, long if_freq, long fs_in,unsigned
-            int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, bool detect_spoofing);
+            int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, Spoofing_Detector spoofing_detector);
 
     gps_l1_ca_sd_telemetry_decoder_cc(Gnss_Satellite satellite, long if_freq, long fs_in, unsigned
-            int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, bool detect_spoofing);
+            int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, Spoofing_Detector spoofing_detector);
 
     bool gps_word_parityCheck(unsigned int gpsword);
 
@@ -152,7 +152,6 @@ private:
     std::ofstream d_dump_file;
     ofstream file_corr_value;
 
-    bool d_detect_spoofing;
 };
 
 #endif
