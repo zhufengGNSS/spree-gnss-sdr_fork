@@ -385,23 +385,33 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                         }
                                 }
                         }
-                }
 
-            //Check if the value of the position is logical and if the satellites have movement is probable.
-            if(d_detect_spoofing && check_spoofing)
-                {
-                    if(d_ls_pvt->b_valid_position == true)
-                        d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
-
-                    std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter;
-                    gps_ephemeris_iter = d_ls_pvt->gps_ephemeris_map.begin();
-                    if (gps_ephemeris_iter != d_ls_pvt->gps_ephemeris_map.end())
+                //Check if the value of the position is logical and if the satellites have movement is probable.
+                if(d_detect_spoofing && check_spoofing)
                     {
-                        d_spoofing_detector.check_satpos(gps_ephemeris_iter->second.i_satellite_PRN, gps_ephemeris_iter->second.timestamp , 
-                                                        gps_ephemeris_iter->second.d_satpos_X, gps_ephemeris_iter->second.d_satpos_Y, 
-                                                        gps_ephemeris_iter->second.d_satpos_Z);
+                        if(d_ls_pvt->b_valid_position == true)
+                            d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
+
+                            std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter2;
+                            std::map<int,Gnss_Synchro>::iterator gnss_pseudoranges_iter;
+                            for(gnss_pseudoranges_iter = gnss_pseudoranges_map.begin();
+                                    gnss_pseudoranges_iter != gnss_pseudoranges_map.end();
+                                    gnss_pseudoranges_iter++)
+                            {
+                            // 1- find the ephemeris for the current SV observation. The SV PRN ID is the map key
+                            gps_ephemeris_iter2 = d_ls_pvt->gps_ephemeris_map.find(gnss_pseudoranges_iter->first);
+
+
+                            if (gps_ephemeris_iter2 != d_ls_pvt->gps_ephemeris_map.end())
+                            {
+                                d_spoofing_detector.check_satpos(gps_ephemeris_iter2->second.i_satellite_PRN, gps_ephemeris_iter2->second.timestamp , 
+                                                                gps_ephemeris_iter2->second.d_satpos_X, gps_ephemeris_iter2->second.d_satpos_Y, 
+                                                                gps_ephemeris_iter2->second.d_satpos_Z);
+                            }
+                        }
                     }
                 }
+
 
 
             // DEBUG MESSAGE: Display position in console output

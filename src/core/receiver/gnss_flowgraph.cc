@@ -493,10 +493,6 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
     case 1:
         LOG(INFO) << "Channel " << who << " ACQ SUCCESS satellite " << channels_.at(who)->get_signal().get_satellite();
         acq_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
-        //global_channel_status.add(who, 0);
-
-
-    
 
         channels_state_[who] = 2;
         acq_channels_count_--;
@@ -823,6 +819,9 @@ void GNSSFlowgraph::set_signals_list()
             /*
              * Loop to create GPS L1 C/A signals
              */
+            DLOG(INFO) << "MULTI "<< (double)channels_count_/available_gps_prn.size();
+            int multiple = std::ceil((double)channels_count_/available_gps_prn.size()); 
+
             for (available_gnss_prn_iter = available_gps_prn.begin();
                     available_gnss_prn_iter != available_gps_prn.end();
                     available_gnss_prn_iter++)
@@ -830,17 +829,31 @@ void GNSSFlowgraph::set_signals_list()
                     available_GNSS_signals_.push_back(Gnss_Signal(Gnss_Satellite(std::string("GPS"),
                             *available_gnss_prn_iter), std::string("1C")));
 
-                nr_acquired_peaks[*available_gnss_prn_iter] = 0; 
-                std::deque<int> tmp;
-                //if we are using the strongest signal, the channel assigned to 0
-                // will also track the highest peak.
-                for(int i = 1; i != nr_peaks; ++i)
-                    {
-                        tmp.push_back(i);
-                    }
-                //if(!use_first_arriving_signal)
-                tmp.push_back(0);
-                acquired_peaks[*available_gnss_prn_iter] = tmp;  
+                    nr_acquired_peaks[*available_gnss_prn_iter] = 0; 
+                    std::deque<int> tmp;
+                    //if we are using the strongest signal, the channel assigned to 0
+                    // will also track the highest peak.
+                    for(int i = 1; i != nr_peaks; ++i)
+                        {
+                            tmp.push_back(i);
+                        }
+                    //if(!use_first_arriving_signal)
+                    tmp.push_back(0);
+                    acquired_peaks[*available_gnss_prn_iter] = tmp;  
+                }
+            
+            DLOG(INFO) << "multiple " << multiple; 
+            for(int i = 0; i < multiple; ++i)
+                { 
+                    DLOG(INFO) << "add other round of signals"; 
+                    for (available_gnss_prn_iter = available_gps_prn.begin();
+                            available_gnss_prn_iter != available_gps_prn.end();
+                            available_gnss_prn_iter++)
+                        {
+                            available_GNSS_signals_.push_back(Gnss_Signal(Gnss_Satellite(std::string("GPS"),
+                                    *available_gnss_prn_iter), std::string("1C")));
+                        }
+
                 }
         }
 
