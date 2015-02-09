@@ -444,6 +444,22 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                 }
 
 */
+            if(!acquire_auxiliary_peaks && peaks.size() > 0)
+                {
+                    std::map<double,map<string, double>>::reverse_iterator rit;
+    
+                    unsigned int i = 0;
+                    for (rit=peaks.rbegin(); rit!=peaks.rend(); ++rit)
+                    {
+                        bool insert_peak = true;
+                        map<string, double> values = rit->second;
+                        double code_phase = values.find("code phase")->second;
+                        double c_doppler = values.find("doppler")->second;
+                        double magnitude = rit->first;
+
+                        DLOG(INFO) << "peaks: " << code_phase << "   " << c_doppler << " " << rit->first/ d_input_power;
+                    }
+                }
 
 
             if(acquire_auxiliary_peaks && peaks.size() > 0)

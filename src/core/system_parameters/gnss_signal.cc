@@ -47,6 +47,14 @@ Gnss_Signal::Gnss_Signal(const Gnss_Satellite& satellite_, const std::string& si
     this->signal = signal_;
 }
 
+Gnss_Signal::Gnss_Signal(Gnss_Satellite satellite_,std::string signal_, unsigned int peak_)
+{
+    this->satellite = satellite_;
+    this->signal = signal_;
+    this->peak = peak_;
+}
+
+
 
 Gnss_Signal::~Gnss_Signal()
 {}
@@ -62,7 +70,12 @@ Gnss_Satellite Gnss_Signal::get_satellite() const
 {
     return this->satellite;
 }
-
+/*
+Gnss_Satellite Gnss_Signal::get_peak() const
+{
+    return this->peak;
+}
+*/
 
 std::ostream& operator<<(std::ostream &out, const Gnss_Signal &sig) // output
 {

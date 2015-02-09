@@ -130,7 +130,7 @@ void Spoofing_Detector::check_new_TOW(double current_time_ms, int new_week, doub
                         stringstream s;
                         s << " received new ephemeris TOW that is later than last received one and incorrect";
                         s << " difference: " << new_time-old_time;
-                        s << " duration: " << duration;
+                        s << " duration: " << duration << std::endl;
                         s << " gps times : " << new_time << " " << old_time; 
                         s << " times : " << round(current_time_ms) << " " << round(old_GPS_time.at(2)); 
                         spoofing_detected(s.str(), 3);
@@ -140,7 +140,7 @@ void Spoofing_Detector::check_new_TOW(double current_time_ms, int new_week, doub
                         stringstream s;
                         s << " received new ephemeris TOW that is earlier than last received one and incorrect";
                         s << " difference: " << new_time-old_time;
-                        s << " duration: " << duration;
+                        s << " duration: " << duration << std::endl;
                         s << " gps times : " << new_time << " " << old_time;
                         s << " times : " << round(current_time_ms) << " " << round(old_GPS_time.at(2)); 
                         spoofing_detected(s.str(), 3);
@@ -201,7 +201,7 @@ void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, do
                 {
                     stringstream s;
                     s << "New satellite position for sat: " << sat << " is further away from last reported position." << std::endl;
-                    s << "  Distance: " << distance << " time difference: " << time_diff << std::endl;
+                    s << "  Distance: " << distance/1e3 << " [km] " << " time difference: " << time_diff << std::endl;
                     s << "  New pos: (" << p.x << ", " << p.y << ", " << p.z << ") old pos: (" << x << ", " << y << ", " << z << ")";
                     spoofing_detected(s.str(), 5);
 
