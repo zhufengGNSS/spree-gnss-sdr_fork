@@ -46,7 +46,6 @@ class Gnss_Signal
 private:
     Gnss_Satellite satellite;
     std::string signal;
-    unsigned int peak;
 public:
     Gnss_Signal();
     Gnss_Signal(const std::string& signal_);

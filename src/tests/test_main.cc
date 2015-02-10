@@ -134,12 +134,13 @@ concurrent_map<int> global_channel_status;  //status 0: newly acquired, status 1
                                             //status 2: reset by PVT because no spoofing detected 
 struct Subframe{
     std::string subframe;
-    int id;
+    unsigned int id;
+    unsigned int PRN;
     double timestamp;    
 };
 
-concurrent_map<Subframe> global_channel_to_subframe;
-concurrent_map<bool> global_channel_spoofed_checked;
+concurrent_map<Subframe> global_subframe_map;
+concurrent_map<unsigned int> global_subframe_check;
 concurrent_queue<Spoofing_Message> global_spoofing_queue;
 
 

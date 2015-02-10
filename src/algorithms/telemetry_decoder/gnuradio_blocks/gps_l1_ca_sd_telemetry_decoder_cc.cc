@@ -47,6 +47,14 @@
 #include <fstream>
 using namespace std;
 
+struct Subframe{
+    std::string subframe;
+    unsigned int id;
+    unsigned int PRN;
+    double timestamp;
+};
+extern concurrent_map<Subframe> global_subframe_map;
+
 #ifndef _rotl
 #define _rotl(X,N)  ((X << N) ^ (X >> (32-N)))  // Used in the parity check algorithm
 #endif
@@ -344,14 +352,12 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
     current_synchro_data.Flag_preamble = d_flag_preamble;
     current_synchro_data.Prn_timestamp_ms = in[0][0].Tracking_timestamp_secs * 1000.0;
     current_synchro_data.Prn_timestamp_at_preamble_ms = Prn_timestamp_at_preamble_ms;
-    current_synchro_data.rx_of_subframe = d_GPS_FSM.d_nav.d_subframe_timestamp_ms;
-    current_synchro_data.subframe = d_GPS_FSM.d_nav.d_subframe;
-    if(d_GPS_FSM.new_subframe && current_synchro_data.Flag_valid_word)
-    {
-        DLOG(INFO) << "new subframe " << current_synchro_data.PRN;
-        current_synchro_data.new_subframe = true;
-        d_GPS_FSM.new_subframe = false;
-    }
+
+    if(!(d_flag_frame_sync == true and d_flag_parity == true and flag_TOW_set==true) && d_nav.unique_id != 0)
+        {
+            DLOG(INFO) << "remove from subframe map " << d_nav.unique_id;
+            global_subframe_map.remove((int)d_nav.unique_id);
+        }
 
     if(d_dump == true)
         {

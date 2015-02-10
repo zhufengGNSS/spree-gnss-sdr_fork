@@ -40,16 +40,18 @@
 #include "concurrent_map.h"
 #include "concurrent_queue.h"
 #include <math.h> 
+#include <iomanip>
 
 extern concurrent_queue<Spoofing_Message> global_spoofing_queue;
 extern concurrent_map<double> global_last_gps_time;
 using namespace std; 
 struct Subframe{
     std::string subframe;
-    int id;
+    unsigned int id;
+    unsigned int PRN;
     double timestamp;
 };
-extern concurrent_map<Subframe> global_channel_to_subframe;
+extern concurrent_map<Subframe> global_subframe_map;
 
 struct GPS_time_t{
     int week;
@@ -59,6 +61,7 @@ struct GPS_time_t{
 };
 
 extern concurrent_map<GPS_time_t> global_gps_time;
+extern concurrent_map<unsigned int> global_subframe_check;
 
 using google::LogMessage;
 
@@ -162,30 +165,6 @@ void Spoofing_Detector::check_middle_earth(double sqrtA)
     }
 }  
 
-void Spoofing_Detector::check_sat_RX(std::set<int> satellites, std::map<int, std::map<string,rx_time_t>> rx_times)
-{
-    // If the received time for any of the signals of tsatellite is larger
-    // than 1 second TODO: make configurable 
-    double smallest = 0;
-    double largest = 0;
-    for(std::set<int>::iterator it = satellites.begin(); it != satellites.end(); ++it)
-        {
-            if(rx_times.count(*it))
-                {
-                    
-                    if(rx_times.at(*it).at("smallest").time > largest)
-                        largest = rx_times.at(*it).at("smallest").time;
-        
-                    if(rx_times.at(*it).at("smallest").time < smallest)
-                        largest = rx_times.at(*it).at("smallest").time;
-
-                }
-        }
-        if(std::abs(largest-smallest) > 1)
-        {
-            DLOG(INFO) << "SPOOFING rx times of satellites are more than a second apart " << smallest << " "<< largest;
-        }
-}
 
 void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, double y, double z) 
 {
@@ -197,7 +176,7 @@ void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, do
             double distance = sqrt(pow(p.x-x, 2)+pow(p.y-y, 2)+pow(p.z-z, 2));
             double time_diff = std::abs(time-p.time)/1000.0;
             //what to set as the max difference in position
-            if(distance != 0  && abs(distance - time_diff*sat_speed) > 500)
+            if(distance != 0  && ((distance - time_diff*sat_speed) > 500 || (distance - time_diff*sat_speed) < 10e3))
                 {
                     stringstream s;
                     s << "New satellite position for sat: " << sat << " is further away from last reported position." << std::endl;
@@ -213,68 +192,6 @@ void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, do
     p.y = z;
     p.time = time;
     Satpos_map[sat] = p;
-}
-
-bool Spoofing_Detector::check_RX(std::set<int> satellites, std::map<int, std::map<string, rx_time_t>> rx_times)
-{
-    // If the received time for any of the signals of the same satellite is larger
-    // than the maximum allowed discrepancy assume one is a spoofed signal
-    double largest, smallest;
-    int subframe1, subframe2, diff;
-    bool spoofed_rx = false;
-    bool checked = false;
-    for(std::set<int>::iterator it = satellites.begin(); it != satellites.end(); ++it)
-        {
-            checked = true;
-            spoofed_rx = false;
-            if(rx_times.count(*it))
-                {
-                    checked_rx[*it] = true;
-                    largest =  rx_times.at(*it).at("largest").time;
-                    smallest =  rx_times.at(*it).at("smallest").time;
-                    //DLOG(INFO) << "check rx for "<< *it << "times "<< largest << " " << smallest ;
-                    if(std::abs(largest-smallest) > d_max_discrepancy)
-                        {
-                            subframe1 = rx_times.at(*it).at("smallest").subframe;
-                            subframe2 = rx_times.at(*it).at("largest").subframe;
-                            //DLOG(INFO) << "subframes " << subframe1 << " " << subframe2; 
-                            if(subframe2 != subframe1)
-                                {
-                                    //DLOG(INFO) << "subframes " << subframe1 << " " << subframe2; 
-                                    diff = subframe2-subframe1;
-                                    //DLOG(INFO) << "diff " << diff;
-                                    if(diff < 0 && diff != -4)
-                                        {
-                                            spoofed_rx = true;
-                                        }
-                                    else if(diff > 1)
-                                        {
-                                            spoofed_rx = true;
-                                        }
-                                    else if(std::abs(largest-smallest) > 6000) 
-                                        {
-                                            spoofed_rx = true;
-                                        }
-                                    else
-                                        {
-                                            checked_rx[*it] = false;
-                                            checked = false;
-                                        }
-                                }
-                            else
-                                spoofed_rx = true;
-                        }
-                }
-
-                if(spoofed_rx)
-                    {
-                        stringstream s;
-                        s << " for sat: " << *it;
-                        s << " RX times not consistent " << smallest << " "<< largest << " "<< diff;
-                        spoofing_detected(s.str(), 1);
-                    }
-        }
-    return checked;
 }
 
 void Spoofing_Detector::check_GPS_time()
@@ -324,283 +241,175 @@ void Spoofing_Detector::check_GPS_time()
     }
 }
 
-bool Spoofing_Detector::check_subframes(std::map<int, std::list<int>> ids_of_PRN)
+void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
 {
-    int id1, id2;
-    Subframe subframeA, subframeB;
-    std::map<int, Subframe> subframes = global_channel_to_subframe.get_map_copy();
-    bool checked = false;
-    for (std::map<int,list<int>>::iterator it=ids_of_PRN.begin(); it!=ids_of_PRN.end(); ++it)
+    std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
+    
+    Subframe smallest = subframes.begin()->second;
+    Subframe largest = subframes.begin()->second;
+    Subframe subframe;
+    
+    for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
     {
-        std::list<int> ids = it->second;  
-        //DLOG(INFO) << "check subframes for sat " << it->first << " " <<ids.size(); 
-        while(!ids.empty())
-            {
-                checked  = true;
-                id1 = ids.front();
-                ids.pop_front();
-                if(subframes.count(id1))
-                    {
-                        subframeA = subframes.at(id1); 
-                        break;
-                    }
-            }
+        subframe = it->second;
         
-        while(!ids.empty())
-            {
-                id2 = ids.front();
-                //DLOG(INFO) << "Check subframes for " << id1 << " " << id2;
-                ids.pop_front();
-                if(!subframes.count(id2))
-                    continue;
-                
-                subframeB = subframes.at(id2); 
-                DLOG(INFO) << "check subframe "<< subframeA.id << std::endl
-                       << subframeA.subframe << std::endl
-                       << subframeB.subframe;
-                //one of the ephemeris data has not been updated.
-                if(subframeA.id != subframeB.id || subframeA.timestamp == 0 ||  subframeB.timestamp == 0)
-                    {
-                        DLOG(INFO) << "Subframes are not updated"
-                                   << " " << subframeA.id
-                                   << " " << subframeB.id
-                                   << " " << subframeA.timestamp
-                                   << " " << subframeB.timestamp;
-                        checked = false;
-                        continue;
-                    }
-                
-                if(subframeA.subframe != subframeB.subframe && subframeA.subframe != "" && subframeB.subframe != "")
-                    {
-                        stringstream s;
-                        s << "Ephemeris data not consistent " << id1 << " " << id2;
-                        s << std::endl << subframeA.timestamp << " " << subframeB.timestamp; 
-                        s << std::endl << subframeA.id<< " " << subframeB.id; 
-                        s << std::endl << subframeA.subframe << std::endl << subframeB.subframe;
+        if(subframe.PRN != PRN)
+            continue;
+    
+        if(smallest.timestamp > subframe.timestamp) 
+        {
+            smallest = subframe;
+        }
 
-                        spoofing_detected(s.str(), 2);
-
-                    }
-                else
-                    {
-                        DLOG(INFO) << " subframes: " << endl
-                        << subframeA.timestamp << " " << subframeB.timestamp << std::endl
-                        << subframeA.id << " " << subframeB.id << std::endl
-                        << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
-
-
-                    }
-                
-                //log if these two signals have been checked against each other
-                std::string id;
-                if(id1 > id2)
-                    {
-                        id = to_string(id1)+"-"+to_string(id2); 
-                    }
-                else
-                    {
-                        id = to_string(id2)+"-"+to_string(id1); 
-                    }
-                checked_subframe[id][subframeA.id] = true;
-            }
+        if(largest.timestamp < subframe.timestamp) 
+        {
+            largest = subframe;
+        }
     }
-    return checked;
-}
+    
+    double largest_t = largest.timestamp;
+    double smallest_t = smallest.timestamp;
+    bool spoofed = false;
+    int diff = 0;
 
-bool Spoofing_Detector::checked(unsigned int PRN, unsigned int channel)
-{
-    if(!used_channel.count(PRN))
+    if(std::abs(largest_t-smallest_t) > d_max_discrepancy)
         {
-            //DLOG(INFO) << "PRN is not in used channel";
-            return false; 
-        }
-
-    unsigned int u_channel = used_channel.at(PRN);
-    unsigned int id1 = channel; 
-    unsigned int id2 = used_channel.at(PRN);
-    //DLOG(INFO) << "checked ? " << channel << " " << u_channel;
-    if(!checked_rx.count(PRN))
-        {
-            //DLOG(INFO) << "The satellite has not been checked yet " << u_channel;
-            return false;
-        }
-    else
-        {
-            //there was no comparison of the RX times for satellite PRN
-            if(!checked_rx.at(PRN))
+            if(largest.id != smallest.id)
                 {
-                    //DLOG(INFO) << "No RX checked has been performed";
-                    return false;
-                }
-
-            //Either the main channel or the auxiliary channel was not checked during the RX check
-            if(checked_channel_rx.count(u_channel) && checked_channel_rx.count(channel)) 
-                {
-                    if(!(checked_channel_rx.at(u_channel) && checked_channel_rx.at(channel))) 
+                    diff = largest.id-smallest.id;
+                    if(diff < 0 && diff != -4)
                         {
-                            //DLOG(INFO) << "No RX checked has been performed on the channels 1";
-                            return false;
+                            spoofed = true;
+                        }
+                    else if(diff > 1)
+                        {
+                            spoofed = true;
+                        }
+                    else if(std::abs(largest_t-smallest_t) > 6000) 
+                        {
+                            spoofed = true;
                         }
                 }
             else
-                {   
-                    //DLOG(INFO) << "No RX checked has been performed on the channels 2";
-                    return false;
-                }
+                {
+                    spoofed = true;
+                } 
         }
-    std::string id;
-    if(id1 > id2)
+
+    if(spoofed)
         {
-            id = to_string(id1)+"-"+to_string(id2); 
+            int c = 299792458; //[m/s] 
+            double distance = std::abs(largest_t-smallest_t)*c/1e3; 
+            stringstream s;
+            s << " for satellite " << PRN;
+            s << setprecision(10) << " RX times not consistent " << smallest_t << " "<< largest_t<< std::endl;
+            s << setprecision(5) << "subframes: " << largest.id << " " << smallest.id << std::endl;
+            s << "time difference: " << std::abs(largest_t-smallest_t)*1e6 << " [ns]" << std::endl;
+            s << "distance: " << distance <<" [m]";
+            spoofing_detected(s.str(), 1);
+        }
+}
+
+void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsigned int subframe_id)
+{
+    DLOG(INFO) << "check subframe " << subframe_id << " for " << uid;
+    Subframe subframeA, subframeB;
+    unsigned int id1, id2;
+    std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
+    if(subframes.count(uid))
+        {
+            subframeA = subframes.at(uid);
+            id1 = uid;
         }
     else
         {
-            id = to_string(id2)+"-"+to_string(id1); 
+            DLOG(INFO) << "check subframe - but subframe for sat " << uid << " subframe: " << subframe_id << " not in subframe map"; 
+            return;
         }
 
-    if(!(checked_subframe.count(id)))
+    for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
+    {
+        subframeB = it->second;
+        id2 = it->first;
+        DLOG(INFO) << "subframeB " << subframeB.id << " " << id2 << " " << subframeB.PRN;
+        DLOG(INFO) <<  (subframeB.PRN != PRN)  << " " << (subframeB.id != subframe_id) << " " << (id2 == id1);
+        if(subframeB.PRN != PRN || subframeB.id != subframe_id || id2 == id1)
+            continue;
+
+        DLOG(INFO) << "check subframe "<< subframe_id << std::endl
+        << subframeA.subframe << std::endl
+        << subframeB.subframe;
+
+        //one of the ephemeris data has not been updated.
+        if(subframeA.timestamp == 0 ||  subframeB.timestamp == 0)
+            {
+                DLOG(INFO) << "Subframes timestamps are zero";
+                continue;
+            }
+            
+        if(subframeA.subframe != subframeB.subframe && subframeA.subframe != "" && subframeB.subframe != "")
+            {
+                stringstream s;
+                s << "Ephemeris data not consistent " << id1 << " " << id2;
+                s << std::endl << "subframe id: " << subframe_id;
+                s << std::endl << "timestamps: " << subframeA.timestamp << " " << subframeB.timestamp; 
+                s << std::endl << "subframes: ";
+                s << std::endl << subframeA.subframe << std::endl << subframeB.subframe;
+
+                spoofing_detected(s.str(), 2);
+
+            }
+        else
+            {
+                DLOG(INFO) << " subframes: " << endl
+                << subframeA.timestamp << " " << subframeB.timestamp << std::endl
+                << subframeA.id << " " << subframeB.id << std::endl
+                << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
+            }
+        
+        //log if these two signals have been checked against each other
+        if(subframe_id != 4 && subframe_id != 5)
+            {
+                std::string sid;
+                if(id1 > id2)
+                    {
+                        sid = to_string(id1)+"-"+to_string(id2); 
+                    }
+                else
+                    {
+                        sid = to_string(id2)+"-"+to_string(id1); 
+                    }
+                unsigned int sum = 0; 
+                unsigned int id = (unsigned int)stoi(sid);
+                global_subframe_check.read(id, sum); 
+                ++sum;
+                global_subframe_check.add(id, sum); 
+            }
+    }
+}
+
+
+bool Spoofing_Detector::checked_subframes(unsigned int id1, unsigned int id2)
+{
+    unsigned int sum = 0;
+    std::string sid;
+    if(id1 > id2)
+    {
+        sid = to_string(id1)+"-"+to_string(id2); 
+    }
+    else
+    {
+        sid = to_string(id2)+"-"+to_string(id1); 
+    }
+    unsigned int id = (unsigned int)stoi(sid);
+    global_subframe_check.read(id, sum); 
+    if(sum < 3)
         {
-            //DLOG(INFO) << "subframes not checked ";
             return false;
         }
     else
         {
-            if(!(checked_subframe.at(id).count(1) && checked_subframe.at(id).at(1)))
-                {
-                    //DLOG(INFO) << "subframe 1 not checked for channel " <<channel;
-                    return false;
-                }
-            if(!(checked_subframe.at(id).count(2) && checked_subframe.at(id).at(2)))
-                {
-                    //DLOG(INFO) << "subframe 2 not checked for channel " <<channel;
-                    return false;
-                }
-            if(!(checked_subframe.at(id).count(3) && checked_subframe.at(id).at(3)))
-                {
-                    //DLOG(INFO) << "subframe 3 not checked for channel " <<channel;
-                    return false;
-                }
+            return true;
         }
-    //Since the
-    checked_subframe.erase(id);
-    return true;
 }
 
-
-bool Spoofing_Detector::check_spoofing(std::list<unsigned int> channels, Gnss_Synchro **in)
-{
-    bool check = false; 
-    unsigned int i = 0;
-    for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
-        {
-            i = *it;
-            if( in[i][0].new_subframe == true)
-                {
-                    check = true;
-                    DLOG(INFO) << "new subframe " << in[i][0].PRN;
-                    new_subframe.insert(i);
-                }
-            else if(find(new_subframe.begin(), new_subframe.end(), i) != new_subframe.end())
-                {
-                    check = true;
-                    DLOG(INFO) << "new subframe not found " << in[i][0].PRN;
-                    for(set<unsigned int>::iterator it = new_subframe.begin(); it != new_subframe.end(); ++it)
-                        {
-                            DLOG(INFO) << *it;
-                        }
-                }
-        }
-
-    return check;
-}
-
-
-void Spoofing_Detector::RX_TX_ephemeris_check(std::list<unsigned int> channels, 
-                                                                Gnss_Synchro **in, 
-                                                                std::map<int, 
-                                                                Gps_Ephemeris> ephemeris_map )
-{
-    std::map<int, std::map<string, rx_time_t >> rx_times;
-    std::set<int> satellites;
-    std::map<int, std::list<int>> ids_of_PRN;
-    double rx_time;
-    unsigned int PRN;
-    unsigned int i = 0;
-
-    for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
-        {
-            i = *it;
-            DLOG(INFO) << "check spoofing channel " << i;
-            if (in[i][0].Flag_valid_pseudorange == true)
-                {
-                    PRN = in[i][0].PRN;
-                    std::string tmp = std::to_string(PRN);
-                    satellites.insert(PRN);
-                    tmp += "0"+std::to_string(in[i][0].peak)+"0"+std::to_string(i);
-                    int sat_id = std::stoi(tmp);
-
-                    rx_time = in[i][0].rx_of_subframe;
-                    if(rx_time == 0)
-                        continue;
-
-            
-                    DLOG(INFO) << "spoofing check " << sat_id;
-        
-                    rx_time_t p;
-                    p.sat_id = sat_id;
-                    p.time = rx_time;
-                    p.subframe = in[i][0].subframe;
-                    
-                    if(!rx_times.count(PRN))
-                        {
-                          //DLOG(INFO) << "received first rx for sat " << PRN;
-                          std::map<string, rx_time_t> tmp;
-                          tmp["smallest"] = p; 
-                          tmp["largest"] = p; 
-                          rx_times[PRN] = tmp;
-
-                        }
-                    else
-                        {
-                            std::map<string, rx_time_t> rx = rx_times.at(PRN);
-                            if(rx.at("smallest").time > rx_time)// && 
-                                {
-                                    rx_times.at(PRN)["smallest"] = p;
-                                }
-                            else if(rx.at("largest").time < rx_time)
-                                {
-                                    rx_times.at(PRN)["largest"] = p;
-                                }
-                        }
-
-                    if(!ids_of_PRN.count(in[i][0].PRN))
-                        {
-                            std::list<int> tmp;
-                            tmp.push_back(sat_id);
-                            ids_of_PRN[in[i][0].PRN] = tmp;
-                        }
-                    else
-                        {
-                            ids_of_PRN.at(in[i][0].PRN).push_back(sat_id); 
-                       }
-                    //DLOG(INFO) << "checked channel rx " << sat_id;
-                checked_channel_rx[sat_id] = true;
-                }
-
-            //DLOG(INFO) << "sat " << PRN << " smallest " << rx_times.at(PRN).at("smallest").second << " largest " <<rx_times.at(PRN).at("largest").second;
-        }
-    bool c1 = false; 
-    bool c2 = false;
-    c1 = check_RX(satellites, rx_times);
-    c2 = check_subframes(ids_of_PRN);
-    if(c1 && c2)
-        {
-            new_subframe.clear();
-            DLOG(INFO) << "c1 and c2 " << c1 << " " << c2;
-        }
-    else
-        {
-            DLOG(INFO) << "c1 and c2 " << c1 << " " << c2;
-        }
-        
-}

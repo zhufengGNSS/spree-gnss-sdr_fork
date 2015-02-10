@@ -58,7 +58,7 @@ struct Subframe{
     int id;
     double timestamp;
 };
-extern concurrent_map<Subframe> global_channel_to_subframe;
+extern concurrent_map<Subframe> global_subframe_map;
 
 struct GPS_time_t{
     int week;
@@ -426,7 +426,6 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
     int PRN, lost_PRN, acq_PRN, nr_acq_peaks, peak;
     int inactive;
     bool acquire_sat_again = false;
-    unsigned int old_PVT_channel;
     int unique_id;
     
     peak = channel_to_peak.find(who)->second;
@@ -466,7 +465,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 
                 //remove cannel from spoofing detection queues
                 unique_id = std::stoi(std::to_string(lost_PRN)+"0"+std::to_string(peak)+"0"+std::to_string(who));
-                global_channel_to_subframe.remove(unique_id);
+                global_subframe_map.remove(unique_id);
                 global_gps_time.remove(unique_id);
             }
 
@@ -568,9 +567,12 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         PRN = channels_.at(who)->get_signal().get_satellite().get_PRN(); 
 
         //remove cannel from spoofing detection queues
-        unique_id = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak)+"0"+std::to_string(who));
-        global_channel_to_subframe.remove(unique_id);
-        global_gps_time.remove(unique_id);
+        if(spoofing_detection)
+            {
+                unique_id = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak)+"0"+std::to_string(who));
+                global_subframe_map.remove(unique_id);
+                global_gps_time.remove(unique_id);
+            }
 
         if (acq_channels_count_ < max_acq_channels_)
             {

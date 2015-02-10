@@ -412,13 +412,9 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             DLOG(INFO) << "magnitude " << d_mag;
             DLOG(INFO) << "input signal power " << d_input_power;
 
-            set<pair<int, int>> higher_peaks; 
-            map<int, map<string, double>> high_peaks; 
-            set<int> previous_peaks;
-            bool found_peak = false;
+/*
             int start, end;
 
-/*
             Persistence1D p;
             for(map<int, map<int, float>>::iterator it = peaks2.begin(); it!=peaks2.end(); ++it)
                 {
@@ -461,7 +457,10 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     }
                 }
 
-
+            set<pair<int, int>> higher_peaks; 
+            map<int, map<string, double>> high_peaks; 
+            set<int> previous_peaks;
+            bool found_peak = false;
             if(acquire_auxiliary_peaks && peaks.size() > 0)
                 {
                     std::map<double,map<string, double>>::reverse_iterator rit;
