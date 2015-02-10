@@ -275,12 +275,14 @@ void GpsL1CaSdSubframeFsm::gps_subframe_to_nav_msg()
     string tmp = std::to_string(i_satellite_PRN)+ "0" + std::to_string(i_peak)+"0"+std::to_string(d_nav.i_channel_ID);
     d_nav.unique_id = std::stoi(tmp);
     
-    //Spoofing detection
+    //Spoofing detection - Subframes
     Subframe subframe;
     subframe.timestamp = this->d_preamble_time_ms;
     subframe.id = subframe_ID; 
     subframe.subframe = d_nav.get_subframe(subframe_ID);
     global_channel_to_subframe.add((int)d_nav.unique_id, subframe);
+    spoofing_detector->check_subframe(d_nav.unique_id, i_satellite_PRN, subframe_ID);
+    
     std::cout << "NAV Message: received subframe "
         << subframe_ID << " from satellite "
         << Gnss_Satellite(std::string("GPS"), i_satellite_PRN) 
@@ -291,7 +293,8 @@ void GpsL1CaSdSubframeFsm::gps_subframe_to_nav_msg()
 
     d_nav.d_subframe_timestamp_ms = this->d_preamble_time_ms;
     d_nav.d_subframe = subframe_ID;
-
+    
+    //Spoofing detection - GPS time
     GPS_time_t gps_time; 
     gps_time.subframe_id = subframe_ID;
     gps_time.timestamp = this->d_preamble_time_ms;
@@ -326,22 +329,6 @@ void GpsL1CaSdSubframeFsm::gps_subframe_to_nav_msg()
             {
                 // get ephemeris object for this SV (mandatory)
                 Gps_Ephemeris ephemeris = d_nav.get_ephemeris();
-/*
-                std::cout << std::endl;
-                std::cout << ephemeris.d_TOW<< std::endl;
-                std::cout << ephemeris.b_integrity_status_flag<< std::endl; 
-                std::cout << ephemeris.b_alert_flag << std::endl; 
-                std::cout << ephemeris.b_antispoofing_flag << std::endl; 
-                std::cout << ephemeris.d_Cic << std::endl; 
-                std::cout << ephemeris.d_OMEGA0 << std::endl; 
-                std::cout << ephemeris.d_Cis << std::endl; 
-                std::cout << ephemeris.d_i_0 << std::endl; 
-                std::cout << ephemeris.d_Crc << std::endl; 
-                std::cout << ephemeris.d_OMEGA << std::endl; 
-                std::cout << ephemeris.d_OMEGA_DOT << std::endl; 
-                std::cout << ephemeris.d_IDOT << std::endl; 
-                std::cout << std::endl;
-*/
                 ephemeris.timestamp = this->d_preamble_time_ms;
                 d_ephemeris_queue->push(ephemeris);
                 global_channel_status.add(d_nav.i_channel_ID, 1); 

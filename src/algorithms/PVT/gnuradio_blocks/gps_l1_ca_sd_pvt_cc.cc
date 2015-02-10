@@ -61,7 +61,7 @@ struct Subframe{
     int id;
     double timestamp;
 };
-extern concurrent_map<Subframe> global_channel_to_subframe;
+extern concurrent_map<Subframe> global_subframe_map;
 
 struct GPS_time_t{
     int week;
@@ -167,8 +167,8 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
 
     Gnss_Synchro **in = (Gnss_Synchro **)  &input_items[0]; //Get the input pointer
 
-    std::list<unsigned int> channels_used; 
     std::list<unsigned int> channels; 
+    std::list<unsigned int> channels_used; 
     std::map<unsigned int, unsigned int> channel_added;
     for(unsigned int i = 0; i<d_nchannels; ++i)
         {
@@ -198,27 +198,16 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
         }
 
-    bool check_spoofing = d_spoofing_detector.check_spoofing(channels, in);
-    DLOG(INFO) << "check spoofing "<< check_spoofing << " " << channels.size();
-    
-    if(d_detect_spoofing && check_spoofing)
-        {    
-            DLOG(INFO) << "check spoofing " << channels.size();
-            for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
-                {
-                    DLOG(INFO) << "!check " << *it;
-                }
-            d_spoofing_detector.RX_TX_ephemeris_check(channels, in, global_gps_ephemeris_map.get_map_copy());
-        }
-
     unsigned int i = 0;
+    map<unsigned int, unsigned int> PRN_to_uid;
     for(std::list<unsigned int>::iterator it = channels_used.begin(); it != channels_used.end(); ++it)
         {
             i = *it; 
             std::string tmp = std::to_string(in[i][0].PRN);
             tmp += "0"+std::to_string(in[i][0].peak)+"0"+std::to_string(i);
             int unique_id = std::stoi(tmp);
-            
+            PRN_to_uid[in[i][0].PRN] = unique_id; 
+
             if(d_detect_spoofing)
                 {
                     gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(unique_id, in[i][0])); // store valid pseudoranges in a map
@@ -249,21 +238,24 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                     if (in[i][0].Flag_valid_pseudorange && (channel_status.count(i) && channel_status.at(i) == 1))
                         {
                     //        DLOG(INFO) << i << " is valid";
-                            //don't cancel tracking if the channel is tracking the singal that arrives
-                            //first even if it is not the highest peak
                             if (std::find(channels_used.begin(), channels_used.end(), i) == channels_used.end())
                                 {
+                                    if(!PRN_to_uid.count(in[i][0].PRN))
+                                        continue;
+
                                     std::string tmp = std::to_string(in[i][0].PRN);
                                     tmp += "0"+std::to_string(in[i][0].peak)+"0"+std::to_string(i);
-                                    int unique_id = std::stoi(tmp);
-                                    if(!d_spoofing_detector.checked(in[i][0].PRN, unique_id))
+                                    int uid = std::stoi(tmp);
+                                    int uid_u = PRN_to_uid.at(in[i][0].PRN); //uid of channel with the same sat that is used in the PVT
+                                     
+                                    
+                                    if(!d_spoofing_detector.checked_subframes(uid, uid_u))
                                         {
-                                            //        std::cout << "channel was not checked yet" << std::endl;
-                  //                          DLOG(INFO) << "channel was not checked yet";
+                                            DLOG(INFO) << "channel was not checked yet";
                                             continue;
                                         }
-                                    global_channel_to_subframe.remove(unique_id);
-                                    global_gps_time.remove(unique_id);
+                                    global_subframe_map.remove(uid);
+                                    global_gps_time.remove(uid);
                                     global_channel_status.add(i, 2);
                                     DLOG(INFO) << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " <<i ;
                                     std::cout << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " <<i  << std::endl;
@@ -387,7 +379,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                         }
 
                 //Check if the value of the position is logical and if the satellites have movement is probable.
-                if(d_detect_spoofing && check_spoofing)
+                if(d_detect_spoofing)
                     {
                         if(d_ls_pvt->b_valid_position == true)
                             d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 

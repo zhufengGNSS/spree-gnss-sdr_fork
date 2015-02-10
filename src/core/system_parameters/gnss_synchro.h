@@ -81,7 +81,6 @@ public:
     unsigned int peak;
     double rx_of_subframe;
     unsigned int subframe;
-    bool new_subframe = false;
 };
 
 #endif

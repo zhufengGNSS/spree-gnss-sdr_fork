@@ -97,18 +97,17 @@ struct GPS_time_t{
 
 concurrent_map<GPS_time_t> global_gps_time;
 concurrent_map<double> global_last_gps_time;
-concurrent_map<std::map<std::string, int>> global_code_phase;
-//concurrent_map<bool> global_channel_status;
 concurrent_map<int> global_channel_status;  //status 0: newly acquired, status 1: received the first 3 subframes, 
                                             //status 2: reset by PVT because no spoofing detected 
 struct Subframe{
     std::string subframe;
-    int id;
+    unsigned int id;
+    unsigned int PRN;
     double timestamp;    
 };
 
-concurrent_map<Subframe> global_channel_to_subframe;
-concurrent_map<bool> global_channel_spoofed_checked;
+concurrent_map<Subframe> global_subframe_map;
+concurrent_map<unsigned int> global_subframe_check;
 concurrent_queue<Spoofing_Message> global_spoofing_queue;
 
 int main(int argc, char** argv)
