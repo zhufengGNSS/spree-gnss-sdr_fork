@@ -382,16 +382,18 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 if(d_detect_spoofing)
                     {
                         if(d_ls_pvt->b_valid_position == true)
+                        {
                             d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
-
-                            std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter2;
-                            std::map<int,Gnss_Synchro>::iterator gnss_pseudoranges_iter;
-                            for(gnss_pseudoranges_iter = gnss_pseudoranges_map.begin();
-                                    gnss_pseudoranges_iter != gnss_pseudoranges_map.end();
-                                    gnss_pseudoranges_iter++)
-                            {
-                            // 1- find the ephemeris for the current SV observation. The SV PRN ID is the map key
-                            gps_ephemeris_iter2 = d_ls_pvt->gps_ephemeris_map.find(gnss_pseudoranges_iter->first);
+                        }
+/*
+                        std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter2;
+                        std::map<int,Gnss_Synchro>::iterator gnss_pseudoranges_iter;
+                        for(gnss_pseudoranges_iter = gnss_pseudoranges_map.begin();
+                                gnss_pseudoranges_iter != gnss_pseudoranges_map.end();
+                                gnss_pseudoranges_iter++)
+                        {
+                        // 1- find the ephemeris for the current SV observation. The SV PRN ID is the map key
+                        gps_ephemeris_iter2 = d_ls_pvt->gps_ephemeris_map.find(gnss_pseudoranges_iter->first);
 
 
                             if (gps_ephemeris_iter2 != d_ls_pvt->gps_ephemeris_map.end())
@@ -401,6 +403,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                                                 gps_ephemeris_iter2->second.d_satpos_Z);
                             }
                         }
+*/
                     }
                 }
 
