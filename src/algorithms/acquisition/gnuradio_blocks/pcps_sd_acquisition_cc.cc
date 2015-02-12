@@ -49,6 +49,11 @@ using namespace std;
 using namespace p1d;
 extern concurrent_map<map<string, int>> global_code_phase;
 
+struct Peak{
+    int code_phase;
+    int doppler;
+    float mag;
+};
 
 using google::LogMessage;
 
@@ -289,7 +294,12 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             d_input_power /= (float)d_fft_size;
             
             map<double, map<string, double>> peaks;
-//            map<int, map<int, float>> peaks2;
+            map<int, vector<float>> peaks2;
+            for (unsigned int doppler_index=0;doppler_index<d_num_doppler_bins;doppler_index++)
+                {
+                    doppler=-(int)d_doppler_max+d_doppler_step*doppler_index;
+                    peaks2[doppler] = vector<float> (d_fft_size);
+                }
 
             
             float threshold_spoofing = d_threshold * d_input_power * (fft_normalization_factor * fft_normalization_factor); 
@@ -325,28 +335,16 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     // Normalize the maximum value to correct the scale factor introduced by FFTW
                     magt = d_magnitude[indext] / (fft_normalization_factor * fft_normalization_factor);
                     //?WHY? N^4
-                   /* 
-                    Persistence1D p;
-                    p.RunPersistence(fread(d_magnitude, sizeof(double), );
-                    vector <TPairedExtrema> Extrema;
-                    p.GetPairedExtrema(Extrema, 0);
-
-                    for(vector< TPairedExtrema >::iterator it = Extrema.begin(); it != Extrema.end(); it++)
-                        {
-                            DLOG(INFO)  << " maximum code phase " << (*it).MaxIndex %d_samples_per_code;
-                            //std::cout  << " maximum code phase " << std::to_string(test2) << std::endl; 
-                        }
-*/
                     float tmp = 0.0;
                     for(unsigned int i = 0; i < d_fft_size; i++)
                     {
                         if(d_magnitude[i] > threshold_spoofing)
                             {
                                 tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
-                                map<string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
-                                peaks[tmp] = mtmp;
-                    //            peaks2[doppler][i%d_samples_per_code] = tmp;
+                    //            map<string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
+                                //peaks[tmp] = mtmp;
                             }
+                        peaks2.at(doppler).push_back(tmp);
                       /* 
                         if(d_gnss_synchro->PRN == 13) 
                             {
@@ -355,7 +353,6 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                     << (double)(i % d_samples_per_code) << " " 
                                     << tmp<< " " << endl; 
                             }
-                        //tmp = 0;
                        */
 
                     }
@@ -404,6 +401,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             //file.close();
 
             DLOG(INFO) << "satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
+            DLOG(INFO) << "d_peak " << d_peak; 
             DLOG(INFO) << "sample_stamp " << d_sample_counter;
             DLOG(INFO) << "test statistics value " << d_test_statistics;
             DLOG(INFO) << "test statistics threshold " << d_threshold;
@@ -412,34 +410,101 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             DLOG(INFO) << "magnitude " << d_mag;
             DLOG(INFO) << "input signal power " << d_input_power;
 
-/*
-            int start, end;
 
-            Persistence1D p;
-            for(map<int, map<int, float>>::iterator it = peaks2.begin(); it!=peaks2.end(); ++it)
-                {
-                    start = it->second.begin()->second;
-                    end = it->second.end()->second;
-                    vector<float> peaks3 (end-start);
-        
-                    for(map<int, float>::iterator it2 = it->second.begin(); it2!=it->second.end(); ++it2)
+            bool found_peak = false;
+            if(acquire_auxiliary_peaks)
+                {    
+                    Persistence1D p;
+                    vector<float> dp; 
+                    threshold_spoofing = threshold_spoofing/(fft_normalization_factor * fft_normalization_factor);
+                    map<int, map<int, Peak>> highest_peaks;
+                    for(map<int, vector<float>>::iterator it = peaks2.begin(); it!=peaks2.end(); ++it)
                         {
-                            peaks3[(it2->first-start)] =  it2->second;
-                        } 
-                    p.RunPersistence(peaks3);
-                    vector <TPairedExtrema> Extrema;
-                    p.GetPairedExtrema(Extrema, 0);
-                    DLOG(INFO) << "doppler: " << it->first;
+                            dp = it->second;
+                            if(*std::max_element(dp.begin(), dp.end()) < threshold_spoofing) 
+                                continue;
+                            p.RunPersistence(dp);
+                            vector <TPairedExtrema> Extrema;
+                            p.GetPairedExtrema(Extrema, 0);
 
-                    for(vector< TPairedExtrema >::iterator it3 = Extrema.begin(); it3 != Extrema.end(); it3++)
-                        {
-                 //           int test2 = code_phases.at((*it3).MaxIndex);
-                            DLOG(INFO)  << " maximum code phase " << start+(*it3).MaxIndex; 
-                            //std::cout  << " maximum code phase " << std::to_string(test2) << std::endl; 
+                            for(vector< TPairedExtrema >::iterator it2 = Extrema.begin(); it2 != Extrema.end(); it2++)
+                                {
+                                    int p_code_phase = (*it2).MaxIndex%d_samples_per_code;
+                                    int p_doppler = it->first;
+                                    Peak peak;
+                                    peak.mag = dp.at((*it2).MaxIndex);
+                                    peak.doppler = it->first;
+                                    peak.code_phase = (*it2).MaxIndex%d_samples_per_code;
+                                    if(highest_peaks.count(p_code_phase))
+                                        {
+                                            for(map<int, Peak>::iterator it3= highest_peaks.at(p_code_phase).begin(); 
+                                                                         it3!= highest_peaks.at(p_code_phase).end(); ++it3)
+                                                {
+                                                    DLOG(INFO) << abs(it3->first-p_doppler);
+                                                    if(abs(it3->first-p_doppler) > d_doppler_step)
+                                                        {
+                                                            highest_peaks.at(p_code_phase)[p_doppler] = peak;
+                                                        }
+                                                    else if(dp.at((*it2).MaxIndex) > it3->second.mag)
+                                                        {
+                                                            highest_peaks.at(p_code_phase).erase(it3->first); 
+                                                            highest_peaks.at(p_code_phase)[p_doppler] = peak;
+                                                        }
+                                                }
+                                        }
+                                    else
+                                        {
+                                            highest_peaks[p_code_phase][p_doppler] = peak;
+                                        }
+                                    //DLOG(INFO) << "doppler: " << it->first;
+                                    //DLOG(INFO)  << " maximum code phase " << (*it2).MaxIndex%d_samples_per_code << " " << dp.at((*it2).MaxIndex); 
+                                }
                         }
-                }
+                    DLOG(INFO) << "remove exces doppler ";
+                    map<float, Peak> d_highest_peaks;
+                    std::map<int, map<int,Peak>>::iterator it;
+                    for (it=highest_peaks.begin(); it!=highest_peaks.end(); ++it)
+                    {
+                        for (map<int, Peak>::iterator it2=it->second.begin(); it2!=it->second.end(); ++it2)
+                        {
+                            d_highest_peaks[it2->second.mag] = it2->second;
+                            DLOG(INFO) << "doppler: " << it2->second.doppler;
+                            DLOG(INFO)  << " maximum code phase " << it2->second.code_phase << " " << it2->second.mag; 
+                        }
+                    }
 
-*/
+                    DLOG(INFO) << "peaks size: "<< d_highest_peaks.size();
+                    //If there is more than one peak present, acquire the highest
+                    if(d_peak == 0 && d_highest_peaks.size() > 0)
+                    {
+                        //found_peak = true;
+                    }
+                    else if(d_highest_peaks.size() >= d_peak)
+                    {
+                        std::map<float, Peak>::reverse_iterator rit;
+
+                        unsigned int i = 1;
+                        for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)
+                        {
+                            if(i == d_peak)
+                                {
+                                    found_peak = true; 
+                                    DLOG(INFO) << "peak found";
+                                    DLOG(INFO) << "peak " << rit->first; 
+                                    DLOG(INFO) << "d_peak " << d_peak; 
+                                    DLOG(INFO) << "code phase " << rit->second.code_phase; 
+                                    d_test_statistics = rit->first/ d_input_power; 
+                                    d_gnss_synchro->Acq_delay_samples = rit->second.code_phase; 
+                                    d_gnss_synchro->Acq_doppler_hz = rit->second.doppler; 
+                                    //break;
+                                }
+                            
+                            ++i;
+                        }
+                    }
+            
+                }
+/*
             if(!acquire_auxiliary_peaks && peaks.size() > 0)
                 {
                     std::map<double,map<string, double>>::reverse_iterator rit;
@@ -480,7 +545,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         for (it=previous_peaks.begin(); it!=previous_peaks.end(); ++it)
                         {
                             int next_code_phase = *it; 
-                            if( std::abs(next_code_phase - code_phase) < 4)//  && next_doppler == c_doppler)
+                            if( std::abs(next_code_phase - code_phase) < 8)//  && next_doppler == c_doppler)
                                 {
                                     insert_peak = false;
                                 } 
@@ -527,7 +592,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                 }
 
 
-            /*
+            
 
             if(d_peak == 0)
                 {
@@ -622,7 +687,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                 {
                     if(acquire_auxiliary_peaks && !found_peak)
                         {
-                            DLOG(INFO) << "acq + no fpeak found";
+                            DLOG(INFO) << "acq + no peak found";
                             d_state = 3; // Negative acquisition
                         }
                     else if (d_test_statistics > d_threshold)

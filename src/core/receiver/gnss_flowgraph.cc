@@ -530,7 +530,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                                 channels_.at(i)->set_signal(available_GNSS_signals_.front());
                                 available_GNSS_signals_.pop_front();
                                 acq_channels_count_++;
-                                /*
+                                
                                 if(spoofing_detection){
                                  //unnecessary just so acq of lower peaks happens faster
                                     DLOG(INFO) << "assign same satellite again? " << acquire_sat_again << " " << i;
@@ -545,7 +545,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                                             DLOG(INFO) << "PRN " << PRN << " channel: " << channels_.at(i);
                                             AssignACQState(PRN, i);
                                         }
-                                }*/
+                                }
                                 channels_.at(i)->start_acquisition();
                                 break;
                             }
@@ -563,7 +563,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         LOG(INFO) << "Channel " << who << " TRK FAILED satellite " << channels_.at(who)->get_signal().get_satellite();
         //channel should not be used for spoofing or pvt calculation
         global_channel_status.add(who, 2);
-
+/*
         PRN = channels_.at(who)->get_signal().get_satellite().get_PRN(); 
 
         //remove cannel from spoofing detection queues
@@ -586,10 +586,64 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                 available_GNSS_signals_.push_back( channels_.at(who)->get_signal() );
             }
 
-        // for (unsigned int i = 0; i < channels_count_; i++)
-        //    {
-        //        LOG(INFO) << "Channel " << i << " in state " << channels_state_[i] << std::endl;
-        //    }
+        for (unsigned int i = 0; i < channels_count_; i++)
+            {
+                LOG(INFO) << "Channel " << i << " in state " << channels_state_[i] << std::endl;
+            }
+*/
+        lost_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
+       
+        if(spoofing_detection)
+            {
+                peak = channel_to_peak.find(who)->second;
+                nr_acquired_peaks.at(lost_PRN) -= 1;
+                channels_.at(who)->set_peak(0);
+                acq_peaks = acquired_peaks.at(lost_PRN);
+
+                //If we lost the channel that was providing the PVT solution and we using the first arrving signal
+                //then we don't want to add the peak back into the pool since there already was an extra in there.
+                if(!use_first_arriving_signal || (find(acq_peaks.begin(), acq_peaks.end(),peak) == acq_peaks.end()  
+                                                && !(PVT_to_channel.count(lost_PRN) && PVT_to_channel.at(lost_PRN) == who))) 
+                    {
+                        //if we fail to acquire the highest peak try that one first again.
+                        //TODO: might no want to do this is we are tracking the signal that arrives first     
+                        if(peak == 1) // || peak == 0)
+                            {
+                                acquired_peaks.at(lost_PRN).push_front(peak);
+                            }
+                        else
+                            {
+                                acquired_peaks.at(lost_PRN).push_back(peak);
+                            }
+                    }
+
+
+                //remove cannel from spoofing detection queues
+                unique_id = std::stoi(std::to_string(lost_PRN)+"0"+std::to_string(peak)+"0"+std::to_string(who));
+                global_subframe_map.remove(unique_id);
+                global_gps_time.remove(unique_id);
+            }
+
+        DLOG(INFO) << "pushing back " << lost_PRN << " acq_nr " << nr_acquired_peaks.at(lost_PRN);
+        available_GNSS_signals_.push_back(channels_.at(who)->get_signal());
+
+        while (channels_.at(who)->get_signal().get_satellite().get_system() != available_GNSS_signals_.front().get_satellite().get_system())
+            {
+                available_GNSS_signals_.push_back(available_GNSS_signals_.front());
+                available_GNSS_signals_.pop_front();
+            }
+
+        PRN = available_GNSS_signals_.front().get_satellite().get_PRN();
+        if(spoofing_detection)
+            {
+                AssignACQState(PRN, who);
+            }
+
+        channels_.at(who)->set_signal(available_GNSS_signals_.front());
+        available_GNSS_signals_.pop_front();
+        channels_.at(who)->start_acquisition();
+
+>>>>>>> some cleanup
         break;
     case 4:
             LOG(INFO) << "No spoofing detected, restart acqusition on auxiliary channel: " << who << "  sat " << channels_.at(who)->get_signal().get_satellite().get_PRN(); 

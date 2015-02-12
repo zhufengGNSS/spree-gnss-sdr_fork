@@ -121,8 +121,6 @@ private:
     bool d_detect_spoofing;
     gps_l1_ca_ls_pvt *d_ls_pvt;
     std::map<unsigned int, unsigned int> PRN_to_uchannel;
-    //std::map<int, array<double>> CN0;       //maps sat (unique id not PRN) to SNR
-    //std::map<int, array<double>> Doppler;    //maps sat (unique id not PRN) to Doppler
 
 public:
     ~gps_l1_ca_sd_pvt_cc (); //!< Default destructor
