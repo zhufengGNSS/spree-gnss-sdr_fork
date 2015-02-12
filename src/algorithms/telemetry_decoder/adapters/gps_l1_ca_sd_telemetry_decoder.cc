@@ -71,8 +71,7 @@ GpsL1CaSdTelemetryDecoder::GpsL1CaSdTelemetryDecoder(ConfigurationInterface* con
     //Spoofing detection
     bool detect_spoofing = configuration->property("Spoofing.spoofing_detection", false);
     double max_discrepancy = configuration->property("Spoofing.RX_max_time_diff", 0.1);
-    double max_alt = configuration->property("Spoofing.max_height", 2e3);
-    Spoofing_Detector *spoofing_detector = new Spoofing_Detector(detect_spoofing, max_discrepancy, max_alt);
+    Spoofing_Detector *spoofing_detector = new Spoofing_Detector(detect_spoofing, max_discrepancy);
 
 
     // make telemetry decoder object

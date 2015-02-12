@@ -76,9 +76,14 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
 
     //spoofing detection
     bool detect_spoofing = configuration->property("Spoofing.spoofing_detection", false);
-    double max_discrepancy = configuration->property("Spoofing.RX_max_time_diff", 0.1);
-    double max_alt = configuration->property("Spoofing.max_height", 2e3);
-    Spoofing_Detector *spoofing_detector = new Spoofing_Detector(detect_spoofing, max_discrepancy, max_alt);
+    bool cno_detection = configuration->property("Spoofing.cno_detection", false);
+    bool alt_detection = configuration->property("Spoofing.alt_detection", false);
+    bool satpos_detection = configuration->property("Spoofing.satpos_detection", false);
+    double max_alt = configuration->property("Spoofing.alt_max", 2e3);
+    int cno_count = configuration->property("Spoofing.cno_count", 4);
+    double cno_min = configuration->property("Spoofing.cno_min", 1.0);
+    DLOG(INFO) << "cno_min: " << cno_min;
+    Spoofing_Detector *spoofing_detector = new Spoofing_Detector(detect_spoofing, cno_detection, cno_count, cno_min, alt_detection,  max_alt, satpos_detection);
 
     // make PVT object
     pvt_ = gps_l1_ca_make_sd_pvt_cc(in_streams_, queue_, dump_, dump_filename_, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, *spoofing_detector);

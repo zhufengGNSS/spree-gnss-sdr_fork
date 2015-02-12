@@ -38,6 +38,7 @@
 #include "control_message_factory.h"
 #include "spoofing_message.h"
 #include "concurrent_map.h"
+#include "concurrent_map_str.h"
 #include "concurrent_queue.h"
 #include <math.h> 
 #include <iomanip>
@@ -61,21 +62,29 @@ struct GPS_time_t{
 };
 
 extern concurrent_map<GPS_time_t> global_gps_time;
-extern concurrent_map<unsigned int> global_subframe_check;
+extern concurrent_map<map<unsigned int, unsigned int>> global_subframe_check;
 
 using google::LogMessage;
 
 Spoofing_Detector::Spoofing_Detector()
 {
-    d_detect_spoofing = false;
-    d_max_discrepancy = 0; 
-    d_max_alt = 0;
 }
-Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, double max_discrepancy, double max_alt)
+
+Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, double max_discrepancy)
 {
     d_detect_spoofing = detect_spoofing;
     d_max_discrepancy = max_discrepancy;
+}
+
+Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, int cno_count, double cno_min, bool alt_detection, double max_alt, bool satpos_detection)
+{
+    d_detect_spoofing = detect_spoofing;
+    d_cno_detection = cno_detection;
+    d_cno_count = cno_count;
+    d_cno_min = cno_min;
+    d_alt_detection = alt_detection;
     d_max_alt = max_alt;
+    d_satpos_detection = satpos_detection;
 }
 
 Spoofing_Detector::~Spoofing_Detector()
@@ -241,6 +250,41 @@ void Spoofing_Detector::check_GPS_time()
     }
 }
 
+double Spoofing_Detector::StdDeviation(vector<double> v)
+{
+    double sum = std::accumulate(v.begin(), v.end(), 0.0);
+    double mean = sum / v.size();
+    std::vector<double> diff(v.size());
+    std::transform(v.begin(), v.end(), diff.begin(),
+        std::bind2nd(std::minus<double>(), mean));
+
+    double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    double stdev = std::sqrt(sq_sum / v.size());
+    return stdev;
+}
+
+void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in)
+{
+    if(channels.size() < d_cno_count)
+        return;
+    vector<double> SNRs;
+    unsigned int i;
+    for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
+    {
+        i = *it;
+        SNRs.push_back(in[i][0].CN0_dB_hz);
+        //double doppler = in[i][0].Carrier_Doppler_hz;
+    }
+    double stdev = StdDeviation(SNRs); 
+    if(stdev < d_cno_min)
+        {
+            stringstream s;
+            s << " the SNR stdev is below expected values, "; 
+            s << " SNR: " << stdev; 
+            spoofing_detected(s.str(), 10);
+        }
+}
+
 void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
 {
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
@@ -393,11 +437,40 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
                         sid = to_string(id2)+"-"+to_string(id1); 
                     }
                 unsigned int sum = 0; 
-                unsigned int id = (unsigned int)stoi(sid);
-                if(!global_subframe_check.read(id, sum)) 
-                    sum = 0;
+                DLOG(INFO) << "sid: " << sid;
+                DLOG(INFO) << "id: " << stoi(sid);
+                map<unsigned int, unsigned int> id1m;
+                if(!global_subframe_check.read(id1, id1m)) 
+                    {
+                        sum = 0;
+                    }
+                else
+                    {
+                        if(id1m.count(id2))
+                            sum = id1m.at(id2);
+                        else
+                            sum = 0;
+                    }   
                 ++sum;
-                global_subframe_check.add(id, sum); 
+                id1m[id2] = sum;
+                global_subframe_check.add(id1, id1m); 
+
+                sum = 0;
+                map<unsigned int, unsigned int> id2m;
+                if(!global_subframe_check.read(id2, id2m)) 
+                    {
+                        sum = 0;
+                    }
+                else
+                    {
+                        if(id2m.count(id1))
+                            sum = id2m.at(id1);
+                        else
+                            sum = 0;
+                    }   
+                ++sum;
+                id2m[id1] = sum;
+                global_subframe_check.add(id2, id2m); 
             }
     }
 }
@@ -406,19 +479,16 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
 bool Spoofing_Detector::checked_subframes(unsigned int id1, unsigned int id2)
 {
     unsigned int sum = 0;
-    std::string sid;
-    if(id1 > id2)
-    {
-        sid = to_string(id1)+"-"+to_string(id2); 
-    }
-    else
-    {
-        sid = to_string(id2)+"-"+to_string(id1); 
-    }
-    unsigned int id = (unsigned int)stoi(sid);
-    if(!global_subframe_check.read(id, sum))
-        return false; 
-    if(sum < 3)
+    map<unsigned int, unsigned int> check;
+    if(!global_subframe_check.read(id1, check))
+        {
+            return false; 
+        }
+    else if (!check.count(id2))
+        {
+            return false; 
+        }
+    else if(check.at(id2) < 3)
         {
             return false;
         }
