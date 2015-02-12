@@ -52,6 +52,7 @@
 #include "control_thread.h"
 #include "concurrent_queue.h"
 #include "concurrent_map.h"
+#include "concurrent_map_str.h"
 #include "gps_ephemeris.h"
 #include "gps_cnav_ephemeris.h"
 #include "gps_almanac.h"
@@ -107,7 +108,7 @@ struct Subframe{
 };
 
 concurrent_map<Subframe> global_subframe_map;
-concurrent_map<unsigned int> global_subframe_check;
+concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
 concurrent_queue<Spoofing_Message> global_spoofing_queue;
 
 int main(int argc, char** argv)

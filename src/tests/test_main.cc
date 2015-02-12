@@ -42,6 +42,7 @@
 #include <gtest/gtest.h>
 #include "concurrent_queue.h"
 #include "concurrent_map.h"
+#include "concurrent_map_str.h"
 #include "control_thread.h"
 #include "gps_navigation_message.h"
 
@@ -140,7 +141,7 @@ struct Subframe{
 };
 
 concurrent_map<Subframe> global_subframe_map;
-concurrent_map<unsigned int> global_subframe_check;
+concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
 concurrent_queue<Spoofing_Message> global_spoofing_queue;
 
 

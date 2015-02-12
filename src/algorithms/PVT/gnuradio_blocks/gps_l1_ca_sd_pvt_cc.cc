@@ -56,6 +56,7 @@ extern concurrent_map<Sbas_Satellite_Correction> global_sbas_sat_corr_map;
 extern concurrent_map<Sbas_Ephemeris> global_sbas_ephemeris_map;
 extern concurrent_queue<Spoofing_Message> global_spoofing_queue;
 extern concurrent_map<int> global_channel_status;
+extern concurrent_map<map<unsigned int, unsigned int>> global_subframe_check;
 struct Subframe{
     std::string subframe;
     int id;
@@ -125,8 +126,10 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
 
     //spoofing
     d_spoofing_detector = spoofing_detector;
-    d_max_discrepancy = d_spoofing_detector.d_max_discrepancy; 
     d_detect_spoofing = d_spoofing_detector.d_detect_spoofing;
+    d_cno_detection = d_spoofing_detector.d_cno_detection;
+    d_alt_detection = d_spoofing_detector.d_alt_detection;
+    d_satpos_detection = d_spoofing_detector.d_satpos_detection;
 
     b_rinex_header_writen = false;
     b_rinex_sbs_header_writen = false;
@@ -198,6 +201,11 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
         }
 
+    if(d_cno_detection && (d_sample_counter % d_output_rate_ms) == 0)
+        {
+            d_spoofing_detector.check_SNR(channels_used, in);
+        }
+
     unsigned int i = 0;
     map<unsigned int, unsigned int> PRN_to_uid;
     for(std::list<unsigned int>::iterator it = channels_used.begin(); it != channels_used.end(); ++it)
@@ -255,6 +263,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                         }
                                     global_subframe_map.remove(uid);
                                     global_gps_time.remove(uid);
+                                    global_subframe_check.remove(uid);
                                     global_channel_status.add(i, 2);
                                     DLOG(INFO) << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " <<i ;
                                     std::cout << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " <<i  << std::endl;
@@ -378,31 +387,33 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                         }
 
                 //Check if the value of the position is logical and if the satellites have movement is probable.
-                if(d_detect_spoofing)
+                if(d_alt_detection)
                     {
                         if(d_ls_pvt->b_valid_position == true)
                         {
-                            //d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
+                            d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
                         }
-/*
+                    }
+
+                if(d_satpos_detection)
+                    {
                         std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter2;
                         std::map<int,Gnss_Synchro>::iterator gnss_pseudoranges_iter;
                         for(gnss_pseudoranges_iter = gnss_pseudoranges_map.begin();
                                 gnss_pseudoranges_iter != gnss_pseudoranges_map.end();
                                 gnss_pseudoranges_iter++)
                         {
-                        // 1- find the ephemeris for the current SV observation. The SV PRN ID is the map key
-                        gps_ephemeris_iter2 = d_ls_pvt->gps_ephemeris_map.find(gnss_pseudoranges_iter->first);
+                            std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter2;
+                            gps_ephemeris_iter2 = d_ls_pvt->gps_ephemeris_map.find(gnss_pseudoranges_iter->first);
 
 
                             if (gps_ephemeris_iter2 != d_ls_pvt->gps_ephemeris_map.end())
                             {
                                 d_spoofing_detector.check_satpos(gps_ephemeris_iter2->second.i_satellite_PRN, gps_ephemeris_iter2->second.timestamp , 
-                                                                gps_ephemeris_iter2->second.d_satpos_X, gps_ephemeris_iter2->second.d_satpos_Y, 
-                                                                gps_ephemeris_iter2->second.d_satpos_Z);
+                                        gps_ephemeris_iter2->second.d_satpos_X, gps_ephemeris_iter2->second.d_satpos_Y, 
+                                        gps_ephemeris_iter2->second.d_satpos_Z);
                             }
                         }
-*/
                     }
                 }
 

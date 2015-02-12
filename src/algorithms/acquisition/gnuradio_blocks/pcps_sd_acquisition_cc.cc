@@ -341,8 +341,8 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         if(d_magnitude[i] > threshold_spoofing)
                             {
                                 tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
-                    //            map<string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
-                                //peaks[tmp] = mtmp;
+                                map<string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
+                                peaks[tmp] = mtmp;
                             }
                         peaks2.at(doppler).push_back(tmp);
                       /* 
@@ -477,7 +477,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     //If there is more than one peak present, acquire the highest
                     if(d_peak == 0 && d_highest_peaks.size() > 0)
                     {
-                        //found_peak = true;
+                        found_peak = true;
                     }
                     else if(d_highest_peaks.size() >= d_peak)
                     {
@@ -496,7 +496,6 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                     d_test_statistics = rit->first/ d_input_power; 
                                     d_gnss_synchro->Acq_delay_samples = rit->second.code_phase; 
                                     d_gnss_synchro->Acq_doppler_hz = rit->second.doppler; 
-                                    //break;
                                 }
                             
                             ++i;
@@ -505,7 +504,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             
                 }
 /*
-            if(!acquire_auxiliary_peaks && peaks.size() > 0)
+            if(peaks.size() > 0)
                 {
                     std::map<double,map<string, double>>::reverse_iterator rit;
     
@@ -521,7 +520,8 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         DLOG(INFO) << "peaks: " << code_phase << "   " << c_doppler << " " << rit->first/ d_input_power;
                     }
                 }
-
+*/
+/*
             set<pair<int, int>> higher_peaks; 
             map<int, map<string, double>> high_peaks; 
             set<int> previous_peaks;
