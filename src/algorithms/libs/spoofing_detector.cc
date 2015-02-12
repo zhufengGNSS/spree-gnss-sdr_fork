@@ -244,10 +244,21 @@ void Spoofing_Detector::check_GPS_time()
 void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
 {
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
-    
-    Subframe smallest = subframes.begin()->second;
-    Subframe largest = subframes.begin()->second;
+     
+    Subframe smallest;
+    Subframe largest;
     Subframe subframe;
+
+    for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
+    {
+        subframe = it->second;
+        
+        if(subframe.PRN != PRN)
+            continue;
+        smallest = subframe;
+        largest = subframe;
+        break;
+    }
     
     for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
     {
@@ -255,6 +266,8 @@ void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
         
         if(subframe.PRN != PRN)
             continue;
+
+        DLOG(INFO) << "id: " << it->first << " subframe: " << subframe.id << " timestamp " << subframe.timestamp;
     
         if(smallest.timestamp > subframe.timestamp) 
         {
@@ -285,7 +298,7 @@ void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
                         {
                             spoofed = true;
                         }
-                    else if(std::abs(largest_t-smallest_t) > 6000) 
+                    else if(std::abs(largest_t-smallest_t) > 6001) 
                         {
                             spoofed = true;
                         }
@@ -381,7 +394,8 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
                     }
                 unsigned int sum = 0; 
                 unsigned int id = (unsigned int)stoi(sid);
-                global_subframe_check.read(id, sum); 
+                if(!global_subframe_check.read(id, sum)) 
+                    sum = 0;
                 ++sum;
                 global_subframe_check.add(id, sum); 
             }
@@ -402,7 +416,8 @@ bool Spoofing_Detector::checked_subframes(unsigned int id1, unsigned int id2)
         sid = to_string(id2)+"-"+to_string(id1); 
     }
     unsigned int id = (unsigned int)stoi(sid);
-    global_subframe_check.read(id, sum); 
+    if(!global_subframe_check.read(id, sum))
+        return false; 
     if(sum < 3)
         {
             return false;

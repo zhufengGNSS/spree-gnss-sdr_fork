@@ -218,14 +218,13 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
             d_rx_time = in[i][0].d_TOW_at_current_symbol; // all the channels have the same RX timestamp (common RX time pseudoranges)
         }
-    
     bool spoofed = false;
+   /* 
     Spoofing_Message spm;
-    if(global_spoofing_queue.try_pop(spm))
-        {
-            spoofed = true;
-        } 
-
+    spoofed = global_spoofing_queue.try_pop(spm);
+    if(spoofed)
+        global_spoofing_queue.
+*/
     //cancel tracking on auxiliary channels if no spoofing has been detected.
     if(d_detect_spoofing && !spoofed) 
         {
@@ -383,7 +382,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                     {
                         if(d_ls_pvt->b_valid_position == true)
                         {
-                            d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
+                            //d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
                         }
 /*
                         std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter2;
