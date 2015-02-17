@@ -95,7 +95,7 @@ Spoofing_Detector::~Spoofing_Detector()
 void Spoofing_Detector::spoofing_detected(std::string description, int spoofing_case)
 {
     DLOG(INFO) << "SPOOFING DETECTED " << description;
-    std::cout << "SPOOFING DETECTED " << description << std::endl;
+//    std::cout << "SPOOFING DETECTED " << description << std::endl;
     Spoofing_Message msg;
     msg.spoofing_case = spoofing_case;
     msg.description = description;
@@ -263,7 +263,7 @@ double Spoofing_Detector::StdDeviation(vector<double> v)
     return stdev;
 }
 
-void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in)
+void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
 {
     if(channels.size() < d_cno_count)
         return;
@@ -281,6 +281,7 @@ void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in
             stringstream s;
             s << " the SNR stdev is below expected values, "; 
             s << " SNR: " << stdev; 
+            s << ", " << sample_counter; 
             spoofing_detected(s.str(), 10);
         }
 }
