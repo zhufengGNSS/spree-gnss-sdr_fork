@@ -201,9 +201,10 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
         }
 
+   
     if(d_cno_detection && (d_sample_counter % d_output_rate_ms) == 0)
         {
-            d_spoofing_detector.check_SNR(channels_used, in);
+            d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
         }
 
     unsigned int i = 0;

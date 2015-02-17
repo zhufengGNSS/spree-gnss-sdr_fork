@@ -875,34 +875,26 @@ void GNSSFlowgraph::set_signals_list()
                     available_gnss_prn_iter++)
                 {
                     available_GNSS_signals_.push_back(Gnss_Signal(Gnss_Satellite(std::string("GPS"),
-                            *available_gnss_prn_iter), std::string("1C")));
-
-                    nr_acquired_peaks[*available_gnss_prn_iter] = 0; 
-                    std::deque<int> tmp;
-                    //if we are using the strongest signal, the channel assigned to 0
-                    // will also track the highest peak.
-                    for(int i = 1; i != nr_peaks; ++i)
-                        {
-                            tmp.push_back(i);
-                        }
-                    //if(!use_first_arriving_signal)
-                    tmp.push_back(0);
-                    acquired_peaks[*available_gnss_prn_iter] = tmp;  
-                }
-            
-            DLOG(INFO) << "multiple " << multiple; 
-            for(int i = 0; i < multiple; ++i)
-                { 
-                    DLOG(INFO) << "add other round of signals"; 
-                    for (available_gnss_prn_iter = available_gps_prn.begin();
-                            available_gnss_prn_iter != available_gps_prn.end();
-                            available_gnss_prn_iter++)
-                        {
-                            available_GNSS_signals_.push_back(Gnss_Signal(Gnss_Satellite(std::string("GPS"),
                                     *available_gnss_prn_iter), std::string("1C")));
-                        }
 
+                    next_peak[*available_gnss_prn_iter] = 1;
+                    nr_acquired_peaks[*available_gnss_prn_iter] = 0;
                 }
+
+            if(spoofing_detection)
+            {
+                for(int i = 0; i < multiple; ++i)
+                    { 
+                        DLOG(INFO) << "add other round of signals"; 
+                        for (available_gnss_prn_iter = available_gps_prn.begin();
+                                available_gnss_prn_iter != available_gps_prn.end();
+                                available_gnss_prn_iter++)
+                            {
+                                available_GNSS_signals_.push_back(Gnss_Signal(Gnss_Satellite(std::string("GPS"),
+                                        *available_gnss_prn_iter), std::string("1C")));
+                            }
+                    }
+             }
         }
 
     if (configuration_->property("Channels_2S.count", 0) > 0)
