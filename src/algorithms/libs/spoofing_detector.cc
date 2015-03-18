@@ -68,12 +68,14 @@ using google::LogMessage;
 
 Spoofing_Detector::Spoofing_Detector()
 {
+    stdev_cb = boost::circular_buffer<double> (1000);
 }
 
 Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, double max_discrepancy)
 {
     d_detect_spoofing = detect_spoofing;
     d_max_discrepancy = max_discrepancy;
+    stdev_cb = boost::circular_buffer<double> (1000);
 }
 
 Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, int cno_count, double cno_min, bool alt_detection, double max_alt, bool satpos_detection)
@@ -85,6 +87,7 @@ Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, i
     d_alt_detection = alt_detection;
     d_max_alt = max_alt;
     d_satpos_detection = satpos_detection;
+    stdev_cb = boost::circular_buffer<double> (1000);
 }
 
 Spoofing_Detector::~Spoofing_Detector()
@@ -95,7 +98,7 @@ Spoofing_Detector::~Spoofing_Detector()
 void Spoofing_Detector::spoofing_detected(std::string description, int spoofing_case)
 {
     DLOG(INFO) << "SPOOFING DETECTED " << description;
-//    std::cout << "SPOOFING DETECTED " << description << std::endl;
+    std::cout << "SPOOFING DETECTED " << description << std::endl;
     Spoofing_Message msg;
     msg.spoofing_case = spoofing_case;
     msg.description = description;
@@ -267,15 +270,31 @@ void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in
 {
     if(channels.size() < d_cno_count)
         return;
+
     vector<double> SNRs;
     unsigned int i;
     for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
     {
         i = *it;
         SNRs.push_back(in[i][0].CN0_dB_hz);
-        //double doppler = in[i][0].Carrier_Doppler_hz;
     }
+
     double stdev = StdDeviation(SNRs); 
+    stdev_cb.push_back(stdev);
+    if(stdev_cb.size() >= 1000)
+        {
+            double sum = std::accumulate(stdev_cb.begin(), stdev_cb.end(), 0);
+            double mv_avg = sum/stdev_cb.size();
+            if(mv_avg < d_cno_min)
+                {
+                    stringstream s;
+                    s << " the SNR stdev is below expected values, "; 
+                    s << " SNR: " << mv_avg; 
+                    s << ", " << sample_counter; 
+                    spoofing_detected(s.str(), 10);
+                }
+        }
+   /* 
     if(stdev < d_cno_min)
         {
             stringstream s;
@@ -283,7 +302,7 @@ void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in
             s << " SNR: " << stdev; 
             s << ", " << sample_counter; 
             spoofing_detected(s.str(), 10);
-        }
+        }*/
 }
 
 void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
@@ -479,7 +498,6 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
 
 bool Spoofing_Detector::checked_subframes(unsigned int id1, unsigned int id2)
 {
-    unsigned int sum = 0;
     map<unsigned int, unsigned int> check;
     if(!global_subframe_check.read(id1, check))
         {

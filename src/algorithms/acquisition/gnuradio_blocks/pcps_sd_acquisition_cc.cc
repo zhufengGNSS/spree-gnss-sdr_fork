@@ -414,10 +414,11 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             bool found_peak = false;
             if(acquire_auxiliary_peaks)
                 {    
+                    //Find the local maxima for the peaks for each doppler bin
                     Persistence1D p;
                     vector<float> dp; 
                     threshold_spoofing = threshold_spoofing/(fft_normalization_factor * fft_normalization_factor);
-                    map<int, map<int, Peak>> highest_peaks;
+                    map<float, Peak> d_highest_peaks;
                     for(map<int, vector<float>>::iterator it = peaks2.begin(); it!=peaks2.end(); ++it)
                         {
                             dp = it->second;
@@ -429,67 +430,63 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
 
                             for(vector< TPairedExtrema >::iterator it2 = Extrema.begin(); it2 != Extrema.end(); it2++)
                                 {
-                                    int p_code_phase = (*it2).MaxIndex%d_samples_per_code;
-                                    int p_doppler = it->first;
                                     Peak peak;
                                     peak.mag = dp.at((*it2).MaxIndex);
                                     peak.doppler = it->first;
                                     peak.code_phase = (*it2).MaxIndex%d_samples_per_code;
-                                    if(highest_peaks.count(p_code_phase))
-                                        {
-                                            for(map<int, Peak>::iterator it3= highest_peaks.at(p_code_phase).begin(); 
-                                                                         it3!= highest_peaks.at(p_code_phase).end(); ++it3)
-                                                {
-                                                    DLOG(INFO) << abs(it3->first-p_doppler);
-                                                    if(abs(it3->first-p_doppler) > d_doppler_step)
-                                                        {
-                                                            highest_peaks.at(p_code_phase)[p_doppler] = peak;
-                                                        }
-                                                    else if(dp.at((*it2).MaxIndex) > it3->second.mag)
-                                                        {
-                                                            highest_peaks.at(p_code_phase).erase(it3->first); 
-                                                            highest_peaks.at(p_code_phase)[p_doppler] = peak;
-                                                        }
-                                                }
-                                        }
-                                    else
-                                        {
-                                            highest_peaks[p_code_phase][p_doppler] = peak;
-                                        }
-                                    //DLOG(INFO) << "doppler: " << it->first;
-                                    //DLOG(INFO)  << " maximum code phase " << (*it2).MaxIndex%d_samples_per_code << " " << dp.at((*it2).MaxIndex); 
+                                    d_highest_peaks[peak.mag] = peak;
                                 }
                         }
-                    DLOG(INFO) << "remove exces doppler ";
-                    map<float, Peak> d_highest_peaks;
-                    std::map<int, map<int,Peak>>::iterator it;
-                    for (it=highest_peaks.begin(); it!=highest_peaks.end(); ++it)
-                    {
-                        for (map<int, Peak>::iterator it2=it->second.begin(); it2!=it->second.end(); ++it2)
-                        {
-                            d_highest_peaks[it2->second.mag] = it2->second;
-                            DLOG(INFO) << "doppler: " << it2->second.doppler;
-                            DLOG(INFO)  << " maximum code phase " << it2->second.code_phase << " " << it2->second.mag; 
-                        }
-                    }
 
-                    DLOG(INFO) << "peaks size: "<< d_highest_peaks.size();
+
+                    std::map<float, Peak>::reverse_iterator rit;
+                    std::map<float, Peak>::reverse_iterator rit2;
+                    map<float, Peak> d_highest_peaks_reduced;
+                    bool use_peak;
+                    DLOG(INFO) << "### all peaks: ###";
+                    for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)
+                    {
+                        DLOG(INFO) << "peak " << rit->first 
+                            << " code phase " << rit->second.code_phase 
+                            << " doppler: " << rit->second.doppler;
+                        use_peak = true;
+                        for (rit2=d_highest_peaks_reduced.rbegin(); rit2!=d_highest_peaks_reduced.rend(); ++rit2)
+                        {
+                            if(abs(rit->second.code_phase - rit2->second.code_phase) <= 2 && 
+                               abs(rit->second.doppler - rit2->second.doppler) <= d_doppler_step)
+                                {
+                                    use_peak = false;
+                                }
+                        } 
+
+                        if(use_peak)
+                            {
+                                d_highest_peaks_reduced[rit->first] = rit->second;
+                            }
+                    }
+                    DLOG(INFO) << "#####";
+
+                    DLOG(INFO) << "peaks size: "<< d_highest_peaks_reduced.size();
                     //If there is more than one peak present, acquire the highest
-                    if(d_peak == 0 && d_highest_peaks.size() > 0)
+                    if(d_peak == 0 && d_highest_peaks_reduced.size() > 0)
                     {
                         found_peak = true;
                     }
-                    else if(d_highest_peaks.size() >= d_peak)
+                    else if(d_highest_peaks_reduced.size() >= d_peak)
                     {
                         std::map<float, Peak>::reverse_iterator rit;
 
                         unsigned int i = 1;
-                        for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)
+                        DLOG(INFO) << "### peaks: ###";
+                        for (rit=d_highest_peaks_reduced.rbegin(); rit!=d_highest_peaks_reduced.rend(); ++rit)
                         {
+                            DLOG(INFO) << "peak " << rit->first 
+                                       << " code phase " << rit->second.code_phase 
+                                       << " doppler: " << rit->second.doppler;
                             if(i == d_peak)
                                 {
                                     found_peak = true; 
-                                    DLOG(INFO) << "peak found";
+                                    DLOG(INFO) << "!!! peak found !!!";
                                     DLOG(INFO) << "peak " << rit->first; 
                                     DLOG(INFO) << "d_peak " << d_peak; 
                                     DLOG(INFO) << "code phase " << rit->second.code_phase; 
@@ -500,6 +497,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                             
                             ++i;
                         }
+                    DLOG(INFO) << "#####";
                     }
             
                 }

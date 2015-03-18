@@ -44,6 +44,7 @@
 #include "gps_ephemeris.h"
 #include <string>
 #include "gnss_synchro.h"
+#include <boost/circular_buffer.hpp>
 using namespace std; 
 struct Satpos{
     double x;
@@ -86,6 +87,8 @@ public:
     double  d_max_alt = 2e3;
     double  d_cno_min = 1.0;
     int d_cno_count = 4;
+    boost::circular_buffer<double> stdev_cb;
+
 
     /*!
      * \brief Default destructor.
