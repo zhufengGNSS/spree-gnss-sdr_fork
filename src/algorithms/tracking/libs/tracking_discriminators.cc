@@ -111,6 +111,22 @@ double dll_nc_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1)
         }
 }
 
+float dll_c_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1)
+{
+    float P_early, P_late;
+    P_early = std::abs(early_s1);
+    P_late  = std::abs(late_s1);
+    return (P_early - P_late) / (2*P_late);
+}
+
+float all(gr_complex early_s1, gr_complex late_s1, float lambda)
+{
+    float P_early, P_late;
+    P_early = std::abs(early_s1);
+    P_late  = std::abs(late_s1);
+    return (P_early + P_late) / lambda; 
+}
+
 /*
  * DLL Noncoherent Very Early Minus Late Power (VEMLP) normalized discriminator, using the outputs
  * of four correlators, Very Early (VE), Early (E), Late (L) and Very Late (VL):

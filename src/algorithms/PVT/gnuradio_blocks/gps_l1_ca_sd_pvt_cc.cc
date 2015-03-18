@@ -189,13 +189,13 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                         {
                                             channels_used.remove(channel_added.at(in[i][0].PRN));
                                             channels_used.push_back(i);
-                                            channel_added[in[i][0].PRN] = in[i][0].peak; 
+                                            channel_added[in[i][0].PRN] = i; 
                                         }
                                 }
                             else
                                 {
                                     channels_used.push_back(i);
-                                    channel_added[in[i][0].PRN] = in[i][0].peak; 
+                                    channel_added[in[i][0].PRN] = i; 
                                 }
                         }
                 }

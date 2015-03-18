@@ -37,6 +37,7 @@ set(TRACKING_LIB_SOURCES
      tcp_communication.cc
      tcp_packet_data.cc
      tracking_2nd_DLL_filter.cc
+     tracking_2nd_ALL_filter.cc
      tracking_2nd_PLL_filter.cc
      tracking_discriminators.cc
      tracking_FLL_PLL_filter.cc
