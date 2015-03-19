@@ -111,8 +111,8 @@ Gps_L1_Ca_Dll_Pll_CADLL_Tracking_cc::Gps_L1_Ca_Dll_Pll_CADLL_Tracking_cc(
     // Initialize tracking  ==========================================
     d_code_loop_filter.set_DLL_BW(dll_bw_hz);
     d_code_loop_filter_m.set_DLL_BW(dll_bw_hz);
-    d_amplitude_loop_filter.set_ALL_BW(dll_bw_hz/100.0);
-    d_amplitude_loop_filter_m.set_ALL_BW(dll_bw_hz/100.0);
+    d_amplitude_loop_filter.set_ALL_BW(dll_bw_hz/1e5);
+    d_amplitude_loop_filter_m.set_ALL_BW(dll_bw_hz/1e5);
     d_carrier_loop_filter.set_PLL_BW(pll_bw_hz);
 
     //--- DLL variables --------------------------------------------------------
@@ -526,38 +526,41 @@ int Gps_L1_Ca_Dll_Pll_CADLL_Tracking_cc::general_work (int noutput_items, gr_vec
             float P_early, P_late;
             P_early = std::abs(*d_Early);
             P_late  = std::abs(*d_Late);
-            std::cout << "all1: " << (P_early + P_late) << " " << *d_Early << " " << *d_Late <<std::endl;
-            std::cout << "all2: " << *d_Early_m << " " << *d_Late_m <<std::endl;
+            //std::cout << "all1: " << (P_early + P_late) << " " << *d_Early << " " << *d_Late <<std::endl;
+            //std::cout << "all2: " << *d_Early_m << " " << *d_Late_m <<std::endl;
             float a1_, a2_;
+            float lambda  = 22e3;
             if(CADLL_init)
                 {
-                    a1 = 0.0001;
-                    a1_ = all(*d_Early, *d_Late, 0.99); 
-                    std::cout << "a1_ " << a1_ << " " <<  d_amplitude_loop_filter.get_amplitude_nco(a1_) << std::endl;
+                    a1 = 1;
+                    a1_ = all(*d_Prompt, lambda); 
+                    //std::cout << "a1_ " << a1_ << " " <<  d_amplitude_loop_filter.get_amplitude_nco(a1_) << std::endl;
                     //a1 = a1 + (a1_-a1)*d_amplitude_loop_filter.get_amplitude_nco(a1_);
                     a1 = a1+(a1_-a1)*1e-3;
                     a2 = -a1/2;
-                    std::cout << "a1 " << a1 << " a2: "<< a2 << std::endl;
+                    //std::cout << "a1 " << a1 << " a2: "<< a2 << std::endl;
                 }
             else
                 {
-                    a1_ = all(*d_Early, *d_Late, 0.99); 
-                    std::cout << "a1_ " << a1_ << " " <<  d_amplitude_loop_filter.get_amplitude_nco(a1_) << std::endl;
-                    a2_ = all(*d_Early_m, *d_Late_m, 0.99); 
-                    std::cout << "a2_ " << a2_ << " " <<  d_amplitude_loop_filter_m.get_amplitude_nco(a2_) << std::endl;
+                    //a1_ = all(*d_Early, *d_Late, 0.99); 
+                    a1_ = all(*d_Prompt, lambda); 
+                    //std::cout << "a1_ " << a1_ << " " <<  d_amplitude_loop_filter.get_amplitude_nco(a1_) << std::endl;
+                    //a2_ = all(*d_Early_m, *d_Late_m, 0.99); 
+                    a2_ = all(*d_Prompt_m, lambda); 
+                    //std::cout << "a2_ " << a2_ << " " <<  d_amplitude_loop_filter_m.get_amplitude_nco(a2_) << std::endl;
                     //a1 = a1 + (a1_-a1)*d_amplitude_loop_filter.get_amplitude_nco(a1_);
                     //a2 = a2 + (a2_-a2)*d_amplitude_loop_filter_m.get_amplitude_nco(a2_);
                     a1 = a1+(a1_-a1)*1e-3;
                     a2 = a2+(a2_-a2)*1e-3;
-                    std::cout << "a1 " << a1 << " a2: "<< a2 << std::endl;
+                    //std::cout << "a1 " << a1 << " a2: "<< a2 << std::endl;
                 }
-            a1 = 1; 
-            a2 = -a1/2.0;
+            //a1 = 1; 
+            //a2 = -a1/2.0;
 
             // ################## DLL1 ##########################################################
             // DLL discriminator
-            std::cout << "early, late: " << *d_Early << " " << *d_Late << std::endl;
-            code_error_chips = dll_nc_e_minus_l_normalized(*d_Early, *d_Late); //[chips/Ti]
+            //std::cout << "early, late: " << *d_Early << " " << *d_Late << std::endl;
+            code_error_chips = dll_c_e_minus_l_normalized(*d_Early, *d_Late); //[chips/Ti]
             // Code discriminator filter
             code_error_filt_chips = d_code_loop_filter.get_code_nco(code_error_chips); //[chips/second]
             //Code phase accumulator
@@ -570,7 +573,7 @@ int Gps_L1_Ca_Dll_Pll_CADLL_Tracking_cc::general_work (int noutput_items, gr_vec
             float code_error_filt_secs_m;
             if(!CADLL_init)
                 {
-                    code_error_chips_m = dll_nc_e_minus_l_normalized(*d_Early_m, *d_Late_m); //[chips/Ti]
+                    code_error_chips_m = dll_c_e_minus_l_normalized(*d_Early_m, *d_Late_m); //[chips/Ti]
                     // Code discriminator filter
                     code_error_filt_chips_m = d_code_loop_filter_m.get_code_nco(code_error_chips_m); //[chips/second]
                     //Code phase accumulator
@@ -593,21 +596,21 @@ int Gps_L1_Ca_Dll_Pll_CADLL_Tracking_cc::general_work (int noutput_items, gr_vec
             if(CADLL_init)
                 {
                     K_blk_samples_m = K_blk_samples;
-                    d_rem_code_phase_samples_m = d_rem_code_phase_samples+45;
+                    d_rem_code_phase_samples_m = d_rem_code_phase_samples+75;
                 }
             else
                 {
                     K_blk_samples_m = T_prn_samples + d_rem_code_phase_samples_m + code_error_filt_secs_m * (double)d_fs_in;
                 }
-            std::cout << "K_blk: " << K_blk_samples << " " << K_blk_samples_m << std::endl;
+            /*std::cout << "K_blk: " << K_blk_samples << " " << K_blk_samples_m << std::endl;
             std::cout << "code_error_filt_secs: " << code_error_filt_secs << " " << code_error_filt_secs_m<< std::endl;
             std::cout << "d_rem_code_phase_samples: " << d_rem_code_phase_samples<< " " << d_rem_code_phase_samples_m<< std::endl;
             std::cout << "code_error_chips: " << code_error_chips<< " " << code_error_chips_m<< std::endl;
             std::cout << "code_error_filt_chips: " << code_error_filt_chips<< " " << code_error_filt_chips_m<< std::endl;
-
+*/
             d_current_prn_length_samples = round(K_blk_samples); //round to a discrete samples
             d_current_prn_length_samples_m = round(K_blk_samples_m); //round to a discrete samples
-            std::cout << "d_current_prn_length_samples: " << d_current_prn_length_samples<< " " << d_current_prn_length_samples_m<< std::endl;
+  //          std::cout << "d_current_prn_length_samples: " << d_current_prn_length_samples<< " " << d_current_prn_length_samples_m<< std::endl;
             
             //d_rem_code_phase_samples = K_blk_samples - d_current_prn_length_samples; //rounding error < 1 sample
 
@@ -664,8 +667,8 @@ int Gps_L1_Ca_Dll_Pll_CADLL_Tracking_cc::general_work (int noutput_items, gr_vec
             current_synchro_data.Tracking_timestamp_secs = ((double)d_sample_counter + (double)d_rem_code_phase_samples)/(double)d_fs_in;
             DLOG(INFO) << "unit 1: " << ((double)d_sample_counter + (double)d_rem_code_phase_samples)/(double)d_fs_in;
             DLOG(INFO) << "unit 2: " << ((double)d_sample_counter + (double)d_rem_code_phase_samples_m)/(double)d_fs_in;
-            std::cout << "unit 1: " << ((double)d_sample_counter + (double)d_rem_code_phase_samples)/(double)d_fs_in << std::endl;
-            std::cout << "unit 2: " << ((double)d_sample_counter + (double)d_rem_code_phase_samples_m)/(double)d_fs_in << std::endl;
+            //std::cout << "unit 1: " << ((double)d_sample_counter + (double)d_rem_code_phase_samples)/(double)d_fs_in << std::endl;
+            //std::cout << "unit 2: " << ((double)d_sample_counter + (double)d_rem_code_phase_samples_m)/(double)d_fs_in << std::endl;
             
             //compute remnant code phase samples AFTER the Tracking timestamp
             d_rem_code_phase_samples = K_blk_samples - d_current_prn_length_samples; //rounding error < 1 sample
