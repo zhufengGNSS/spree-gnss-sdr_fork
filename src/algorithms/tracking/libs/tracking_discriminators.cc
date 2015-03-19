@@ -111,25 +111,14 @@ double dll_nc_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1)
         }
 }
 
-float dll_c_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1)
+float dll_c_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1)
 {
-    float Z_I;
-    Z_I = std::sqrt(early_s1.real()*early_s1.real()+late_s1.real()*late_s1.real());
-    return (early_s1.real() - late_s1.real()) / (2*Z_I);
+    return (early_s1.real() - late_s1.real()) / (2*prompt_s1.real());
 }
 
 //float all(gr_complex early_s1, gr_complex late_s1, float lambda)
 float all(gr_complex prompt_s1, float lambda)
 {
-    /*
-    float P_early, P_late;
-    P_early = std::abs(early_s1);
-    P_late  = std::abs(late_s1);
-    return (early_s1.real() +late_s1.real()) / lambda; 
-    float Z_I;
-    Z_I = std::sqrt(early_s1.real()*early_s1.real()+late_s1.real()*late_s1.real());
-    return Z_I / lambda;
-    */
     return prompt_s1.real() / lambda;
 }
 
