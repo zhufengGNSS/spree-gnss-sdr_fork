@@ -1,4 +1,4 @@
-% /*!
+
 %  * \file gps_l1_ca_dll_pll_read_tracking_dump.m
 %  * \brief Read GNSS-SDR Tracking dump binary file into MATLAB.
 %  * \author Javier Arribas, 2011. jarribas(at)cttc.es
@@ -38,6 +38,7 @@ function [GNSS_tracking] = gps_l1_ca_dll_pll_read_tracking_dump (filename, count
   num_double_vars=2;
   double_size_bytes=8;
   float_size_bytes=4;
+  int_size_bytes=4;
   skip_bytes_each_read=float_size_bytes*num_float_vars+double_size_bytes*num_double_vars;
   bytes_shift=0;
   if (m)
@@ -103,6 +104,7 @@ function [GNSS_tracking] = gps_l1_ca_dll_pll_read_tracking_dump (filename, count
             bytes_shift=bytes_shift+double_size_bytes;
     fseek(f,bytes_shift,'bof'); % move to next interleaved float
     v18 = fread (f, count, 'float64',skip_bytes_each_read-double_size_bytes);
+
     fclose (f);
     
     %%%%%%%% output vars %%%%%%%%
