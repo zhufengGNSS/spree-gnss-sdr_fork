@@ -125,6 +125,8 @@ Gps_L1_Ca_Dll_Pll_Tracking_cc::Gps_L1_Ca_Dll_Pll_Tracking_cc(
     // Get space for a vector with the C/A code replica sampled 1x/chip
     d_ca_code = static_cast<gr_complex*>(volk_malloc(static_cast<int>(GPS_L1_CA_CODE_LENGTH_CHIPS) * sizeof(gr_complex), volk_get_alignment()));
 
+    d_carr_wo = (gr_complex*)volk_malloc(2*d_vector_length * sizeof(gr_complex),volk_get_alignment());
+
     // correlator outputs (scalar)
     d_n_correlator_taps = 3; // Early, Prompt, and Late
     d_correlator_outs = static_cast<gr_complex*>(volk_malloc(d_n_correlator_taps*sizeof(gr_complex), volk_get_alignment()));
@@ -283,9 +285,12 @@ void Gps_L1_Ca_Dll_Pll_Tracking_cc::start_tracking()
 Gps_L1_Ca_Dll_Pll_Tracking_cc::~Gps_L1_Ca_Dll_Pll_Tracking_cc()
 {
     d_dump_file.close();
+    d_dump_signal.close();
+    d_dump_signal_wo.close();
 
     volk_free(d_local_code_shift_chips);
     volk_free(d_correlator_outs);
+    volk_free(d_prompt_code);
     volk_free(d_ca_code);
 
     delete[] d_Prompt_buffer;
@@ -473,6 +478,10 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
             tmp_E = std::abs<float>(d_correlator_outs[0]);
             tmp_P = std::abs<float>(d_correlator_outs[1]);
             tmp_L = std::abs<float>(d_correlator_outs[2]);
+            float delta_ = delta(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            float RT_ = RT(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            float ELP_ = ELP(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            float MD_ = MD(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
             try
             {
                 // EPR
@@ -509,6 +518,12 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
                 d_dump_file.write(reinterpret_cast<char*>(&tmp_double), sizeof(double));
                 tmp_double = static_cast<double>(d_sample_counter + d_current_prn_length_samples);
                 d_dump_file.write(reinterpret_cast<char*>(&tmp_double), sizeof(double));
+
+                // vestigial signal defense paramenters
+                d_dump_file.write((char*)&delta_, sizeof(float));
+                d_dump_file.write((char*)&RT_, sizeof(float));
+                d_dump_file.write((char*)&ELP_, sizeof(float));
+                d_dump_file.write((char*)&MD_, sizeof(float));
             }
             catch (const std::ifstream::failure &e)
             {
@@ -528,6 +543,8 @@ void Gps_L1_Ca_Dll_Pll_Tracking_cc::set_channel(unsigned int channel)
 {
     d_channel = channel;
     LOG(INFO) << "Tracking Channel set to " << d_channel;
+    std::string d_dump_signal_filename = "input_signal_";
+    std::string d_dump_signal_filename_wo = "carrier_wipeoff_";
     // ############# ENABLE DATA FILE LOG #################
     if (d_dump == true)
         {
@@ -544,6 +561,38 @@ void Gps_L1_Ca_Dll_Pll_Tracking_cc::set_channel(unsigned int channel)
                     catch (const std::ifstream::failure &e)
                     {
                             LOG(WARNING) << "channel " << d_channel << " Exception opening trk dump file " << e.what();
+                    }
+                }
+
+            if (d_dump_signal.is_open() == false)
+                {
+                    try
+                    {
+                            d_dump_signal_filename.append(boost::lexical_cast<std::string>(d_channel));
+                            d_dump_signal_filename.append(".dat");
+                            d_dump_signal.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+                            d_dump_signal.open(d_dump_signal_filename.c_str(), std::ios::out | std::ios::binary);
+                            LOG(INFO) << "Tracking signal dump enabled on channel " << d_channel << " Log file: " << d_dump_signal_filename.c_str() << std::endl;
+                    }
+                    catch (std::ifstream::failure e)
+                    {
+                            LOG(WARNING) << "channel " << d_channel << " Exception opening trk signal dump file " << e.what() << std::endl;
+                    }
+                }
+
+            if (d_dump_signal_wo.is_open() == false)
+                {
+                    try
+                    {
+                            d_dump_signal_filename_wo.append(boost::lexical_cast<std::string>(d_channel));
+                            d_dump_signal_filename_wo.append(".dat");
+                            d_dump_signal_wo.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+                            d_dump_signal_wo.open(d_dump_signal_filename_wo.c_str(), std::ios::out | std::ios::binary);
+                            LOG(INFO) << "Tracking signal dump enabled on channel " << d_channel << " Log file: " << d_dump_signal_filename_wo.c_str() << std::endl;
+                    }
+                    catch (std::ifstream::failure e)
+                    {
+                            LOG(WARNING) << "channel " << d_channel << " Exception opening trk signal dump file " << e.what() << std::endl;
                     }
                 }
         }

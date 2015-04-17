@@ -117,9 +117,11 @@ float dll_c_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1, gr_com
 }
 
 //float all(gr_complex early_s1, gr_complex late_s1, float lambda)
-float all(gr_complex prompt_s1, float lambda)
+//float all(gr_complex prompt_s1, float lambda)
+float all(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1, float lambda)
 {
-    return prompt_s1.real() / lambda;
+    float tmp = (2*prompt_s1.real())/ (early_s1.real() + late_s1.real());
+    return prompt_s1.real()/ lambda;
 }
 
 /*
@@ -144,4 +146,31 @@ double dll_nc_vemlp_normalized(gr_complex very_early_s1, gr_complex early_s1, gr
         {
             return (P_early - P_late) / ((P_early + P_late));
         }
+}
+
+
+float delta(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1)
+{
+    return (early_s1.real() - late_s1.real()) / (2*prompt_s1.real());
+
+}
+
+float RT(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1)
+{
+    return (early_s1.real() + late_s1.real()) / (2*prompt_s1.real());
+}
+
+float ELP(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1)
+{
+    float tmp = late_s1.imag()/early_s1.real()-early_s1.imag()/late_s1.real();
+    return atan(tmp);
+}
+
+float MD(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1)
+{
+    float P_early, P_late, P_prompt;
+    P_early = std::abs(early_s1);
+    P_late  = std::abs(late_s1);
+    P_prompt = std::abs(prompt_s1);
+    return (P_early-P_late)/P_prompt;
 }

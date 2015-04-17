@@ -1,5 +1,5 @@
 /*!
- * \file tracking_2nd_ALL_filter.h
+ * \file integrator.h
  * \brief Interface of a 2nd order ALL filter for code tracking loop.
  * \author Javier Arribas, 2011. jarribas(at)cttc.es
  *
@@ -34,45 +34,22 @@
  * -------------------------------------------------------------------------
  */
 
-#ifndef GNSS_SDR_TRACKING_2ND_ALL_FILTER_H_
-#define GNSS_SDR_TRACKING_2ND_ALL_FILTER_H_
+#ifndef GNSS_SDR_INTEGRATOR_H_
+#define GNSS_SDR_INTEGRATOR_H
 
-/*!
- * \brief This class implements a 2nd order ALL filter for code tracking loop.
- *
- * The algorithm is described in:
- * K.Borre, D.M.Akos, N.Bertelsen, P.Rinder, and S. H. Jensen, A Software-Defined GPS
- * and Galileo Receiver. A Single-Frequency Approach,
- * Birkhauser, 2007, Applied and Numerical Harmonic Analysis.
- */
-class Tracking_2nd_ALL_filter
+class Integrator
 {
 private:
     // PLL filter parameters
-    float d_tau1_amplitude;
-    float d_tau2_amplitude;
-    float d_pdi_amplitude;
-    float d_allnoisebandwidth;
-    float d_alldampingratio;
-    float d_old_amplitude_error;
-    float d_old_amplitude_nco;
-    float old_result;
+    float T;
     float old_discriminator;
-    float x;
-    float x1;
-    float x2;
-    float y1;
-    float y2;
-    void calculate_lopp_coef(float* tau1,float* tau2, float lbw, float zeta, float k);
+    float old_result;
 
 public:
-    void set_ALL_BW(float all_bw_hz);                //! Set DLL filter bandwidth [Hz]
-    void set_pdi(float pdi_amplitude); //! Set Summation interval for code [s]
     void initialize(); //! Start tracking with acquisition information
-    float get_amplitude_nco(float ALL_discriminator);     //! Numerically controlled oscillator
-    Tracking_2nd_ALL_filter(float pdi_code);
-    Tracking_2nd_ALL_filter();
-    ~Tracking_2nd_ALL_filter();
+    float integrate(float discriminator);     //! Numerically controlled oscillator
+    Integrator();
+    ~Integrator();
 };
 
 #endif
