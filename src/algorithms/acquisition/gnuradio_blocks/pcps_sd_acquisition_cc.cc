@@ -45,6 +45,7 @@
 #include "persistence1d.hpp"
 #include <iostream>
 #include <fstream>
+
 using namespace std;
 using namespace p1d;
 extern concurrent_map<map<string, int>> global_code_phase;
@@ -300,8 +301,15 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     doppler=-(int)d_doppler_max+d_doppler_step*doppler_index;
                     peaks2[doppler] = vector<float> (d_fft_size);
                 }
+/*
+            for(unsigned int i = 0; i< 10; i++)
+                {
+                    std::cout << "in " << in[i] << " ss: " << d_sample_counter << std::endl;
+                
 
-            
+*/            
+
+            //std::cout << "! " << in[0] << " " << in[1] << " " << in[0]*in[1] << std::endl;
             float threshold_spoofing = d_threshold * d_input_power * (fft_normalization_factor * fft_normalization_factor); 
 
             // 2- Doppler frequency search loop
