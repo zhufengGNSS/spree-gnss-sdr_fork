@@ -164,6 +164,8 @@ private:
     // file dump
     std::string d_dump_filename;
     std::ofstream d_dump_file;
+    std::ofstream d_dump_signal;
+    std::ofstream d_dump_signal_wo;
 
     std::map<std::string, std::string> systemName;
     std::string sys;

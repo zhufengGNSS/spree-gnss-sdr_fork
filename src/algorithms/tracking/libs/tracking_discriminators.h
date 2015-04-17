@@ -87,7 +87,12 @@ double pll_cloop_two_quadrant_atan(gr_complex prompt_s1);
 double dll_nc_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1);
 float dll_nc_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1);
 float dll_c_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1);
-float all(gr_complex prompt_s1, float lambda);
+float all(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1, float lambda);
+float delta(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1);
+float RT(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1);
+float ELP(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1);
+float MD(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1);
+//float all(gr_complex prompt_s1, float lambda);
 
 
 /*! \brief DLL Noncoherent Very Early Minus Late Power (VEMLP) normalized discriminator

@@ -52,58 +52,68 @@ function [GNSS_tracking] = gps_l1_ca_dll_pll_read_tracking_dump (filename, count
   f = fopen (filename, 'rb');
   if (f < 0)
   else
-    v1 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v2 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v3 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v4 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v5 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v6 = fread (f, count, 'uint32',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v7 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v8 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v9 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v10 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v11 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v12 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v13 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v14 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
-        bytes_shift=bytes_shift+float_size_bytes;
-    fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v15 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%    v1 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v2 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v3 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v4 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v5 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v6 = fread (f, count, 'uint32',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v7 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v8 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v9 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v10 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v11 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v12 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v13 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v14 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%        bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v15 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%            bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v16 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+%            bytes_shift=bytes_shift+float_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v17 = fread (f, count, 'float64',skip_bytes_each_read-double_size_bytes);
+%            bytes_shift=bytes_shift+double_size_bytes;
+%    fseek(f,bytes_shift,'bof'); % move to next interleaved float
+%    v18 = fread (f, count, 'float64',skip_bytes_each_read-double_size_bytes);
+    v18 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
             bytes_shift=bytes_shift+float_size_bytes;
     fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v16 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+    v19 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
             bytes_shift=bytes_shift+float_size_bytes;
     fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v17 = fread (f, count, 'float64',skip_bytes_each_read-double_size_bytes);
-            bytes_shift=bytes_shift+double_size_bytes;
+    v20 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
+            bytes_shift=bytes_shift+float_size_bytes;
     fseek(f,bytes_shift,'bof'); % move to next interleaved float
-    v18 = fread (f, count, 'float64',skip_bytes_each_read-double_size_bytes);
+    v21 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
 
     fclose (f);
     
@@ -143,42 +153,52 @@ function [GNSS_tracking] = gps_l1_ca_dll_pll_read_tracking_dump (filename, count
 % 				d_dump_file.write((char*)&tmp_float, sizeof(float));
 % 				d_dump_file.write((char*)&d_sample_counter_seconds, sizeof(double));
                 
-    E=v1;
-    P=v2;
-    L=v3;
-    prompt_I=v4;
-    prompt_Q=v5;
-    PRN_start_sample=v6;
-    acc_carrier_phase_rad=v7;
-    carrier_doppler_hz=v8;
-    code_freq_hz=v9;
-    carr_error=v10;
-    carr_nco=v11;
-    code_error=v12;
-    code_nco=v13;
-    CN0_SNV_dB_Hz=v14;
-    carrier_lock_test=v15;
-    var1=v16;
-    var2=v17;
-    var3=v18;
+%    E=v1;
+%    P=v2;
+%    L=v3;
+%    prompt_I=v4;
+%    prompt_Q=v5;
+%    PRN_start_sample=v6;
+%    acc_carrier_phase_rad=v7;
+%    carrier_doppler_hz=v8;
+%    code_freq_hz=v9;
+%    carr_error=v10;
+%    carr_nco=v11;
+%    code_error=v12;
+%    code_nco=v13;
+%    CN0_SNV_dB_Hz=v14;
+%    carrier_lock_test=v15;
+%    var1=v16;
+%    var2=v17;
+%    var3=v18;
     
-    GNSS_tracking.E=E;
-    GNSS_tracking.P=P;
-    GNSS_tracking.L=L;
-    GNSS_tracking.prompt_I=prompt_I;
-    GNSS_tracking.prompt_Q=prompt_Q;
-    GNSS_tracking.PRN_start_sample=PRN_start_sample;
-    GNSS_tracking.acc_carrier_phase_rad=acc_carrier_phase_rad;
-    GNSS_tracking.carrier_doppler_hz=carrier_doppler_hz;
-    GNSS_tracking.code_freq_hz=code_freq_hz;
-    GNSS_tracking.carr_error=carr_error;
-    GNSS_tracking.carr_nco=carr_nco;
-    GNSS_tracking.code_error=code_error;
-    GNSS_tracking.code_nco=code_nco;
-    GNSS_tracking.CN0_SNV_dB_Hz=CN0_SNV_dB_Hz;
-    GNSS_tracking.carrier_lock_test=carrier_lock_test;
-    GNSS_tracking.var1=var1;
-    GNSS_tracking.var2=var2;
-    GNSS_tracking.var3=var3;
+%    GNSS_tracking.E=E;
+%    GNSS_tracking.P=P;
+%    GNSS_tracking.L=L;
+%    GNSS_tracking.prompt_I=prompt_I;
+%    GNSS_tracking.prompt_Q=prompt_Q;
+%    GNSS_tracking.PRN_start_sample=PRN_start_sample;
+%    GNSS_tracking.acc_carrier_phase_rad=acc_carrier_phase_rad;
+%    GNSS_tracking.carrier_doppler_hz=carrier_doppler_hz;
+%    GNSS_tracking.code_freq_hz=code_freq_hz;
+%    GNSS_tracking.carr_error=carr_error;
+%    GNSS_tracking.carr_nco=carr_nco;
+%    GNSS_tracking.code_error=code_error;
+%    GNSS_tracking.code_nco=code_nco;
+%    GNSS_tracking.CN0_SNV_dB_Hz=CN0_SNV_dB_Hz;
+%    GNSS_tracking.carrier_lock_test=carrier_lock_test;
+%    GNSS_tracking.var1=var1;
+%    GNSS_tracking.var2=var2;
+%    GNSS_tracking.var3=var3;
+
+    delta = v18;
+    RT = v19;
+    ELP = v20;
+    MD = v21;
+    
+    GNSS_tracking.delta=delta;
+    GNSS_tracking.RT=RT;
+    GNSS_tracking.ELP=ELP;
+    GNSS_tracking.MD=MD;
   end
   

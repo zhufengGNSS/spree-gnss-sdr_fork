@@ -54,7 +54,7 @@ void Tracking_2nd_ALL_filter::set_ALL_BW(float all_bw_hz)
 {
     //Calculate filter coefficient values
     d_allnoisebandwidth  = all_bw_hz;
-    calculate_lopp_coef(&d_tau1_amplitude, &d_tau2_amplitude, d_allnoisebandwidth, d_alldampingratio, 1.0);// Calculate filter coefficient values
+    calculate_lopp_coef(&d_tau1_amplitude, &d_tau2_amplitude, d_allnoisebandwidth, d_alldampingratio, 1000);// Calculate filter coefficient values
 }
 
 
@@ -64,16 +64,42 @@ void Tracking_2nd_ALL_filter::initialize()
     // amplitude tracking loop parameters
     d_old_amplitude_nco   = 0.0;
     d_old_amplitude_error = 0.0;
+    old_result = 0.0;
+    old_discriminator = 0.0;
+    x1 = 0.0;
+    x = 0.0;
+    x2 = 0.0;
+    y1 = 0.0;
+    y2 = 0.0;
 }
 
 
 
 float Tracking_2nd_ALL_filter::get_amplitude_nco(float ALL_discriminator)
 {
+    /*
+    float T = 0.01;
+    float zeta = 0.7;
+    float lbw = 10;
+    float Wn;
+    Wn = lbw*8*zeta / (4*zeta*zeta + 1);
+    float a0 = (4/(T*T) + 4*zeta*Wn/T + Wn*Wn);
+    float a1 = 2*Wn*Wn - 8/(T*T); 
+    x2 = x1;
+    x1 = x;
+    x = ALL_discriminator;
+    */
     float amplitude_nco;
     amplitude_nco = d_old_amplitude_nco+ (d_tau2_amplitude/d_tau1_amplitude)*(ALL_discriminator - d_old_amplitude_error) + (ALL_discriminator+d_old_amplitude_error) * (d_pdi_amplitude/(2*d_tau1_amplitude));
     d_old_amplitude_nco   = amplitude_nco;
     d_old_amplitude_error = ALL_discriminator; //[chips]
+/*  
+    float result = Wn*Wn*(x+2*x1+x2)-a1*y1-a0*y2;
+    result = result/a0;
+    y2 = y1;
+    y1 = result;
+    return result;
+   */ 
     return amplitude_nco;
 }
 
@@ -85,7 +111,7 @@ Tracking_2nd_ALL_filter::Tracking_2nd_ALL_filter (float pdi_amplitude)
 
 Tracking_2nd_ALL_filter::Tracking_2nd_ALL_filter ()
 {
-    d_pdi_amplitude = 0.001;// Summation interval for amplitude 
+    d_pdi_amplitude = 0.01;// Summation interval for amplitude 
     d_alldampingratio = 0.7;
 }
 

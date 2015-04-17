@@ -51,6 +51,7 @@
 #include "tracking_2nd_DLL_filter.h"
 #include "tracking_2nd_ALL_filter.h"
 #include "tracking_2nd_PLL_filter.h"
+#include "integrator.h"
 #include "correlator.h"
 
 class Gps_L1_Ca_Dll_Pll_CADLL_Tracking_cc;
@@ -157,9 +158,13 @@ private:
     Tracking_2nd_ALL_filter d_amplitude_loop_filter;
     Tracking_2nd_ALL_filter d_amplitude_loop_filter_m;
     Tracking_2nd_PLL_filter d_carrier_loop_filter;
+    Integrator d_integrator;
+    Integrator d_integrator_m;
 
     //ALL
-    float a1, a2;
+    float a1 = 1e-5;
+    float a2;
+    bool first_run = true;
 
     // acquisition
     float d_acq_code_phase_samples;
@@ -174,6 +179,9 @@ private:
     float d_acc_carrier_phase_rad;
     float d_code_phase_samples;
     float d_acc_code_phase_secs;
+    float d_acc_code_phase_secs_m;
+
+    double delay;
 
     //PRN period in samples
     int d_current_prn_length_samples;
@@ -181,7 +189,11 @@ private:
 
     //processing samples counters
     unsigned long int d_sample_counter;
+    unsigned long int d_sample_counter_m;
     unsigned long int d_acq_sample_stamp;
+    double d_sample_counter_f;
+    double d_sample_counter_fm;
+    
 
     // CN0 estimation and lock detector
     int d_cn0_estimation_counter;
