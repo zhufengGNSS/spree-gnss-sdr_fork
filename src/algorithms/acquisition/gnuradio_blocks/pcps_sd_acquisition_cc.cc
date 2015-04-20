@@ -46,9 +46,8 @@
 #include <iostream>
 #include <fstream>
 
-using namespace std;
 using namespace p1d;
-extern concurrent_map<map<string, int>> global_code_phase;
+extern concurrent_map< std::map< std::string, int>> global_code_phase;
 
 struct Peak{
     int code_phase;
@@ -294,12 +293,12 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             volk_32f_accumulator_s32f_a(&d_input_power, d_magnitude, d_fft_size);
             d_input_power /= (float)d_fft_size;
             
-            map<double, map<string, double>> peaks;
-            map<int, vector<float>> peaks2;
+             std::map<double,  std::map< std::string, double>> peaks;
+             std::map<int,  std::vector<float>> peaks2;
             for (unsigned int doppler_index=0;doppler_index<d_num_doppler_bins;doppler_index++)
                 {
                     doppler=-(int)d_doppler_max+d_doppler_step*doppler_index;
-                    peaks2[doppler] = vector<float> (d_fft_size);
+                    peaks2[doppler] =  std::vector<float> (d_fft_size);
                 }
 /*
             for(unsigned int i = 0; i< 10; i++)
@@ -349,7 +348,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         if(d_magnitude[i] > threshold_spoofing)
                             {
                                 tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
-                                map<string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
+                                 std::map< std::string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
                                 peaks[tmp] = mtmp;
                             }
                         peaks2.at(doppler).push_back(tmp);
@@ -424,19 +423,19 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                 {    
                     //Find the local maxima for the peaks for each doppler bin
                     Persistence1D p;
-                    vector<float> dp; 
+                     std::vector<float> dp; 
                     threshold_spoofing = threshold_spoofing/(fft_normalization_factor * fft_normalization_factor);
-                    map<float, Peak> d_highest_peaks;
-                    for(map<int, vector<float>>::iterator it = peaks2.begin(); it!=peaks2.end(); ++it)
+                     std::map<float, Peak> d_highest_peaks;
+                    for( std::map<int,  std::vector<float>>::iterator it = peaks2.begin(); it!=peaks2.end(); ++it)
                         {
                             dp = it->second;
                             if(*std::max_element(dp.begin(), dp.end()) < threshold_spoofing) 
                                 continue;
                             p.RunPersistence(dp);
-                            vector <TPairedExtrema> Extrema;
+                             std::vector <TPairedExtrema> Extrema;
                             p.GetPairedExtrema(Extrema, 0);
 
-                            for(vector< TPairedExtrema >::iterator it2 = Extrema.begin(); it2 != Extrema.end(); it2++)
+                            for( std::vector< TPairedExtrema >::iterator it2 = Extrema.begin(); it2 != Extrema.end(); it2++)
                                 {
                                     Peak peak;
                                     peak.mag = dp.at((*it2).MaxIndex);
@@ -449,7 +448,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
 
                     std::map<float, Peak>::reverse_iterator rit;
                     std::map<float, Peak>::reverse_iterator rit2;
-                    map<float, Peak> d_highest_peaks_reduced;
+                     std::map<float, Peak> d_highest_peaks_reduced;
                     bool use_peak;
                     DLOG(INFO) << "### all peaks: ###";
                     for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)

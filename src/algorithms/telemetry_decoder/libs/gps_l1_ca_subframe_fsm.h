@@ -42,10 +42,8 @@
 #include "gps_utc_model.h"
 #include "spoofing_detector.h"
 
-#include <iostream>
-
 #include <fstream>
-using namespace std;
+
 namespace sc = boost::statechart;
 namespace mpl = boost::mpl;
 

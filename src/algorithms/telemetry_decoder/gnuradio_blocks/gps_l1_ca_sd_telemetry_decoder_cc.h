@@ -40,7 +40,6 @@
 #include "concurrent_queue.h"
 #include "gnss_satellite.h"
 #include <iostream>
-using namespace std;
 
 
 class gps_l1_ca_sd_telemetry_decoder_cc;
@@ -150,7 +149,7 @@ private:
 
     std::string d_dump_filename;
     std::ofstream d_dump_file;
-    ofstream file_corr_value;
+    std::ofstream file_corr_value;
 
 };
 

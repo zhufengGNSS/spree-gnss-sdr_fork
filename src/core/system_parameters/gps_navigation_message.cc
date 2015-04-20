@@ -35,7 +35,6 @@ m * \file gps_navigation_message.cc
 #include <iostream>
 #include <gnss_satellite.h>
 
-
 void Gps_Navigation_Message::reset()
 {
     b_valid_ephemeris_set_flag = false;

@@ -37,7 +37,6 @@
 #include <boost/mpl/list.hpp>
 #include "gnss_satellite.h"
 
-
 //************ GPS WORD TO SUBFRAME DECODER STATE MACHINE **********
 
 struct Ev_gps_word_valid : sc::event<Ev_gps_word_valid> {};

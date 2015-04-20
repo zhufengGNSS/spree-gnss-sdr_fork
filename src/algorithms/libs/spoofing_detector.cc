@@ -40,12 +40,14 @@
 #include "concurrent_map.h"
 #include "concurrent_map_str.h"
 #include "concurrent_queue.h"
-#include <math.h> 
+#include <cmath>
+#include <numeric>
 #include <iomanip>
+
 
 extern concurrent_queue<Spoofing_Message> global_spoofing_queue;
 extern concurrent_map<double> global_last_gps_time;
-using namespace std; 
+
 struct Subframe{
     std::string subframe;
     unsigned int id;
@@ -62,7 +64,7 @@ struct GPS_time_t{
 };
 
 extern concurrent_map<GPS_time_t> global_gps_time;
-extern concurrent_map<map<unsigned int, unsigned int>> global_subframe_check;
+extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
 
 using google::LogMessage;
 
@@ -110,12 +112,12 @@ void Spoofing_Detector::check_position(double lat, double lng, double alt)
 {
     if(alt < 0)
         {
-            string description = "Height of position is negative";
+            std::string description = "Height of position is negative";
             spoofing_detected(description, 4);
         }
     else if(alt > d_max_alt)
         {
-            string description = "Height of position is above 2 km";
+            std::string description = "Height of position is above 2 km";
             spoofing_detected(description, 4);
         }
 }
@@ -142,7 +144,7 @@ void Spoofing_Detector::check_new_TOW(double current_time_ms, int new_week, doub
                     
                 if(old_time < new_time)
                     {
-                        stringstream s;
+                        std::stringstream s;
                         s << " received new ephemeris TOW that is later than last received one and incorrect";
                         s << " difference: " << new_time-old_time;
                         s << " duration: " << duration << std::endl;
@@ -152,7 +154,7 @@ void Spoofing_Detector::check_new_TOW(double current_time_ms, int new_week, doub
                     }
                 else
                     {
-                        stringstream s;
+                        std::stringstream s;
                         s << " received new ephemeris TOW that is earlier than last received one and incorrect";
                         s << " difference: " << new_time-old_time;
                         s << " duration: " << duration << std::endl;
@@ -190,7 +192,7 @@ void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, do
             //what to set as the max difference in position
             if(distance != 0  && ((distance - time_diff*sat_speed) > 500 || (distance - time_diff*sat_speed) < 10e3))
                 {
-                    stringstream s;
+                    std::stringstream s;
                     s << "New satellite position for sat: " << sat << " is further away from last reported position." << std::endl;
                     s << "  Distance: " << distance/1e3 << " [km] " << " time difference: " << time_diff << std::endl;
                     s << "  New pos: (" << p.x << ", " << p.y << ", " << p.z << ") old pos: (" << x << ", " << y << ", " << z << ")";
@@ -209,9 +211,9 @@ void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, do
 void Spoofing_Detector::check_GPS_time()
 {
     std::map<int, GPS_time_t> gps_times = global_gps_time.get_map_copy();
-    set<int> GPS_TOW;
+    std::set<int> GPS_TOW;
     int GPS_week, TOW;
-    set<int> subframe_IDs;
+    std::set<int> subframe_IDs;
     double smallest = 0; 
     double largest = 0;
     GPS_time_t gps_time;
@@ -233,9 +235,9 @@ void Spoofing_Detector::check_GPS_time()
             subframe_IDs.insert(gps_time.subframe_id);
         }
 
-    if(subframe_IDs.size() > 1 || abs(largest-smallest) > 30000)
+    if(subframe_IDs.size() > 1 || std::abs(largest-smallest) > 30000)
     {
-        DLOG(INFO) << "Not all satellites have received the latest subframe, don't compare GPS time " << subframe_IDs.size() << " " <<abs(largest-smallest);
+        DLOG(INFO) << "Not all satellites have received the latest subframe, don't compare GPS time " << subframe_IDs.size() << " " <<std::abs(largest-smallest);
     }
     else if(GPS_TOW.size() >1)
     {
@@ -253,7 +255,7 @@ void Spoofing_Detector::check_GPS_time()
     }
 }
 
-double Spoofing_Detector::StdDeviation(vector<double> v)
+double Spoofing_Detector::StdDeviation(std::vector<double> v)
 {
     double sum = std::accumulate(v.begin(), v.end(), 0.0);
     double mean = sum / v.size();
@@ -266,12 +268,12 @@ double Spoofing_Detector::StdDeviation(vector<double> v)
     return stdev;
 }
 
-void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
+void Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
 {
     if(channels.size() < d_cno_count)
         return;
 
-    vector<double> SNRs;
+    std::vector<double> SNRs;
     unsigned int i;
     for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
     {
@@ -287,7 +289,7 @@ void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in
             double mv_avg = sum/stdev_cb.size();
             if(mv_avg < d_cno_min)
                 {
-                    stringstream s;
+                    std::stringstream s;
                     s << " the SNR stdev is below expected values, "; 
                     s << " SNR: " << mv_avg; 
                     s << ", " << sample_counter; 
@@ -297,7 +299,7 @@ void Spoofing_Detector::check_SNR(list<unsigned int> channels, Gnss_Synchro **in
    /* 
     if(stdev < d_cno_min)
         {
-            stringstream s;
+            std::stringstream s;
             s << " the SNR stdev is below expected values, "; 
             s << " SNR: " << stdev; 
             s << ", " << sample_counter; 
@@ -377,10 +379,10 @@ void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
         {
             int c = 299792458; //[m/s] 
             double distance = std::abs(largest_t-smallest_t)*c/1e3; 
-            stringstream s;
+            std::stringstream s;
             s << " for satellite " << PRN;
-            s << setprecision(10) << " RX times not consistent " << smallest_t << " "<< largest_t<< std::endl;
-            s << setprecision(5) << "subframes: " << largest.id << " " << smallest.id << std::endl;
+            s << std::setprecision(10) << " RX times not consistent " << smallest_t << " "<< largest_t<< std::endl;
+            s << std::setprecision(5) << "subframes: " << largest.id << " " << smallest.id << std::endl;
             s << "time difference: " << std::abs(largest_t-smallest_t)*1e6 << " [ns]" << std::endl;
             s << "distance: " << distance <<" [m]";
             spoofing_detected(s.str(), 1);
@@ -426,7 +428,7 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
             
         if(subframeA.subframe != subframeB.subframe && subframeA.subframe != "" && subframeB.subframe != "")
             {
-                stringstream s;
+                std::stringstream s;
                 s << "Ephemeris data not consistent " << id1 << " " << id2;
                 s << std::endl << "subframe id: " << subframe_id;
                 s << std::endl << "timestamps: " << subframeA.timestamp << " " << subframeB.timestamp; 
@@ -438,7 +440,7 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
             }
         else
             {
-                DLOG(INFO) << " subframes: " << endl
+                DLOG(INFO) << " subframes: " << std::endl
                 << subframeA.timestamp << " " << subframeB.timestamp << std::endl
                 << subframeA.id << " " << subframeB.id << std::endl
                 << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
@@ -450,16 +452,16 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
                 std::string sid;
                 if(id1 > id2)
                     {
-                        sid = to_string(id1)+"-"+to_string(id2); 
+                        sid = std::to_string(id1)+"-"+std::to_string(id2); 
                     }
                 else
                     {
-                        sid = to_string(id2)+"-"+to_string(id1); 
+                        sid = std::to_string(id2)+"-"+std::to_string(id1); 
                     }
                 unsigned int sum = 0; 
                 DLOG(INFO) << "sid: " << sid;
                 DLOG(INFO) << "id: " << stoi(sid);
-                map<unsigned int, unsigned int> id1m;
+                std::map<unsigned int, unsigned int> id1m;
                 if(!global_subframe_check.read(id1, id1m)) 
                     {
                         sum = 0;
@@ -476,7 +478,7 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
                 global_subframe_check.add(id1, id1m); 
 
                 sum = 0;
-                map<unsigned int, unsigned int> id2m;
+                std::map<unsigned int, unsigned int> id2m;
                 if(!global_subframe_check.read(id2, id2m)) 
                     {
                         sum = 0;
@@ -498,7 +500,7 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
 
 bool Spoofing_Detector::checked_subframes(unsigned int id1, unsigned int id2)
 {
-    map<unsigned int, unsigned int> check;
+    std::map<unsigned int, unsigned int> check;
     if(!global_subframe_check.read(id1, check))
         {
             return false; 

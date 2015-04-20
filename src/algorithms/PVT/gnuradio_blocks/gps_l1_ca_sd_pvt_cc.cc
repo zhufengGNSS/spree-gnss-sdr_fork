@@ -56,7 +56,7 @@ extern concurrent_map<Sbas_Satellite_Correction> global_sbas_sat_corr_map;
 extern concurrent_map<Sbas_Ephemeris> global_sbas_ephemeris_map;
 extern concurrent_queue<Spoofing_Message> global_spoofing_queue;
 extern concurrent_map<int> global_channel_status;
-extern concurrent_map<map<unsigned int, unsigned int>> global_subframe_check;
+extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
 struct Subframe{
     std::string subframe;
     int id;
@@ -208,7 +208,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
         }
 
     unsigned int i = 0;
-    map<unsigned int, unsigned int> PRN_to_uid;
+    std::map<unsigned int, unsigned int> PRN_to_uid;
     for(std::list<unsigned int>::iterator it = channels_used.begin(); it != channels_used.end(); ++it)
         {
             i = *it; 
