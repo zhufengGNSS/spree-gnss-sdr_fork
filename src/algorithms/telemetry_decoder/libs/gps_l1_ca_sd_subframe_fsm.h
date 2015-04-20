@@ -55,7 +55,6 @@
 #include <iostream>
 
 #include <fstream>
-using namespace std;
 namespace sc = boost::statechart;
 namespace mpl = boost::mpl;
 

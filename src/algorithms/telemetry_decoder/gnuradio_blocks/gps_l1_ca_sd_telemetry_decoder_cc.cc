@@ -42,10 +42,8 @@
 #include <glog/logging.h>
 #include "control_message_factory.h"
 #include "gnss_synchro.h"
-
-#include <iostream>
 #include <fstream>
-using namespace std;
+#include <cmath>
 
 struct Subframe{
     std::string subframe;
@@ -251,7 +249,7 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
         {
             if (d_stat == 1)
                 {
-                    file_corr_value << d_satellite.get_PRN() << ' ' << d_sample_counter << ' ' << abs(corr_value) << endl;
+                    file_corr_value << d_satellite.get_PRN() << ' ' << d_sample_counter << ' ' << abs(corr_value) <<  std::endl;
                     preamble_diff = d_sample_counter - d_preamble_index;
                     if (preamble_diff > 6001)
                         {
@@ -457,6 +455,6 @@ void gps_l1_ca_sd_telemetry_decoder_cc::set_channel(int channel)
     std::stringstream filename;
     filename.str("");
     filename << "tel_data/" << "TEL_" <<"CH" << d_channel; // << "_sat" << d_satellite.get_PRN(); 
-    file_corr_value.open (filename.str().c_str(),  ios::out);
+    file_corr_value.open (filename.str().c_str(),   std::ios::out);
 }
 

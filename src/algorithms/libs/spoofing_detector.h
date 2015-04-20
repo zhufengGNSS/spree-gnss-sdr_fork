@@ -39,13 +39,14 @@
 #include <string>
 #include <list>
 #include <map>
+#include <vector>
 #include <set>
 #include "concurrent_map.h"
 #include "gps_ephemeris.h"
 #include <string>
 #include "gnss_synchro.h"
 #include <boost/circular_buffer.hpp>
-using namespace std; 
+
 struct Satpos{
     double x;
     double y;
@@ -77,7 +78,7 @@ public:
     void check_subframe(unsigned int uid, unsigned int PRN, unsigned int subframe_id);
     void check_RX(unsigned int PRN, unsigned int subframe_id);
     bool checked_subframes(unsigned int id1, unsigned int id2);
-    void check_SNR(list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
+    void check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
 
     bool d_detect_spoofing = false; 
     bool d_cno_detection = false; 
@@ -97,7 +98,7 @@ public:
 
 private:
     void spoofing_detected(std::string description, int spoofing_case); 
-    double StdDeviation(vector<double> v);
+    double StdDeviation(std::vector<double> v);
 };
 
 #endif
