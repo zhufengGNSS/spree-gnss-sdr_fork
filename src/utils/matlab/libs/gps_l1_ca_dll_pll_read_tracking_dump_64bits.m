@@ -34,7 +34,7 @@ function [GNSS_tracking] = gps_l1_ca_dll_pll_read_tracking_dump_64bits (filename
   %%
 
   m = nargchk (1,2,nargin);
-  num_float_vars=15;
+  num_float_vars=16;
   num_unsigned_long_int_vars=1;
   num_double_vars=1;
   double_size_bytes=8;
@@ -53,6 +53,9 @@ function [GNSS_tracking] = gps_l1_ca_dll_pll_read_tracking_dump_64bits (filename
   f = fopen (filename, 'rb');
   if (f < 0)
   else
+    v0 = fread (f, count, 'int',skip_bytes_each_read-float_size_bytes);
+        bytes_shift=bytes_shift+float_size_bytes;
+    fseek(f,bytes_shift,'bof'); % move to next interleaved float
     v1 = fread (f, count, 'float',skip_bytes_each_read-float_size_bytes);
         bytes_shift=bytes_shift+float_size_bytes;
     fseek(f,bytes_shift,'bof'); % move to next interleaved float
@@ -140,6 +143,7 @@ function [GNSS_tracking] = gps_l1_ca_dll_pll_read_tracking_dump_64bits (filename
 % 				d_dump_file.write((char*)&tmp_float, sizeof(float));
 % 				d_dump_file.write((char*)&d_sample_counter_seconds, sizeof(double));
                 
+    PRN=v0;
     E=v1;
     P=v2;
     L=v3;
@@ -158,6 +162,7 @@ function [GNSS_tracking] = gps_l1_ca_dll_pll_read_tracking_dump_64bits (filename
     var1=v16;
     var2=v17;
     
+    GNSS_tracking.PRN=PRN;
     GNSS_tracking.E=E;
     GNSS_tracking.P=P;
     GNSS_tracking.L=L;
