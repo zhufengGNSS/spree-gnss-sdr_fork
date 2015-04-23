@@ -259,7 +259,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     
                                     if(!d_spoofing_detector.checked_subframes(uid, uid_u))
                                         {
-                                            DLOG(INFO) << "channel was not checked yet";
+                                            //DLOG(INFO) << "channel was not checked yet";
                                             continue;
                                         }
                                     global_subframe_map.remove(uid);
@@ -343,7 +343,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
      
     //DLOG(INFO) << "calculate the PVT";
     // ############ 2 COMPUTE THE PVT ################################
-    if (gnss_pseudoranges_map.size() > 0 and d_ls_pvt->gps_ephemeris_map.size() >0)
+    if (gnss_pseudoranges_map.size() > 0 and d_ls_pvt->gps_ephemeris_map.size() >0 and 0)
         {
             
             // compute on the fly PVT solution

@@ -355,6 +355,8 @@ void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
         {
             if(largest.id != smallest.id)
                 {
+                    spoofed = false;
+                /*
                     diff = largest.id-smallest.id;
                     if(diff < 0 && diff != -4)
                         {
@@ -368,6 +370,7 @@ void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
                         {
                             spoofed = true;
                         }
+                */
                 }
             else
                 {
@@ -423,6 +426,16 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
         if(subframeA.timestamp == 0 ||  subframeB.timestamp == 0)
             {
                 DLOG(INFO) << "Subframes timestamps are zero";
+                continue;
+            }
+
+        //one of the ephemeris data has not been updated.
+        if(std::abs(subframeA.timestamp -subframeB.timestamp) > 1)
+            {
+                DLOG(INFO) << "Subframes timestamps differ more than one" << std::endl
+                << subframeA.timestamp << " " << subframeB.timestamp << std::endl
+                << subframeA.id << " " << subframeB.id << std::endl
+                << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
                 continue;
             }
             

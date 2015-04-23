@@ -52,6 +52,7 @@ struct Subframe{
     double timestamp;
 };
 extern concurrent_map<Subframe> global_subframe_map;
+extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
 
 #ifndef _rotl
 #define _rotl(X,N)  ((X << N) ^ (X >> (32-N)))  // Used in the parity check algorithm
@@ -253,7 +254,10 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
                     preamble_diff = d_sample_counter - d_preamble_index;
                     if (preamble_diff > 6001)
                         {
-                            LOG(INFO) << "Lost of frame sync SAT " << this->d_satellite << " preamble_diff= " << preamble_diff;
+                            LOG(INFO) << "Lost frame sync SAT " << this->d_satellite << " preamble_diff= " << preamble_diff
+                                      << d_nav.unique_id; 
+                    
+                               
                             d_stat = 0; //lost of frame sync
                             d_flag_frame_sync = false;
                             flag_TOW_set=false;
@@ -300,7 +304,6 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
                     if (gps_l1_ca_sd_telemetry_decoder_cc::gps_word_parityCheck(d_GPS_frame_4bytes))
                         {
                             memcpy(&d_GPS_FSM.d_GPS_frame_4bytes, &d_GPS_frame_4bytes, sizeof(char)*4);
-                            DLOG(INFO) << "set preamble time channel: " << d_channel << " to: " << in[0][0].Tracking_timestamp_secs*1000.0; 
                             //d_GPS_FSM.d_preamble_time_ms = d_preamble_time_seconds*1000.0;
                             d_GPS_FSM.d_preamble_time_ms = in[0][0].Tracking_timestamp_secs*1000.0;
                             d_GPS_FSM.Event_gps_word_valid();
@@ -351,10 +354,11 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
     current_synchro_data.Prn_timestamp_ms = in[0][0].Tracking_timestamp_secs * 1000.0;
     current_synchro_data.Prn_timestamp_at_preamble_ms = Prn_timestamp_at_preamble_ms;
 
-    if(!(d_flag_frame_sync == true and d_flag_parity == true and flag_TOW_set==true) && d_nav.unique_id != 0)
+    if(d_flag_frame_sync == false && d_nav.unique_id != 0)
         {
-            DLOG(INFO) << "remove from subframe map " << d_nav.unique_id;
+            DLOG(INFO) << "remove from subframe map " << d_satellite.get_PRN() << " " << d_nav.unique_id;
             global_subframe_map.remove((int)d_nav.unique_id);
+            global_subframe_check.remove((int)d_nav.unique_id);
         }
 
     if(d_dump == true)
@@ -406,6 +410,8 @@ void gps_l1_ca_sd_telemetry_decoder_cc::set_satellite(Gnss_Satellite satellite)
 
 void gps_l1_ca_sd_telemetry_decoder_cc::reset()
 {
+    //global_subframe_map.remove((int)d_nav.unique_id);
+   // global_subframe_check.remove((int)d_nav.unique_id);
     d_GPS_FSM.d_nav.reset();
     d_GPS_FSM.Event_gps_word_invalid();
     d_sample_counter = 0;
