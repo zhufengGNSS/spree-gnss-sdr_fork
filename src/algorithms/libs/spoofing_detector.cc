@@ -107,7 +107,7 @@ void Spoofing_Detector::spoofing_detected(std::string description, int spoofing_
     global_spoofing_queue.push(msg);
 }
 
-// check that the position has norma values 
+// check that the position has normal values 
 void Spoofing_Detector::check_position(double lat, double lng, double alt) 
 {
     if(alt < 0)
@@ -235,7 +235,7 @@ void Spoofing_Detector::check_GPS_time()
             subframe_IDs.insert(gps_time.subframe_id);
         }
 
-    if(subframe_IDs.size() > 1 || std::abs(largest-smallest) > 30000)
+    if(subframe_IDs.size() > 1 || std::abs(largest-smallest) > 30000) // 30 s 
     {
         DLOG(INFO) << "Not all satellites have received the latest subframe, don't compare GPS time " << subframe_IDs.size() << " " <<std::abs(largest-smallest);
     }
