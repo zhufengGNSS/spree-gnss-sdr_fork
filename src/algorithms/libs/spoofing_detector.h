@@ -78,7 +78,7 @@ public:
     void check_subframe(unsigned int uid, unsigned int PRN, unsigned int subframe_id);
     void check_RX(unsigned int PRN, unsigned int subframe_id);
     bool checked_subframes(unsigned int id1, unsigned int id2);
-    void check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
+    double check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
 
     bool d_detect_spoofing = false; 
     bool d_cno_detection = false; 
@@ -99,6 +99,7 @@ public:
 private:
     void spoofing_detected(std::string description, int spoofing_case); 
     double StdDeviation(std::vector<double> v);
+    void set_dump_file();
 };
 
 #endif
