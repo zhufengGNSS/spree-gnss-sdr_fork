@@ -151,13 +151,32 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
                             LOG(INFO) << "Exception opening PVT dump file " << e.what();
                     }
                 }
-        }
+
+
+            std::string d_dump_snr_filename = "../data/stdev";
+            if (d_dump_snr_file.is_open() == false)
+                {
+                    try
+                    {
+                            d_dump_snr_filename.append(".dat");
+                            d_dump_snr_file.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+                            d_dump_snr_file.open(d_dump_snr_filename.c_str(), std::ios::out | std::ios::binary);
+                            LOG(INFO) << "SNR stdDevdump enabled, " << " Log file: " << d_dump_snr_filename.c_str() << std::endl;
+                    }
+                    catch (std::ifstream::failure e)
+                    {
+                            LOG(WARNING) << " Exception opening SNR stdDev dump file " << e.what() << std::endl;
+                    }
+                }
+            }
 }
 
 
 
 gps_l1_ca_sd_pvt_cc::~gps_l1_ca_sd_pvt_cc()
 {
+    d_dump_file.close();
+    d_dump_snr_file.close();
 }
 
 int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_items,
@@ -202,9 +221,13 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
         }
 
    
-    if(d_cno_detection && (d_sample_counter % d_output_rate_ms) == 0)
+    //if(d_cno_detection && (d_sample_counter % d_output_rate_ms) == 0)
+    if(d_cno_detection) // && (d_sample_counter % d_output_rate_ms) == 0)
         {
-            d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
+            double stdev = d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
+             //log the standard deviation
+            d_dump_snr_file.write((char*)&d_sample_counter, sizeof(unsigned long int));
+            d_dump_snr_file.write((char*)&stdev, sizeof(float));
         }
 
     unsigned int i = 0;
@@ -238,7 +261,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
     if(d_detect_spoofing && !spoofed) 
         {
             ControlMessageFactory* cmf = new ControlMessageFactory();
-            //unsigned int i = 0;
+            unsigned int i = 0;
             for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
                 {
                     i = *it; 
@@ -266,8 +289,8 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     global_gps_time.remove(uid);
                                     global_subframe_check.remove(uid);
                                     global_channel_status.add(i, 2);
-                                    DLOG(INFO) << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " <<i ;
-                                    std::cout << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " <<i  << std::endl;
+                                    DLOG(INFO) << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " << i;
+                                    std::cout << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " << i  << " " << uid << std::endl;
                                     if (d_queue != gr::msg_queue::sptr())
                                         {
                                             d_queue->handle(cmf->GetQueueMessage(i, 4));

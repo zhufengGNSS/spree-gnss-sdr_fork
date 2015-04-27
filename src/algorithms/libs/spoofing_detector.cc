@@ -94,13 +94,12 @@ Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, i
 
 Spoofing_Detector::~Spoofing_Detector()
 {
-
 }
 
 void Spoofing_Detector::spoofing_detected(std::string description, int spoofing_case)
 {
     DLOG(INFO) << "SPOOFING DETECTED " << description;
-    std::cout << "SPOOFING DETECTED " << description << std::endl;
+//    std::cout << "SPOOFING DETECTED " << description << std::endl;
     Spoofing_Message msg;
     msg.spoofing_case = spoofing_case;
     msg.description = description;
@@ -268,10 +267,10 @@ double Spoofing_Detector::StdDeviation(std::vector<double> v)
     return stdev;
 }
 
-void Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
+double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
 {
     if(channels.size() < d_cno_count)
-        return;
+        return 0;
 
     std::vector<double> SNRs;
     unsigned int i;
@@ -282,11 +281,13 @@ void Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synchro
     }
 
     double stdev = StdDeviation(SNRs); 
+    double mv_avg;
+    
     stdev_cb.push_back(stdev);
     if(stdev_cb.size() >= 1000)
         {
             double sum = std::accumulate(stdev_cb.begin(), stdev_cb.end(), 0);
-            double mv_avg = sum/stdev_cb.size();
+            mv_avg = sum/stdev_cb.size();
             if(mv_avg < d_cno_min)
                 {
                     std::stringstream s;
@@ -305,6 +306,7 @@ void Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synchro
             s << ", " << sample_counter; 
             spoofing_detected(s.str(), 10);
         }*/
+    return stdev;
 }
 
 void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)

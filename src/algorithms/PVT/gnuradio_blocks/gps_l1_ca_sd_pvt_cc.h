@@ -105,6 +105,7 @@ private:
     unsigned int d_nchannels;
     std::string d_dump_filename;
     std::ofstream d_dump_file;
+    std::ofstream d_dump_snr_file;
     int d_averaging_depth;
     bool d_flag_averaging;
     int d_output_rate_ms;

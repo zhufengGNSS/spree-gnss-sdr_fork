@@ -30,24 +30,19 @@ function r  = plot_tracking(path, channels, count_, p, rows, cols)
             continue
         end
 
-        %Create x vector
-%        diff = freq/1e3; 
-%        sample_end = length(r(i).PRN_start_sample)*diff+r(i).PRN_start_sample(1);
-%        samples = [r(i).PRN_start_sample(1):diff:sample_end];
-
         subplot(rows, cols, i)
         k = 1;
         for j = 1:length(PRNs)
             x = r(i).PRN_start_sample( r(i).PRN == PRNs(j));
             y = r(i).(p)( r(i).PRN == PRNs(j));
-            %if(length(x) > 1e4)
+            if(length(x) > 1e4)
                 x = x/16e6;
                 h(k) = plot(x,y,'.');
                 set(h(k), 'Color', cc(PRNs(j),:)) 
                 used_PRNs(k) = PRNs(j);
                 k = k+1;
                 hold on
-            %end
+            end
         end
         if(k>1)
             xlabel('time [s]')

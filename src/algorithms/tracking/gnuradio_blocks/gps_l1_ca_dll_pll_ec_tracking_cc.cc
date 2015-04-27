@@ -760,6 +760,7 @@ void Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::set_channel(unsigned int channel)
                     }
                 }
 
+
             if (d_dump_signal_wo.is_open() == false)
                 {
                     try
