@@ -757,7 +757,6 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 almanacHealth[24] = static_cast<int>(read_navigation_unsigned(subframe_bits, HEALTH_SV24));
             }
         subframe5 = os.str(); 
-        //std::cout << "subframe 4: " << os.str() <<std::endl;
         break;
 
     default:

@@ -1,5 +1,5 @@
 function [r]  = plot_SNR_stdev(path, count_, ws)
-    count_
+
     count = count_;
     filename = strcat(path,'.dat')
     if exist(filename, 'file')
@@ -12,12 +12,14 @@ function [r]  = plot_SNR_stdev(path, count_, ws)
         strcat('File ', filename, 'doesn not exists');
     end
 
-    mv_avg = tsmovavg(r.stdev,'s', ws) 
-    
+    mv_avg = tsmovavg(r.stdev','s', ws); 
+
     figure(1)
-    plot(r.sample, m_avg); 
+    plot(r.sample/1e3, mv_avg); 
+    hold on
+    plot(r.sample/1e3, 2*ones(1,length(r.sample)), 'r')
     xlabel('time [s]')
     ylabel('stdDev SNR')
-    title('CN0_SNV_dB_Hz');
+    title('CN0\_SNV\_dB0\_Hz');
 
 end

@@ -44,6 +44,7 @@
 #include "sbas_telemetry_data.h"
 #include "sbas_ionospheric_correction.h"
 #include "spoofing_message.h"
+
 using google::LogMessage;
 
 extern concurrent_map<Gps_Ephemeris> global_gps_ephemeris_map;
@@ -59,7 +60,7 @@ extern concurrent_map<int> global_channel_status;
 extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
 struct Subframe{
     std::string subframe;
-    int id;
+    int subframe_id;
     double timestamp;
 };
 extern concurrent_map<Subframe> global_subframe_map;
@@ -222,12 +223,12 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
 
    
     //if(d_cno_detection && (d_sample_counter % d_output_rate_ms) == 0)
-    if(d_cno_detection) // && (d_sample_counter % d_output_rate_ms) == 0)
+    if(d_cno_detection) 
         {
             double stdev = d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
              //log the standard deviation
             d_dump_snr_file.write((char*)&d_sample_counter, sizeof(unsigned long int));
-            d_dump_snr_file.write((char*)&stdev, sizeof(float));
+            d_dump_snr_file.write((char*)&stdev, sizeof(double));
         }
 
     unsigned int i = 0;
@@ -300,7 +301,8 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
             delete cmf;
         }
-    
+
+
     // ############ 1. READ EPHEMERIS/UTC_MODE/IONO FROM GLOBAL MAPS ####
 
     d_ls_pvt->gps_ephemeris_map = global_gps_ephemeris_map.get_map_copy();
@@ -364,7 +366,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
         }
 
      
-    //DLOG(INFO) << "calculate the PVT";
     // ############ 2 COMPUTE THE PVT ################################
     if (gnss_pseudoranges_map.size() > 0 and d_ls_pvt->gps_ephemeris_map.size() >0 and 0)
         {
