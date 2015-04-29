@@ -29,6 +29,10 @@ include_directories(
      ${CMAKE_SOURCE_DIR}/src/core/receiver
      ${CMAKE_SOURCE_DIR}/src/algorithms/libs
      ${CMAKE_SOURCE_DIR}/src/algorithms/telemetry_decoder/adapters
+     ${CMAKE_SOURCE_DIR}/src/core/libs
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn-rrlp
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn-supl
      ${Boost_INCLUDE_DIRS}
      ${GLOG_INCLUDE_DIRS}
      ${GFlags_INCLUDE_DIRS}
