@@ -65,30 +65,39 @@ public:
      * \brief Default constructor.
      */
     Spoofing_Detector();
-    Spoofing_Detector(bool detect_spoofing, double max_discrepancy);
-    Spoofing_Detector(bool detect_spoofing, bool cno_detection, int cno_count, double cno_min, bool alt_detection, double max_alt, bool satpos_detection);
+    /*!
+    * \brief Constructor called from telemetry 
+    */
+    Spoofing_Detector(bool detect_spoofing, double max_rx_discrepancy, double max_tow_discrepancy);
+    /*!
+    * \brief Constructor called from PVT 
+    */
+    Spoofing_Detector(bool detect_spoofing, bool cno_detection, int cno_count, double cno_min, 
+                    bool alt_detection, double max_alt, bool satpos_detection, int snr_moving_avg_window);
 
     void check_new_TOW(double current_time_ms, int new_week, double new_TOW);
     void check_middle_earth(double sqrtA);
     std::map<unsigned int, Satpos> Satpos_map;
-    //std::map<unsigned int, bool> checked_ephemeris;
     void check_position(double lat, double lng, double alt);
     void check_satpos(unsigned int sat, double time, double x, double y, double z); 
     void check_GPS_time();
-    void check_subframe(unsigned int uid, unsigned int PRN, unsigned int subframe_id);
-    void check_RX(unsigned int PRN, unsigned int subframe_id);
+    void check_ap_subframe(unsigned int uid, unsigned int PRN, unsigned int subframe_id);
+    void check_RX_time(unsigned int PRN, unsigned int subframe_id);
     bool checked_subframes(unsigned int id1, unsigned int id2);
     double check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
+    void check_external_ephemeris(Gps_Ephemeris internal, int PRN);
 
     bool d_detect_spoofing = false; 
     bool d_cno_detection = false; 
     bool d_alt_detection = false; 
     bool d_satpos_detection = false; 
-    double d_max_discrepancy = 1e-6;
-    double  d_max_alt = 2e3;
-    double  d_cno_min = 1.0;
+    double d_max_rx_discrepancy = 1e-6;
+    double d_max_tow_discrepancy = 20e-3;
+    double d_max_alt = 2e3;
+    double d_cno_min = 1.0;
     int d_cno_count = 4;
-    boost::circular_buffer<double> stdev_cb;
+    int d_snr_moving_avg_window = 1000;
+//    boost::circular_buffer<double> stdev_cb;
 
 
     /*!
@@ -99,7 +108,8 @@ public:
 private:
     void spoofing_detected(std::string description, int spoofing_case); 
     double StdDeviation(std::vector<double> v);
-    void set_dump_file();
+    bool compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b);
+    std::map<int,Gps_Ephemeris> lookup_external_ephemeris(int source);
 };
 
 #endif

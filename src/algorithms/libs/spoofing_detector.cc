@@ -43,6 +43,10 @@
 #include <cmath>
 #include <numeric>
 #include <iomanip>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include "gnss_sdr_supl_client.h"
+
 
 
 extern concurrent_queue<Spoofing_Message> global_spoofing_queue;
@@ -50,7 +54,7 @@ extern concurrent_map<double> global_last_gps_time;
 
 struct Subframe{
     std::string subframe;
-    unsigned int id;
+    unsigned int subframe_id;
     unsigned int PRN;
     double timestamp;
 };
@@ -66,21 +70,27 @@ struct GPS_time_t{
 extern concurrent_map<GPS_time_t> global_gps_time;
 extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
 
+const int seconds_per_week = 604800; 
+
 using google::LogMessage;
 
 Spoofing_Detector::Spoofing_Detector()
 {
-    stdev_cb = boost::circular_buffer<double> (1000);
+//    stdev_cb = boost::circular_buffer<double> (d_snr_moving_avg_window);
+    //stdev_cb = boost::circular_buffer<double> (1000);
 }
 
-Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, double max_discrepancy)
+Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, double max_rx_discrepancy, double max_tow_discrepancy)
 {
     d_detect_spoofing = detect_spoofing;
-    d_max_discrepancy = max_discrepancy;
-    stdev_cb = boost::circular_buffer<double> (1000);
+    d_max_rx_discrepancy = max_rx_discrepancy/1e6; //[ns] -> [ms]
+    d_max_tow_discrepancy = max_tow_discrepancy/1e3; //[ms] -> [s]
+    //stdev_cb = boost::circular_buffer<double> (d_snr_moving_avg_window);
+    //stdev_cb = boost::circular_buffer<double> (1000);
 }
 
-Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, int cno_count, double cno_min, bool alt_detection, double max_alt, bool satpos_detection)
+Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, int cno_count, double cno_min, 
+                                    bool alt_detection, double max_alt, bool satpos_detection, int snr_moving_avg_window)
 {
     d_detect_spoofing = detect_spoofing;
     d_cno_detection = cno_detection;
@@ -89,7 +99,9 @@ Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, i
     d_alt_detection = alt_detection;
     d_max_alt = max_alt;
     d_satpos_detection = satpos_detection;
-    stdev_cb = boost::circular_buffer<double> (1000);
+    d_snr_moving_avg_window = snr_moving_avg_window;
+    //stdev_cb = boost::circular_buffer<double> (d_snr_moving_avg_window);
+    //stdev_cb = boost::circular_buffer<double> (1000);
 }
 
 Spoofing_Detector::~Spoofing_Detector()
@@ -106,7 +118,8 @@ void Spoofing_Detector::spoofing_detected(std::string description, int spoofing_
     global_spoofing_queue.push(msg);
 }
 
-// check that the position has normal values 
+// check that the position has normal values, that is is non negative and 
+//below the configurable value alt 
 void Spoofing_Detector::check_position(double lat, double lng, double alt) 
 {
     if(alt < 0)
@@ -116,56 +129,59 @@ void Spoofing_Detector::check_position(double lat, double lng, double alt)
         }
     else if(alt > d_max_alt)
         {
-            std::string description = "Height of position is above 2 km";
+            std::stringstream s;
+            s << "Height of position is above " <<alt << " km";
+            std::string description = s.str();
             spoofing_detected(description, 4);
         }
 }
 
-// check that new ephemeris TOW is consitent with the latest received TOW
-// and the time duration between them
-void Spoofing_Detector::check_new_TOW(double current_time_ms, int new_week, double new_TOW)
+// check that new ephemeris TOW (from a certain satellite) is consistent with the latest received TOW
+// and the time duration between them 
+void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week, double new_TOW)
 {
     std::map<int, double> old_GPS_time;
     old_GPS_time = global_last_gps_time.get_map_copy();
-    int old_time, new_time;
+    int old_gps_time, new_gps_time;
     double duration;
     if(old_GPS_time.size() > 2)
     {
+        double old_timestamp_ms = old_GPS_time.at(2);
 
-        old_time = old_GPS_time.at(0)*604800+old_GPS_time.at(1); // 604800=7*24*60*60
-        new_time = new_week*604800+new_TOW;
-        duration = round((current_time_ms-old_GPS_time.at(2))/1000.0);
+        old_gps_time = old_GPS_time.at(0)*seconds_per_week+old_GPS_time.at(1);
+        new_gps_time = new_week*seconds_per_week+new_TOW;
+        //duration = round((current_timestamp_ms-old_timestamp_ms)/1000.0);
+        duration = (current_timestamp_ms-old_timestamp_ms)/1000.0;
         //DLOG(INFO) << "check new TOW " << duration << " " << std::abs(new_time-old_time);
 
-        //TODO: set configurable max deviation, now is 1 second
-        if( std::abs(std::abs(new_time-old_time)-duration) > 1 && (round(current_time_ms) != 0 || round(old_GPS_time.at(2)) != 0) )
+        if( std::abs(std::abs(new_gps_time-old_gps_time)-duration) > d_max_tow_discrepancy) 
             {
                     
-                if(old_time < new_time)
+                if(old_gps_time < new_gps_time)
                     {
                         std::stringstream s;
                         s << " received new ephemeris TOW that is later than last received one and incorrect";
-                        s << " difference: " << new_time-old_time;
+                        s << " difference: " << new_gps_time-old_gps_time;
                         s << " duration: " << duration << std::endl;
-                        s << " gps times : " << new_time << " " << old_time; 
-                        s << " times : " << round(current_time_ms) << " " << round(old_GPS_time.at(2)); 
+                        s << " gps times : " << new_gps_time << " " << old_gps_time; 
+                        s << " times : " << current_timestamp_ms << " " << old_timestamp_ms; 
                         spoofing_detected(s.str(), 3);
                     }
                 else
                     {
                         std::stringstream s;
                         s << " received new ephemeris TOW that is earlier than last received one and incorrect";
-                        s << " difference: " << new_time-old_time;
+                        s << " difference: " << new_gps_time-old_gps_time;
                         s << " duration: " << duration << std::endl;
-                        s << " gps times : " << new_time << " " << old_time;
-                        s << " times : " << round(current_time_ms) << " " << round(old_GPS_time.at(2)); 
+                        s << " gps times : " << new_gps_time << " " << old_gps_time; 
+                        s << " times : " << current_timestamp_ms << " " << old_timestamp_ms; 
                         spoofing_detected(s.str(), 3);
                     }
             }
     }
     global_last_gps_time.write(0, new_week);
     global_last_gps_time.write(1, new_TOW);
-    global_last_gps_time.write(2, current_time_ms);
+    global_last_gps_time.write(2, current_timestamp_ms);
 }
 
 //Check for middle of earth attack
@@ -270,7 +286,9 @@ double Spoofing_Detector::StdDeviation(std::vector<double> v)
 double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
 {
     if(channels.size() < d_cno_count)
-        return 0;
+        {
+            return 0;
+        }
 
     std::vector<double> SNRs;
     unsigned int i;
@@ -282,7 +300,7 @@ double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synch
 
     double stdev = StdDeviation(SNRs); 
     double mv_avg;
-    
+   /* 
     stdev_cb.push_back(stdev);
     if(stdev_cb.size() >= 1000)
         {
@@ -297,6 +315,7 @@ double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synch
                     spoofing_detected(s.str(), 10);
                 }
         }
+    */
    /* 
     if(stdev < d_cno_min)
         {
@@ -309,7 +328,9 @@ double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synch
     return stdev;
 }
 
-void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
+//Check whether the reception time of two different peaks of the same satellite
+//are within the configurable value d_maximum_deviation
+void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id)
 {
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
      
@@ -335,7 +356,7 @@ void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
         if(subframe.PRN != PRN)
             continue;
 
-        DLOG(INFO) << "id: " << it->first << " subframe: " << subframe.id << " timestamp " << subframe.timestamp;
+        DLOG(INFO) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << subframe.timestamp;
     
         if(smallest.timestamp > subframe.timestamp) 
         {
@@ -348,14 +369,15 @@ void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
         }
     }
     
+    //the earliest and latest reception times
     double largest_t = largest.timestamp;
     double smallest_t = smallest.timestamp;
     bool spoofed = false;
     int diff = 0;
 
-    if(std::abs(largest_t-smallest_t) > d_max_discrepancy)
+    if(std::abs(largest_t-smallest_t) > d_max_rx_discrepancy)
         {
-            if(largest.id != smallest.id)
+            if(largest.subframe_id != smallest.subframe_id)
                 {
                     spoofed = false;
                 /*
@@ -382,19 +404,20 @@ void Spoofing_Detector::check_RX(unsigned int PRN, unsigned int subframe_id)
 
     if(spoofed)
         {
-            int c = 299792458; //[m/s] 
-            double distance = std::abs(largest_t-smallest_t)*c/1e3; 
+            double distance = std::abs(largest_t-smallest_t)*GPS_C_m_s/1e3; 
             std::stringstream s;
             s << " for satellite " << PRN;
             s << std::setprecision(10) << " RX times not consistent " << smallest_t << " "<< largest_t<< std::endl;
-            s << std::setprecision(5) << "subframes: " << largest.id << " " << smallest.id << std::endl;
+            s << std::setprecision(5) << "subframes: " << largest.subframe_id << " " << smallest.subframe_id << std::endl;
             s << "time difference: " << std::abs(largest_t-smallest_t)*1e6 << " [ns]" << std::endl;
             s << "distance: " << distance <<" [m]";
             spoofing_detected(s.str(), 1);
         }
 }
 
-void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsigned int subframe_id)
+//checks if the subframe retrieved (with subframe id: subframe_id) from different peaks from 
+//the same satellite (same PRN)  are consistent
+void Spoofing_Detector::check_ap_subframe(unsigned int uid, unsigned int PRN, unsigned int subframe_id)
 {
     DLOG(INFO) << "check subframe " << subframe_id << " for " << uid;
     Subframe subframeA, subframeB;
@@ -415,9 +438,9 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
     {
         subframeB = it->second;
         id2 = it->first;
-        DLOG(INFO) << "subframeB " << subframeB.id << " " << id2 << " " << subframeB.PRN;
-        DLOG(INFO) <<  (subframeB.PRN != PRN)  << " " << (subframeB.id != subframe_id) << " " << (id2 == id1);
-        if(subframeB.PRN != PRN || subframeB.id != subframe_id || id2 == id1)
+        DLOG(INFO) << "subframeB " << subframeB.subframe_id << " " << id2 << " " << subframeB.PRN;
+        DLOG(INFO) <<  (subframeB.PRN != PRN)  << " " << (subframeB.subframe_id != subframe_id) << " " << (id2 == id1);
+        if(subframeB.PRN != PRN || subframeB.subframe_id != subframe_id || id2 == id1)
             continue;
 
         DLOG(INFO) << "check subframe "<< subframe_id << std::endl
@@ -436,7 +459,7 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
             {
                 DLOG(INFO) << "Subframes timestamps differ more than one" << std::endl
                 << subframeA.timestamp << " " << subframeB.timestamp << std::endl
-                << subframeA.id << " " << subframeB.id << std::endl
+                << subframeA.subframe_id << " " << subframeB.subframe_id << std::endl
                 << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
                 continue;
             }
@@ -457,7 +480,7 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
             {
                 DLOG(INFO) << " subframes: " << std::endl
                 << subframeA.timestamp << " " << subframeB.timestamp << std::endl
-                << subframeA.id << " " << subframeB.id << std::endl
+                << subframeA.subframe_id << " " << subframeB.subframe_id << std::endl
                 << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
             }
         
@@ -512,18 +535,25 @@ void Spoofing_Detector::check_subframe(unsigned int uid, unsigned int PRN, unsig
     }
 }
 
-
+//check that the peak of a satellite that is designated id1 has been
+//checked against the peak id2 (that is checked that they have the same subframe
+// for subframes 1,2,3)
 bool Spoofing_Detector::checked_subframes(unsigned int id1, unsigned int id2)
 {
     std::map<unsigned int, unsigned int> check;
+    //id1 is not in the checked map and has thus not been checked
+    //against any other signal
     if(!global_subframe_check.read(id1, check))
         {
             return false; 
         }
+    //id1 has not been checked against id2
     else if (!check.count(id2))
         {
             return false; 
         }
+    //id1 and id2 have been checked against one and other
+    //but not for all of the subframes
     else if(check.at(id2) < 3)
         {
             return false;
@@ -534,3 +564,277 @@ bool Spoofing_Detector::checked_subframes(unsigned int id1, unsigned int id2)
         }
 }
 
+// check whether the ephemeris data received from the satellites is consistent with
+// ephemeris data received from an external source
+void Spoofing_Detector::check_external_ephemeris(Gps_Ephemeris eph_internal, int PRN)
+{
+    std::map<int,Gps_Ephemeris> external;
+    external = lookup_external_ephemeris(1);
+        
+    if(external.count( PRN) )
+        {
+            //create strings from the the ephemeris object for easy comparison
+            Gps_Ephemeris eph_external = external.at( PRN );  
+            bool the_same = compare_ephemeris(eph_internal, eph_external);
+
+            if( !the_same )
+                {
+                    std::cout << "External ephemeris not consistent with ephemeris records from satellite " << PRN << std::endl;
+                    LOG(INFO) << "External ephemeris not consistent with ephemeris records from satellite " << PRN; 
+
+                }
+            else
+                {
+                    LOG(INFO) << "External ephemeris are consistent with ephemeris records from satellite " << PRN;
+                }
+        }
+    else
+        {
+            LOG(INFO) << "No external ephemeris record for satellite " << PRN;
+        }
+            
+}
+
+
+
+std::map<int,Gps_Ephemeris> Spoofing_Detector::lookup_external_ephemeris(int source)
+{
+    std::map<int,Gps_Ephemeris> result;
+    gnss_sdr_supl_client supl_client_ephemeris_;
+    std::string default_eph_server = "supl.google.com";
+    supl_client_ephemeris_.server_name = default_eph_server; 
+    int supl_mcc = 244;
+    int supl_mns = 5; 
+    int supl_lac = 0x59e2;
+    int supl_ci = 0x31b0;
+    switch( source )
+    {
+    case 1:
+        // Request ephemeris from SUPL server
+        int error;
+        supl_client_ephemeris_.request = 1;
+        std::cout << "SUPL: Try to read GPS ephemeris from SUPL server.." << std::endl;
+        error = supl_client_ephemeris_.get_assistance(supl_mcc, supl_mns, supl_lac, supl_ci);
+        if (error == 0)
+        {
+            //Save ephemeris to XML file
+            std::string eph_xml_filename = "../data/ephemeris.xml"; 
+            if (supl_client_ephemeris_.save_ephemeris_map_xml(eph_xml_filename, supl_client_ephemeris_.gps_ephemeris_map) == true)
+            {
+                std::cout << "SUPL: XML Ephemeris file created" << std::endl;
+            }
+            else
+            {
+                std::cout << "SUPL: Failed to create XML Ephemeris file" << std::endl;
+            }
+
+            result = supl_client_ephemeris_.gps_ephemeris_map;
+        }
+        else
+        {
+            std::cout << "ERROR: SUPL client for Ephemeris returned " << error << std::endl;
+            std::cout << "Please check internet connection and SUPL server configuration" << error << std::endl;
+        }
+        break;
+            
+    case 2:
+        
+        std::string eph_xml_filename = "gps_ephemeris.xml"; 
+        if (supl_client_ephemeris_.load_ephemeris_xml(eph_xml_filename) == true)
+            {
+                result = supl_client_ephemeris_.gps_ephemeris_map;
+            }
+        break;
+    }
+
+    return result;
+}
+
+bool Spoofing_Detector::compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b)
+{
+    if( a.i_satellite_PRN != b.i_satellite_PRN)
+        {
+            DLOG(INFO) << "Comparing ephemeris of two different satellites";
+            return true;
+        }
+
+    bool the_same = true; 
+    if( a.d_TOW != b.d_TOW )
+        {
+            the_same = false;
+            DLOG(INFO) << "TOW not the same " << a.d_TOW << " " << b.d_TOW;
+        } 
+    if( a.d_Crs != b.d_Crs )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Crs not the same";
+        } 
+    if( a.d_Delta_n != b.d_Delta_n )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Delta_n not the same";
+        } 
+    if( a.d_M_0 != b.d_M_0 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_M_0 not the same";
+        } 
+    if( a.d_Cuc != b.d_Cuc )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Cuc not the same";
+        } 
+    if( a.d_e_eccentricity != b.d_e_eccentricity )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_e_eccentricity not the same";
+        } 
+    if( a.d_Cus != b.d_Cus )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Cus not the same";
+        } 
+    if( a.d_sqrt_A != b.d_sqrt_A )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_sqrt_A not the same";
+        } 
+    if( a.d_Toe != b.d_Toe )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Toe not the same";
+        } 
+    if( a.d_Toc != b.d_Toc )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Toc not the same " << a.d_Toc << " " << b.d_Toc;
+        } 
+    if( a.d_Cic != b.d_Cic )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Cic not the same";
+        } 
+    if( a.d_OMEGA0 != b.d_OMEGA0 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_OMEGA0 not the same";
+        } 
+    if( a.d_Cis != b.d_Cis )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Cis not the same";
+        } 
+    if( a.d_i_0 != b.d_i_0 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_i_0 not the same";
+        } 
+    if( a.d_Crc != b.d_Crc )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_Crc not the same";
+        } 
+    if( a.d_OMEGA != b.d_OMEGA )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_OMEGA not the same";
+        } 
+    if( a.d_OMEGA_DOT != b.d_OMEGA_DOT )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_OMEGA_DOT not the same";
+        } 
+    if( a.d_IDOT != b.d_IDOT )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_IDOT not the same";
+        } 
+    if( a.i_code_on_L2 != b.i_code_on_L2 )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_code_on_L2 not the same";
+        } 
+    if( a.i_GPS_week != b.i_GPS_week )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_GPS_week not the same";
+        } 
+    if( a.b_L2_P_data_flag != b.b_L2_P_data_flag )
+        {
+            the_same = false;
+            DLOG(INFO) << "b_L2_P_data_flag not the same";
+        } 
+    if( a.i_SV_accuracy != b.i_SV_accuracy )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_SV_accuracy not the same";
+        } 
+    if( a.i_SV_health != b.i_SV_health )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_SV_health not the same";
+        } 
+    if( a.d_TGD != b.d_TGD )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_TGD not the same";
+        } 
+    if( a.d_IODC != b.d_IODC )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_IODC not the same";
+        } 
+    if( a.i_AODO != b.i_AODO )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_AODO not the same";
+        } 
+    if( a.b_fit_interval_flag != b.b_fit_interval_flag )
+        {
+            the_same = false;
+            DLOG(INFO) << "b_fit_interval_flag not the same";
+        } 
+    if( a.d_spare1 != b.d_spare1 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_spare1 not the same";
+        } 
+    if( a.d_spare2 != b.d_spare2 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_spare2 not the same";
+        } 
+    if( a.d_A_f0 != b.d_A_f0 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_A_f0 not the same";
+        } 
+    if( a.d_A_f1 != b.d_A_f1 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_A_f1 not the same";
+        } 
+    if( a.d_A_f2 != b.d_A_f2 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_A_f2 not the same";
+        } 
+    if( a.b_integrity_status_flag != b.b_integrity_status_flag )
+        {
+            the_same = false;
+            DLOG(INFO) << "b_integrity_status_flag not the same";
+        } 
+    if( a.b_alert_flag != b.b_alert_flag )
+        {
+            the_same = false;
+            DLOG(INFO) << "b_alert_flag not the same";
+        } 
+    if( a.b_antispoofing_flag != b.b_antispoofing_flag )
+        {
+            the_same = false;
+            DLOG(INFO) << "b_antispoofing_flag not the same";
+        } 
+
+    return the_same;
+
+}
