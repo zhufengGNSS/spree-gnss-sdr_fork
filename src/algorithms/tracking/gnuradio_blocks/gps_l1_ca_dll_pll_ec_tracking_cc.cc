@@ -533,6 +533,20 @@ int Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::general_work (int noutput_items, gr_vector
             current_synchro_data.Carrier_phase_rads = (double)d_acc_carrier_phase_rad;
             current_synchro_data.Carrier_Doppler_hz = (double)d_carrier_doppler_hz;
             current_synchro_data.CN0_dB_hz = (double)d_CN0_SNV_dB_Hz;
+
+
+            //Vestigial
+            float delta_ = delta(*d_Early, *d_Late, *d_Prompt);
+            float RT_ = RT(*d_Early, *d_Late, *d_Prompt);
+            float Extra_RT_ = RT(*d_Extra_Early, *d_Extra_Late, *d_Prompt);
+            float ELP_ = ELP(*d_Early, *d_Late, *d_Prompt);
+            float MD_ = MD(*d_Early, *d_Late, *d_Prompt);
+            current_synchro_data.delta = delta_;
+            current_synchro_data.RT = RT_;
+            current_synchro_data.Extra_RT = Extra_RT_;
+            current_synchro_data.ELP = ELP_;
+            current_synchro_data.MD = MD_;
+            current_synchro_data.sample_counter = d_sample_counter;
             *out[0] = current_synchro_data;
 
             // ########## DEBUG OUTPUT

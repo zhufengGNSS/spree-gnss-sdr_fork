@@ -46,6 +46,9 @@
 #include <string>
 #include "gnss_synchro.h"
 #include <boost/circular_buffer.hpp>
+#include "gps_iono.h"
+#include "gps_almanac.h"
+#include "gps_utc_model.h"
 
 struct Satpos{
     double x;
@@ -109,6 +112,9 @@ private:
     void spoofing_detected(std::string description, int spoofing_case); 
     double StdDeviation(std::vector<double> v);
     bool compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b);
+    bool compare_utc(Gps_Utc_Model a, Gps_Utc_Model b);
+    bool compare_iono(Gps_Iono a, Gps_Iono b);
+//    bool compare_almanac(Gps_Alamanc a, Gps_Almanac b);
     std::map<int,Gps_Ephemeris> lookup_external_ephemeris(int source);
 };
 

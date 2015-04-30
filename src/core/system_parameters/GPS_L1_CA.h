@@ -159,6 +159,32 @@ const double I_DOT_LSB = PI_TWO_N43;
 // SUBFRAME 4-5
 const std::vector<std::pair<int,int>> SV_DATA_ID({{61,2}});
 const std::vector<std::pair<int,int>> SV_PAGE({{63,6}});
+const std::vector<std::pair<int,int>> almanac_E({69,16});
+const double almanac_E_LSB = TWO_N21;
+const std::vector<std::pair<int,int>> T_OA({{91,8}});
+const double T_OA_LSB = TWO_P12;
+const std::vector<std::pair<int,int>> DELTA_I({{99,16}});
+const double DELTA_I_LSB = TWO_P19;
+const std::vector<std::pair<int,int>> almanac_OMEGA_DOT({{99,16}});
+const double almanac_OMEGA_DOT_LSB= TWO_P38;
+const std::vector<std::pair<int,int>> almanac_SQRT_A({{151,24}});
+const double almanac_SQRT_A_LSB = TWO_P11;
+const std::vector<std::pair<int,int>> almanac_OMEGA0({{181,24}});
+const double almanac_OMEGA0_LSB= TWO_P23;
+const std::vector<std::pair<int,int>> almanac_({{211,24}});
+const double almanac_OMEGA_DOT_LSB= TWO_P38;
+const std::vector<std::pair<int,int>> almanac_M_0({{241,24}});
+const double almanac_OMEGA_DOT_LSB= TWO_P38;
+const std::vector<std::pair<int,int>> almanac_({{181,24}});
+const double almanac_OMEGA_DOT_LSB= TWO_P38;
+const std::vector<std::pair<int,int>> almanac_OMEGA0({{181,24}});
+const double almanac_OMEGA_DOT_LSB= TWO_P38;
+
+
+    double d_OMEGA;          //!< Argument of Perigee [semi-cicles]
+    double d_A_f0;           //!< Coefficient 0 of code phase offset model [s]
+    double d_A_f1;           //!< Coefficient 1 of code phase offset model [s/s]
+
 
 // SUBFRAME 4
 //! \todo read all pages of subframe 4
@@ -211,8 +237,7 @@ const std::vector<std::pair<int,int>> HEALTH_SV32({{283,6}});
 //! \todo read all pages of subframe 5
 
 // page 25 - Health (PRN 1 - 24)
-const std::vector<std::pair<int,int>> T_OA({{69,8}});
-const double T_OA_LSB = TWO_P12;
+const std::vector<std::pair<int,int>> T_OA_25({{69,8}});
 const std::vector<std::pair<int,int>> WN_A({{77,8}});
 const std::vector<std::pair<int,int>> HEALTH_SV1({{91,6}});
 const std::vector<std::pair<int,int>> HEALTH_SV2({{97,6}});
