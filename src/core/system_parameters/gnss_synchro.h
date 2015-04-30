@@ -79,8 +79,14 @@ public:
 
     //spoofing detection
     unsigned int peak;
-    double rx_of_subframe;
-    unsigned int subframe;
+    
+    //vestigial
+    float delta;
+    float RT;
+    float Extra_RT;
+    float ELP;
+    float MD;
+    unsigned long int sample_counter;
 };
 
 #endif

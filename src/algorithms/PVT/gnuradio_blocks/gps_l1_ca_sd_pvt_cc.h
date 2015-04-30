@@ -126,6 +126,10 @@ private:
     gps_l1_ca_ls_pvt *d_ls_pvt;
     std::map<unsigned int, unsigned int> PRN_to_uchannel;
 
+    //logging for fingerprinting
+    std::map<int, std::ofstream*> flog_files_map;
+    std::string flog_filename = "flog/sat_";
+
 public:
     ~gps_l1_ca_sd_pvt_cc (); //!< Default destructor
 

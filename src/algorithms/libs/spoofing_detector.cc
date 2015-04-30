@@ -43,8 +43,6 @@
 #include <cmath>
 #include <numeric>
 #include <iomanip>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
 #include "gnss_sdr_supl_client.h"
 
 
@@ -657,184 +655,330 @@ bool Spoofing_Detector::compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b)
             DLOG(INFO) << "Comparing ephemeris of two different satellites";
             return true;
         }
-
     bool the_same = true; 
+
+    if( a.i_peak != b.i_peak )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_peak not the same: " << a.i_peak << " " << b.i_peak;
+        }
     if( a.d_TOW != b.d_TOW )
         {
             the_same = false;
-            DLOG(INFO) << "TOW not the same " << a.d_TOW << " " << b.d_TOW;
-        } 
+            DLOG(INFO) << "d_TOW not the same: " << a.d_TOW << " " << b.d_TOW;
+        }
     if( a.d_Crs != b.d_Crs )
         {
             the_same = false;
-            DLOG(INFO) << "d_Crs not the same";
-        } 
+            DLOG(INFO) << "d_Crs not the same: " << a.d_Crs << " " << b.d_Crs;
+        }
     if( a.d_Delta_n != b.d_Delta_n )
         {
             the_same = false;
-            DLOG(INFO) << "d_Delta_n not the same";
-        } 
+            DLOG(INFO) << "d_Delta_n not the same: " << a.d_Delta_n << " " << b.d_Delta_n;
+        }
     if( a.d_M_0 != b.d_M_0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_M_0 not the same";
-        } 
+            DLOG(INFO) << "d_M_0 not the same: " << a.d_M_0 << " " << b.d_M_0;
+        }
     if( a.d_Cuc != b.d_Cuc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cuc not the same";
-        } 
+            DLOG(INFO) << "d_Cuc not the same: " << a.d_Cuc << " " << b.d_Cuc;
+        }
     if( a.d_e_eccentricity != b.d_e_eccentricity )
         {
             the_same = false;
-            DLOG(INFO) << "d_e_eccentricity not the same";
-        } 
+            DLOG(INFO) << "d_e_eccentricity not the same: " << a.d_e_eccentricity << " " << b.d_e_eccentricity;
+        }
     if( a.d_Cus != b.d_Cus )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cus not the same";
-        } 
+            DLOG(INFO) << "d_Cus not the same: " << a.d_Cus << " " << b.d_Cus;
+        }
     if( a.d_sqrt_A != b.d_sqrt_A )
         {
             the_same = false;
-            DLOG(INFO) << "d_sqrt_A not the same";
-        } 
+            DLOG(INFO) << "d_sqrt_A not the same: " << a.d_sqrt_A << " " << b.d_sqrt_A;
+        }
     if( a.d_Toe != b.d_Toe )
         {
             the_same = false;
-            DLOG(INFO) << "d_Toe not the same";
-        } 
+            DLOG(INFO) << "d_Toe not the same: " << a.d_Toe << " " << b.d_Toe;
+        }
     if( a.d_Toc != b.d_Toc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Toc not the same " << a.d_Toc << " " << b.d_Toc;
-        } 
+            DLOG(INFO) << "d_Toc not the same: " << a.d_Toc << " " << b.d_Toc;
+        }
     if( a.d_Cic != b.d_Cic )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cic not the same";
-        } 
+            DLOG(INFO) << "d_Cic not the same: " << a.d_Cic << " " << b.d_Cic;
+        }
     if( a.d_OMEGA0 != b.d_OMEGA0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA0 not the same";
-        } 
+            DLOG(INFO) << "d_OMEGA0 not the same: " << a.d_OMEGA0 << " " << b.d_OMEGA0;
+        }
     if( a.d_Cis != b.d_Cis )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cis not the same";
-        } 
+            DLOG(INFO) << "d_Cis not the same: " << a.d_Cis << " " << b.d_Cis;
+        }
     if( a.d_i_0 != b.d_i_0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_i_0 not the same";
-        } 
+            DLOG(INFO) << "d_i_0 not the same: " << a.d_i_0 << " " << b.d_i_0;
+        }
     if( a.d_Crc != b.d_Crc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Crc not the same";
-        } 
+            DLOG(INFO) << "d_Crc not the same: " << a.d_Crc << " " << b.d_Crc;
+        }
     if( a.d_OMEGA != b.d_OMEGA )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA not the same";
-        } 
+            DLOG(INFO) << "d_OMEGA not the same: " << a.d_OMEGA << " " << b.d_OMEGA;
+        }
     if( a.d_OMEGA_DOT != b.d_OMEGA_DOT )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA_DOT not the same";
-        } 
+            DLOG(INFO) << "d_OMEGA_DOT not the same: " << a.d_OMEGA_DOT << " " << b.d_OMEGA_DOT;
+        }
     if( a.d_IDOT != b.d_IDOT )
         {
             the_same = false;
-            DLOG(INFO) << "d_IDOT not the same";
-        } 
+            DLOG(INFO) << "d_IDOT not the same: " << a.d_IDOT << " " << b.d_IDOT;
+        }
     if( a.i_code_on_L2 != b.i_code_on_L2 )
         {
             the_same = false;
-            DLOG(INFO) << "i_code_on_L2 not the same";
-        } 
+            DLOG(INFO) << "i_code_on_L2 not the same: " << a.i_code_on_L2 << " " << b.i_code_on_L2;
+        }
     if( a.i_GPS_week != b.i_GPS_week )
         {
             the_same = false;
-            DLOG(INFO) << "i_GPS_week not the same";
-        } 
+            DLOG(INFO) << "i_GPS_week not the same: " << a.i_GPS_week << " " << b.i_GPS_week;
+        }
     if( a.b_L2_P_data_flag != b.b_L2_P_data_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_L2_P_data_flag not the same";
-        } 
+            DLOG(INFO) << "b_L2_P_data_flag not the same: " << a.b_L2_P_data_flag << " " << b.b_L2_P_data_flag;
+        }
     if( a.i_SV_accuracy != b.i_SV_accuracy )
         {
             the_same = false;
-            DLOG(INFO) << "i_SV_accuracy not the same";
-        } 
+            DLOG(INFO) << "i_SV_accuracy not the same: " << a.i_SV_accuracy << " " << b.i_SV_accuracy;
+        }
     if( a.i_SV_health != b.i_SV_health )
         {
             the_same = false;
-            DLOG(INFO) << "i_SV_health not the same";
-        } 
+            DLOG(INFO) << "i_SV_health not the same: " << a.i_SV_health << " " << b.i_SV_health;
+        }
     if( a.d_TGD != b.d_TGD )
         {
             the_same = false;
-            DLOG(INFO) << "d_TGD not the same";
-        } 
+            DLOG(INFO) << "d_TGD not the same: " << a.d_TGD << " " << b.d_TGD;
+        }
     if( a.d_IODC != b.d_IODC )
         {
             the_same = false;
-            DLOG(INFO) << "d_IODC not the same";
-        } 
+            DLOG(INFO) << "d_IODC not the same: " << a.d_IODC << " " << b.d_IODC;
+        }
     if( a.i_AODO != b.i_AODO )
         {
             the_same = false;
-            DLOG(INFO) << "i_AODO not the same";
-        } 
+            DLOG(INFO) << "i_AODO not the same: " << a.i_AODO << " " << b.i_AODO;
+        }
     if( a.b_fit_interval_flag != b.b_fit_interval_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_fit_interval_flag not the same";
-        } 
+            DLOG(INFO) << "b_fit_interval_flag not the same: " << a.b_fit_interval_flag << " " << b.b_fit_interval_flag;
+        }
     if( a.d_spare1 != b.d_spare1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare1 not the same";
-        } 
+            DLOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
+        }
     if( a.d_spare2 != b.d_spare2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare2 not the same";
-        } 
+            DLOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
+        }
     if( a.d_A_f0 != b.d_A_f0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f0 not the same";
-        } 
+            DLOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
+        }
     if( a.d_A_f1 != b.d_A_f1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f1 not the same";
-        } 
+            DLOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
+        }
     if( a.d_A_f2 != b.d_A_f2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f2 not the same";
-        } 
+            DLOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
+        }
     if( a.b_integrity_status_flag != b.b_integrity_status_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_integrity_status_flag not the same";
-        } 
+            DLOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
+        }
     if( a.b_alert_flag != b.b_alert_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_alert_flag not the same";
-        } 
+            DLOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
+        }
     if( a.b_antispoofing_flag != b.b_antispoofing_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_antispoofing_flag not the same";
-        } 
+            DLOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
+        }
+    if( a.d_spare1 != b.d_spare1 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
+        }
+    if( a.d_spare2 != b.d_spare2 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
+        }
+    if( a.d_A_f0 != b.d_A_f0 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
+        }
+    if( a.d_A_f1 != b.d_A_f1 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
+        }
+    if( a.d_A_f2 != b.d_A_f2 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
+        }
+    if( a.b_integrity_status_flag != b.b_integrity_status_flag )
+        {
+            the_same = false;
+            DLOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
+        }
+    if( a.b_alert_flag != b.b_alert_flag )
+        {
+            the_same = false;
+            DLOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
+        }
+    if( a.b_antispoofing_flag != b.b_antispoofing_flag )
+        {
+            the_same = false;
+            DLOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
+        }
 
     return the_same;
-
 }
+
+bool Spoofing_Detector::compare_iono(Gps_Iono a, Gps_Iono b)
+{
+    bool the_same = true; 
+    if( a.d_alpha0 != b.d_alpha0 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_alpha0 not the same: " << a.d_alpha0 << " " << b.d_alpha0;
+        }
+    if( a.d_alpha1 != b.d_alpha1 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_alpha1 not the same: " << a.d_alpha1 << " " << b.d_alpha1;
+        }
+    if( a.d_alpha2 != b.d_alpha2 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_alpha2 not the same: " << a.d_alpha2 << " " << b.d_alpha2;
+        }
+    if( a.d_alpha3 != b.d_alpha3 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_alpha3 not the same: " << a.d_alpha3 << " " << b.d_alpha3;
+        }
+    if( a.d_beta0 != b.d_beta0 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_beta0 not the same: " << a.d_beta0 << " " << b.d_beta0;
+        }
+    if( a.d_beta1 != b.d_beta1 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_beta1 not the same: " << a.d_beta1 << " " << b.d_beta1;
+        }
+    if( a.d_beta2 != b.d_beta2 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_beta2 not the same: " << a.d_beta2 << " " << b.d_beta2;
+        }
+    if( a.d_beta3 != b.d_beta3 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_beta3 not the same: " << a.d_beta3 << " " << b.d_beta3;
+        }
+    if( a.valid != b.valid )
+        {
+            the_same = false;
+            DLOG(INFO) << "valid not the same: " << a.valid << " " << b.valid;
+        }
+    return the_same;
+}
+
+bool Spoofing_Detector::compare_utc(Gps_Utc_Model a, Gps_Utc_Model b)
+{
+    bool the_same = true;
+    if( a.valid != b.valid )
+        {
+            the_same = false;
+            DLOG(INFO) << "valid not the same: " << a.valid << " " << b.valid;
+        }
+    if( a.d_A1 != b.d_A1 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_A1 not the same: " << a.d_A1 << " " << b.d_A1;
+        }
+    if( a.d_A0 != b.d_A0 )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_A0 not the same: " << a.d_A0 << " " << b.d_A0;
+        }
+    if( a.d_t_OT != b.d_t_OT )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_t_OT not the same: " << a.d_t_OT << " " << b.d_t_OT;
+        }
+    if( a.i_WN_T != b.i_WN_T )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_WN_T not the same: " << a.i_WN_T << " " << b.i_WN_T;
+        }
+    if( a.d_DeltaT_LS != b.d_DeltaT_LS )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_DeltaT_LS not the same: " << a.d_DeltaT_LS << " " << b.d_DeltaT_LS;
+        }
+    if( a.i_WN_LSF != b.i_WN_LSF )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_WN_LSF not the same: " << a.i_WN_LSF << " " << b.i_WN_LSF;
+        }
+    if( a.i_DN != b.i_DN )
+        {
+            the_same = false;
+            DLOG(INFO) << "i_DN not the same: " << a.i_DN << " " << b.i_DN;
+        }
+    if( a.d_DeltaT_LSF != b.d_DeltaT_LSF )
+        {
+            the_same = false;
+            DLOG(INFO) << "d_DeltaT_LSF not the same: " << a.d_DeltaT_LSF << " " << b.d_DeltaT_LSF;
+        } 
+}
+

@@ -170,6 +170,18 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
                     }
                 }
             }
+
+    //create all logging files
+    for(int i = 1; i != 33; i++)
+        {
+            std::string tmp = flog_filename;
+            tmp.append(boost::lexical_cast<std::string>(i));
+            tmp.append(".dat");
+            std::ofstream *flog_file = new std::ofstream(tmp.c_str(), std::ios::out | std::ios::binary);
+            flog_file->exceptions (std::ifstream::failbit | std::ifstream::badbit );
+            flog_files_map[i] = flog_file;
+        }
+
 }
 
 
@@ -233,6 +245,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
 
     unsigned int i = 0;
     std::map<unsigned int, unsigned int> PRN_to_uid;
+    std::ofstream *flog_file;
     for(std::list<unsigned int>::iterator it = channels_used.begin(); it != channels_used.end(); ++it)
         {
             i = *it; 
@@ -250,6 +263,28 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                     gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(in[i][0].PRN, in[i][0])); // store valid pseudoranges in a map
                 }
             d_rx_time = in[i][0].d_TOW_at_current_symbol; // all the channels have the same RX timestamp (common RX time pseudoranges)
+
+            
+            DLOG(INFO) << "1 flog for " << in[i][0].PRN;
+            if( flog_files_map.count(in[i][0].PRN))
+                {
+                    DLOG(INFO) << "flog for " << in[i][0].PRN;
+                    flog_file = flog_files_map.at(in[i][0].PRN); 
+                    if (flog_file->is_open())
+                        {
+                            flog_file->write((char*)&in[i][0].PRN, sizeof(float));
+                            flog_file->write((char*)&d_sample_counter, sizeof(unsigned long int));
+                            flog_file->write((char*)&in[i][0].Tracking_timestamp_secs, sizeof(double));
+                            flog_file->write((char*)&in[i][0].CN0_dB_hz, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Carrier_Doppler_hz, sizeof(double));
+                            flog_file->write((char*)&in[i][0].delta, sizeof(float));
+                            flog_file->write((char*)&in[i][0].RT, sizeof(float));
+                            flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
+                            flog_file->write((char*)&in[i][0].ELP, sizeof(float));
+                            flog_file->write((char*)&in[i][0].MD, sizeof(float));
+
+                        }
+                }
         }
     bool spoofed = false;
    /* 
