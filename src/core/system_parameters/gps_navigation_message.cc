@@ -132,6 +132,16 @@ void Gps_Navigation_Message::reset()
         {
             almanacHealth[i] = 0;
         }
+    //which page stores the almanac data for
+    //which satellite in subframe 4
+    almanac_page_to_PRN[2] = 25;
+    almanac_page_to_PRN[3] = 26;
+    almanac_page_to_PRN[4] = 27;
+    almanac_page_to_PRN[5] = 28;
+    almanac_page_to_PRN[7] = 29;
+    almanac_page_to_PRN[8] = 30;
+    almanac_page_to_PRN[9] = 31;
+    almanac_page_to_PRN[10] = 32;
 
     // Satellite velocity
     d_satvel_X = 0;
@@ -694,6 +704,56 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 almanacHealth[32] = static_cast<int>(read_navigation_unsigned(subframe_bits, HEALTH_SV32));
             }
 
+        if ( almanac_page_to_PRN.count( SV_page) )
+            {
+               
+                d_Toa = (double)read_navigation_unsigned(subframe_bits, T_OA);
+                d_Toa = d_Toa * T_OA_LSB;
+
+                Gps_Almanac almanac;
+                //! \TODO read almanac
+                almanac.i_satellite_PRN = almanac_page_to_PRN.at( SV_page) ; 
+                double delta_i = (double)read_navigation_signed(subframe_bits, DELTA_I);
+                almanac.d_Delta_i = delta_i * DELTA_I_LSB; 
+
+                double M_0 = (double)read_navigation_signed(subframe_bits, almanac_M_0);
+                almanac.d_M_0 = M_0 * almana_M_0_LSB; 
+
+                double almanac_e = (double)read_navigation_signed(subframe_bits, almanac_E);
+                almanac.d_e_eccentricity = almanac_e * almanac_E_LSB;    
+
+                double sqrt_A = (double)read_navigation_signed(subframe_bits, almanac_SQRT_A);
+                almanac.d_sqrt_A = sqrt_A * almanac_SQRT_A_LSB; 
+
+                double omega0 = (double)read_navigation_signed(subframe_bits, almanac_OMEGA0);
+                almanac.d_OMEGA0 = omega0 * almanac_OMEGA0_LSB;
+
+                double omega = (double)read_navigation_signed(subframe_bits, almanac_OMEGA);
+                almanac.d_OMEGA = omega * almanac_OMEGA_LSB;
+
+                double omega_dot = (double)read_navigation_signed(subframe_bits, almanac_OMEGA_DOT);
+                almanac.d_OMEGA_DOT = omega_dot * almanac_OMEGA_DOT_LSB;
+
+                double a_f0 = (double)read_navigation_signed(subframe_bits, almanac_A_F0);
+                almanac.d_A_f0 = a_f0 * almanac_A_F0_LSB; 
+
+                double a_f1 = (double)read_navigation_signed(subframe_bits, almanac_A_F1);
+                almanac.d_A_f1 = a_f1 * almanac_A_F1_LSB; 
+                almanac_map[almanac_page_to_PRN.at( SV_page )] = almanac;
+
+                os << " " << d_Toa; 
+                os << " " << almanac.d_Delta_i; 
+                os << " " << almanac.d_M_0; 
+                os << " " << almanac.d_e_eccentricity; 
+                os << " " << almanac.d_sqrt_A; 
+                os << " " << almanac.d_OMEGA0; 
+                os << " " << almanac.d_OMEGA; 
+                os << " " << almanac.d_OMEGA_DOT; 
+                os << " " << almanac.d_A_f0; 
+                os << " " << almanac.d_A_f1; 
+            }
+
+
         subframe4 = os.str(); 
         //std::cout << "subframe 4: " << os.str() <<std::endl;
 
@@ -718,10 +778,54 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
         os << " " << SV_data_ID_5; 
         os << " " << SV_page_5; 
 
-        if (SV_page_5 < 25)
+        if (SV_page_5 < 25 && SV_page_5 != 0)
             {
-                //! \TODO read almanac
                 if(SV_data_ID_5){}
+
+                d_Toa = (double)read_navigation_unsigned(subframe_bits, T_OA);
+                d_Toa = d_Toa * T_OA_LSB;
+
+                Gps_Almanac almanac;
+                //! \TODO read almanac
+                almanac.i_satellite_PRN = SV_page; 
+                double delta_i = (double)read_navigation_signed(subframe_bits, DELTA_I);
+                almanac.d_Delta_i = delta_i * DELTA_I_LSB; 
+
+                double M_0 = (double)read_navigation_signed(subframe_bits, almanac_M_0);
+                almanac.d_M_0 = M_0 * almana_M_0_LSB; 
+
+                double almanac_e = (double)read_navigation_signed(subframe_bits, almanac_E);
+                almanac.d_e_eccentricity = almanac_e * almanac_E_LSB;    
+
+                double sqrt_A = (double)read_navigation_signed(subframe_bits, almanac_SQRT_A);
+                almanac.d_sqrt_A = sqrt_A * almanac_SQRT_A_LSB; 
+
+                double omega0 = (double)read_navigation_signed(subframe_bits, almanac_OMEGA0);
+                almanac.d_OMEGA0 = omega0 * almanac_OMEGA0_LSB;
+
+                double omega = (double)read_navigation_signed(subframe_bits, almanac_OMEGA);
+                almanac.d_OMEGA = omega0 * almanac_OMEGA_LSB;
+
+                double omega_dot = (double)read_navigation_signed(subframe_bits, almanac_OMEGA_DOT);
+                almanac.d_OMEGA_DOT = omega_dot * almanac_OMEGA_DOT_LSB;
+
+                double a_f0 = (double)read_navigation_signed(subframe_bits, almanac_A_F0);
+                almanac.d_A_f0 = a_f0 * almanac_A_F0_LSB; 
+
+                double a_f1 = (double)read_navigation_signed(subframe_bits, almanac_A_F1);
+                almanac.d_A_f1 = a_f1 * almanac_A_F1_LSB; 
+                almanac_map[SV_page] = almanac;
+
+                os << " " << d_Toa; 
+                os << " " << almanac.d_Delta_i; 
+                os << " " << almanac.d_M_0; 
+                os << " " << almanac.d_e_eccentricity; 
+                os << " " << almanac.d_sqrt_A; 
+                os << " " << almanac.d_OMEGA0; 
+                os << " " << almanac.d_OMEGA; 
+                os << " " << almanac.d_OMEGA_DOT; 
+                os << " " << almanac.d_A_f0; 
+                os << " " << almanac.d_A_f1; 
             }
 
         if (SV_page_5 == 51) // Page 25 (from Table 20-V. Data IDs and SV IDs in Subframes 4 and 5, IS-GPS-200H, page 110)
@@ -932,6 +1036,10 @@ Gps_Utc_Model Gps_Navigation_Message::get_utc_model()
     return utc_model;
 }
 
+GPS_Almanac Gps_Navigation_Message::get_almanac()
+{
+    return almanac_map;
+}
 
 bool Gps_Navigation_Message::satellite_validation()
 {
