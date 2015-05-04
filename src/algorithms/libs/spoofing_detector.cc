@@ -74,8 +74,6 @@ using google::LogMessage;
 
 Spoofing_Detector::Spoofing_Detector()
 {
-//    stdev_cb = boost::circular_buffer<double> (d_snr_moving_avg_window);
-    //stdev_cb = boost::circular_buffer<double> (1000);
 }
 
 Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, double max_rx_discrepancy, double max_tow_discrepancy)
@@ -83,8 +81,6 @@ Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, double max_rx_discrep
     d_detect_spoofing = detect_spoofing;
     d_max_rx_discrepancy = max_rx_discrepancy/1e6; //[ns] -> [ms]
     d_max_tow_discrepancy = max_tow_discrepancy/1e3; //[ms] -> [s]
-    //stdev_cb = boost::circular_buffer<double> (d_snr_moving_avg_window);
-    //stdev_cb = boost::circular_buffer<double> (1000);
 }
 
 Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, int cno_count, double cno_min, 
@@ -98,8 +94,7 @@ Spoofing_Detector::Spoofing_Detector(bool detect_spoofing, bool cno_detection, i
     d_max_alt = max_alt;
     d_satpos_detection = satpos_detection;
     d_snr_moving_avg_window = snr_moving_avg_window;
-    //stdev_cb = boost::circular_buffer<double> (d_snr_moving_avg_window);
-    //stdev_cb = boost::circular_buffer<double> (1000);
+    stdev_cb = boost::circular_buffer<double> (d_snr_moving_avg_window);
 }
 
 Spoofing_Detector::~Spoofing_Detector()
@@ -610,7 +605,7 @@ std::map<int,Gps_Ephemeris> Spoofing_Detector::lookup_external_ephemeris(int sou
     case 1:
         // Request ephemeris from SUPL server
         int error;
-        supl_client_ephemeris_.request = 1;
+        supl_client_ephemeris_.request = 0;
         std::cout << "SUPL: Try to read GPS ephemeris from SUPL server.." << std::endl;
         error = supl_client_ephemeris_.get_assistance(supl_mcc, supl_mns, supl_lac, supl_ci);
         if (error == 0)
@@ -980,5 +975,6 @@ bool Spoofing_Detector::compare_utc(Gps_Utc_Model a, Gps_Utc_Model b)
             the_same = false;
             DLOG(INFO) << "d_DeltaT_LSF not the same: " << a.d_DeltaT_LSF << " " << b.d_DeltaT_LSF;
         } 
+    return the_same;
 }
 

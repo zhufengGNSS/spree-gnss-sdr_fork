@@ -221,7 +221,7 @@ public:
     /*!
      * \brief Obtain the almanac data 
      */
-    GPS_Almanac get_almanac();
+    std::map<int, Gps_Almanac> get_almanac();
 
     /*!
      * \brief Decodes the GPS NAV message

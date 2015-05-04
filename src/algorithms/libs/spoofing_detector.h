@@ -100,7 +100,7 @@ public:
     double d_cno_min = 1.0;
     int d_cno_count = 4;
     int d_snr_moving_avg_window = 1000;
-//    boost::circular_buffer<double> stdev_cb;
+    boost::circular_buffer<double> stdev_cb;
 
 
     /*!

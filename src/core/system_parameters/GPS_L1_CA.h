@@ -177,7 +177,7 @@ const std::vector<std::pair<int,int>> almanac_OMEGA({{211,24}});
 const double almanac_OMEGA_LSB= TWO_N23;
 const std::vector<std::pair<int,int>> almanac_M_0({{241,24}});
 const double almana_M_0_LSB = TWO_N23;
-const std::vector<std::pair<int,int>> almanac_A_F0({{271,11}});
+const std::vector<std::pair<int,int>> almanac_A_F0({{271,8}, {290,3}});
 const double almanac_A_F0_LSB = TWO_N20;
 const std::vector<std::pair<int,int>> almanac_A_F1({{290,11}});
 const double almanac_A_F1_LSB = TWO_N38;
