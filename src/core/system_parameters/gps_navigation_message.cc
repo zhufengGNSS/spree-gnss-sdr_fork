@@ -707,10 +707,11 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
         if ( almanac_page_to_PRN.count( SV_page) )
             {
                
+                Gps_Almanac almanac;
                 d_Toa = (double)read_navigation_unsigned(subframe_bits, T_OA);
                 d_Toa = d_Toa * T_OA_LSB;
+                almanac.d_Toa = d_Toa;
 
-                Gps_Almanac almanac;
                 //! \TODO read almanac
                 almanac.i_satellite_PRN = almanac_page_to_PRN.at( SV_page) ; 
                 double delta_i = (double)read_navigation_signed(subframe_bits, DELTA_I);
@@ -719,10 +720,10 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 double M_0 = (double)read_navigation_signed(subframe_bits, almanac_M_0);
                 almanac.d_M_0 = M_0 * almana_M_0_LSB; 
 
-                double almanac_e = (double)read_navigation_signed(subframe_bits, almanac_E);
+                double almanac_e = (double)read_navigation_unsigned(subframe_bits, almanac_E);
                 almanac.d_e_eccentricity = almanac_e * almanac_E_LSB;    
 
-                double sqrt_A = (double)read_navigation_signed(subframe_bits, almanac_SQRT_A);
+                double sqrt_A = (double)read_navigation_unsigned(subframe_bits, almanac_SQRT_A);
                 almanac.d_sqrt_A = sqrt_A * almanac_SQRT_A_LSB; 
 
                 double omega0 = (double)read_navigation_signed(subframe_bits, almanac_OMEGA0);
@@ -782,10 +783,11 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
             {
                 if(SV_data_ID_5){}
 
+                Gps_Almanac almanac;
                 d_Toa = (double)read_navigation_unsigned(subframe_bits, T_OA);
                 d_Toa = d_Toa * T_OA_LSB;
+                almanac.d_Toa = d_Toa;
 
-                Gps_Almanac almanac;
                 //! \TODO read almanac
                 almanac.i_satellite_PRN = SV_page; 
                 double delta_i = (double)read_navigation_signed(subframe_bits, DELTA_I);
@@ -794,17 +796,17 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 double M_0 = (double)read_navigation_signed(subframe_bits, almanac_M_0);
                 almanac.d_M_0 = M_0 * almana_M_0_LSB; 
 
-                double almanac_e = (double)read_navigation_signed(subframe_bits, almanac_E);
+                double almanac_e = (double)read_navigation_unsigned(subframe_bits, almanac_E);
                 almanac.d_e_eccentricity = almanac_e * almanac_E_LSB;    
 
-                double sqrt_A = (double)read_navigation_signed(subframe_bits, almanac_SQRT_A);
+                double sqrt_A = (double)read_navigation_unsigned(subframe_bits, almanac_SQRT_A);
                 almanac.d_sqrt_A = sqrt_A * almanac_SQRT_A_LSB; 
 
                 double omega0 = (double)read_navigation_signed(subframe_bits, almanac_OMEGA0);
                 almanac.d_OMEGA0 = omega0 * almanac_OMEGA0_LSB;
 
                 double omega = (double)read_navigation_signed(subframe_bits, almanac_OMEGA);
-                almanac.d_OMEGA = omega0 * almanac_OMEGA_LSB;
+                almanac.d_OMEGA = omega * almanac_OMEGA_LSB;
 
                 double omega_dot = (double)read_navigation_signed(subframe_bits, almanac_OMEGA_DOT);
                 almanac.d_OMEGA_DOT = omega_dot * almanac_OMEGA_DOT_LSB;
@@ -1036,7 +1038,7 @@ Gps_Utc_Model Gps_Navigation_Message::get_utc_model()
     return utc_model;
 }
 
-GPS_Almanac Gps_Navigation_Message::get_almanac()
+std::map<int, Gps_Almanac> Gps_Navigation_Message::get_almanac()
 {
     return almanac_map;
 }
