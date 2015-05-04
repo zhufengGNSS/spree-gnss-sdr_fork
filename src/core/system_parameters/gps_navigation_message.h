@@ -124,6 +124,8 @@ public:
     double d_Toa;           //!< Almanac reference time [s]
     int i_WN_A;             //!< Modulo 256 of the GPS week number to which the almanac reference time (d_Toa) is referenced
     std::map<int,int> almanacHealth; //!< Map that stores the health information stored in the almanac
+    std::map<int,Gps_Almanac> almanac_map; //!< Map that stores the almanac parameters for each satellite 
+    std::map<int, int> almanac_page_to_PRN; //!< Map that stores which satellite's almanac data is stored in what page of subframe 4
 
     std::map<int,std::string> satelliteBlock; //!< Map that stores to which block the PRN belongs http://www.navcen.uscg.gov/?Do=constellationStatus
 
@@ -216,6 +218,10 @@ public:
      */
     Gps_Utc_Model get_utc_model();
 
+    /*!
+     * \brief Obtain the almanac data 
+     */
+    GPS_Almanac get_almanac();
 
     /*!
      * \brief Decodes the GPS NAV message
