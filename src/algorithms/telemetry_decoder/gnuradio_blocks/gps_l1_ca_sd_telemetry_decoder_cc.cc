@@ -45,12 +45,6 @@
 #include <fstream>
 #include <cmath>
 
-struct Subframe{
-    std::string subframe;
-    unsigned int id;
-    unsigned int PRN;
-    double timestamp;
-};
 extern concurrent_map<Subframe> global_subframe_map;
 extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
 
@@ -145,7 +139,9 @@ gps_l1_ca_sd_telemetry_decoder_cc::gps_l1_ca_sd_telemetry_decoder_cc(
     d_average_count=0;
 
     //set_history(d_samples_per_bit*8); // At least a history of 8 bits are needed to correlate with the preamble
-     d_GPS_FSM.detect_spoofing = spoofing_detector.d_detect_spoofing; 
+     d_GPS_FSM.inter_satellite_check  = spoofing_detector.d_inter_satellite_check; 
+     d_GPS_FSM.ap_detection = spoofing_detector.d_ap_detection; 
+     d_GPS_FSM.external_nav_check = spoofing_detector.d_external_nav_check; 
      d_GPS_FSM.spoofing_detector = spoofing_detector; 
 }
 
@@ -254,7 +250,7 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
                     preamble_diff = d_sample_counter - d_preamble_index;
                     if (preamble_diff > 6001)
                         {
-                            LOG(INFO) << "Lost frame sync SAT " << this->d_satellite << " preamble_diff= " << preamble_diff
+                            LOG(INFO) << "Lost frame sync SAT " << this->d_satellite << " preamble_diff= " << preamble_diff << " "
                                       << d_nav.unique_id; 
                     
                                
@@ -360,6 +356,10 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
             global_subframe_map.remove((int)d_nav.unique_id);
             global_subframe_check.remove((int)d_nav.unique_id);
         }
+    else if(d_flag_frame_sync == false)
+        {
+            DLOG(INFO) << "remove from subframe map " << d_satellite.get_PRN() << " " << d_nav.unique_id;
+        }
 
     if(d_dump == true)
         {
@@ -410,8 +410,6 @@ void gps_l1_ca_sd_telemetry_decoder_cc::set_satellite(Gnss_Satellite satellite)
 
 void gps_l1_ca_sd_telemetry_decoder_cc::reset()
 {
-    //global_subframe_map.remove((int)d_nav.unique_id);
-   // global_subframe_check.remove((int)d_nav.unique_id);
     d_GPS_FSM.d_nav.reset();
     d_GPS_FSM.Event_gps_word_invalid();
     d_sample_counter = 0;

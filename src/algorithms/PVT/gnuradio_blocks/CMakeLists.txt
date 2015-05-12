@@ -29,6 +29,9 @@ include_directories(
      ${CMAKE_SOURCE_DIR}/src/core/interfaces
      ${CMAKE_SOURCE_DIR}/src/core/receiver
      ${CMAKE_SOURCE_DIR}/src/core/libs
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn-rrlp
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn-supl
      ${CMAKE_SOURCE_DIR}/src/algorithms/libs
      ${CMAKE_SOURCE_DIR}/src/algorithms/PVT/libs
      ${ARMADILLO_INCLUDE_DIRS}

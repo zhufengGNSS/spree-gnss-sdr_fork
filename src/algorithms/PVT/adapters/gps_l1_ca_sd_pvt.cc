@@ -30,7 +30,6 @@
  * -------------------------------------------------------------------------
  */
 
-
 #include "gps_l1_ca_sd_pvt.h"
 #include <glog/logging.h>
 #include "configuration_interface.h"
@@ -75,7 +74,7 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
     nmea_dump_devname = configuration->property(role + ".nmea_dump_devname", default_nmea_dump_devname);
 
     //spoofing detection
-    bool detect_spoofing = configuration->property("Spoofing.spoofing_detection", false);
+    bool detect_spoofing = configuration->property("Spoofing.ap_detection", false);
     bool cno_detection = configuration->property("Spoofing.cno_detection", false);
     bool alt_detection = configuration->property("Spoofing.alt_detection", false);
     bool satpos_detection = configuration->property("Spoofing.satpos_detection", false);
@@ -86,9 +85,33 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
     DLOG(INFO) << "cno_min: " << cno_min;
     Spoofing_Detector *spoofing_detector = new Spoofing_Detector(detect_spoofing, cno_detection, cno_count, cno_min, 
                                                                 alt_detection,  max_alt, satpos_detection, snr_window_size);
+    
+    std::string default_flog_filename = "../data/flog/sat_"; 
+/*
+    std::string source_filename = configuration->property("SignalSource.filename", default_flog_filename);
+    //std::string path = "/media/data2/aanjhan/bern-zrh-drive/";
+    std::string path = "/media/data/aanjhan/";
+    std::string extention = ".bin";
+    std::string source  = source_filename.substr(path.size(), source_filename.size()-path.size()-extention.size()); 
+    std::string flog_filename = path;
+    flog_filename.append("flog/").append(source).append("/sat_");
+   
+    std::string flog_path = path.append("flog/").append(source);
+    const boost::filesystem::path p (flog_path); 
+    if (!boost::filesystem::exists(p))
+        {
+            std::cout << "The path "
+                << flog_path
+                << " does not exist, attempting to create it"
+                << std::endl;
+            boost::filesystem::create_directory(p);
+        }
+*/
+    std::string flog_filename = configuration->property("Spoofing.flog_filename", default_flog_filename);
+    std::cout << flog_filename << std::endl;
 
     // make PVT object
-    pvt_ = gps_l1_ca_make_sd_pvt_cc(in_streams_, queue_, dump_, dump_filename_, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, *spoofing_detector);
+    pvt_ = gps_l1_ca_make_sd_pvt_cc(in_streams_, queue_, dump_, dump_filename_, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, *spoofing_detector, flog_filename);
     DLOG(INFO) << "pvt(" << pvt_->unique_id() << ")";
 
 

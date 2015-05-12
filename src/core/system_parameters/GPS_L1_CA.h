@@ -167,10 +167,10 @@ const std::vector<std::pair<int,int>> T_OA({{91,8}});
 const double T_OA_LSB = TWO_P12;
 const std::vector<std::pair<int,int>> DELTA_I({{99,16}});
 const double DELTA_I_LSB = TWO_N19;
-const std::vector<std::pair<int,int>> almanac_OMEGA_DOT({{99,16}});
+const std::vector<std::pair<int,int>> almanac_OMEGA_DOT({{121,16}});
 const double almanac_OMEGA_DOT_LSB= TWO_N38;
 const std::vector<std::pair<int,int>> almanac_SQRT_A({{151,24}});
-const double almanac_SQRT_A_LSB = TWO_N11;
+const double almanac_SQRT_A_LSB = PI_TWO_N11;
 const std::vector<std::pair<int,int>> almanac_OMEGA0({{181,24}});
 const double almanac_OMEGA0_LSB= TWO_N23;
 const std::vector<std::pair<int,int>> almanac_OMEGA({{211,24}});
@@ -178,8 +178,8 @@ const double almanac_OMEGA_LSB= TWO_N23;
 const std::vector<std::pair<int,int>> almanac_M_0({{241,24}});
 const double almana_M_0_LSB = TWO_N23;
 const std::vector<std::pair<int,int>> almanac_A_F0({{271,8}, {290,3}});
-const double almanac_A_F0_LSB = TWO_N20;
-const std::vector<std::pair<int,int>> almanac_A_F1({{290,11}});
+const double almanac_A_F0_LSB = PI_TWO_N20;
+const std::vector<std::pair<int,int>> almanac_A_F1({{279,11}});
 const double almanac_A_F1_LSB = TWO_N38;
 
 // SUBFRAME 4

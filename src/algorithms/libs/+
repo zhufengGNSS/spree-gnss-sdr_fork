@@ -322,13 +322,15 @@ double get_cov(boost::circular_buffer<double> a, boost::circular_buffer<double> 
 
 double Spoofing_Detector::get_SNR_corr(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
 {
-    int window_size = 1e3;
+    DLOG(INFO) << "calculate snr corr";
+    int window_size = 1e4;
     std::vector<unsigned int> PRNs;
     unsigned int PRN, i;
     for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
     {
         i = *it;
         PRN  = in[i][0].PRN;
+        DLOG(INFO) << "PRNs with valid " << PRN; 
         PRNs.push_back(PRN);
         //we have a buffer with previous SNR samples
         if(!satellite_SNR.count(PRN)) 
@@ -353,39 +355,42 @@ double Spoofing_Detector::get_SNR_corr(std::list<unsigned int> channels, Gnss_Sy
         satellite_SNR.erase(*it); 
     }
 
+     
     double p_corr;
     int PRN_a, PRN_b;
-    double corr_sum = 0;
     for(int i = 0; i < PRNs.size(); i++) 
     {
         PRN_a  = PRNs.at(i); 
-        for(int j = i+1; j < PRNs.size(); j++) 
+        DLOG(INFO) << "calc p corr for " << PRN_a;
+        PRNs.erase(PRNs.begin()+i);
+        for(int j = i+1; i < PRNs.size(); i++) 
         {
-            PRN_b = PRNs.at(j);
-            p_corr = get_corr(satellite_SNR.at(PRN_a), satellite_SNR.at(PRN_b));
-            corr_sum += p_corr;
-        } 
-    }
 
-    if(corr_sum > 3)
-    {
-        std::stringstream s;
-        s << " the SNR correlation is above expected values, "; 
-        s << " SNR: " << corr_sum; 
-        s << ", " << sample_counter; 
-        spoofing_detected(s.str(), 10);
+            PRN_b = *it;
+            DLOG(INFO) << "calc p corr for " << PRN_a << " " << PRN_b;
+            p_corr = get_corr(satellite_SNR.at(PRN_a), satellite_SNR.at(PRN_b));
+            DLOG(INFO) << "p_corr " << p_corr;
+
+            if(p_corr > 3)
+            {
+                std::stringstream s;
+                s << " the SNR correlation is above expected values, "; 
+                s << " SNR: " << p_corr; 
+                s << " satellites: " << PRN_a << " " << PRN_b; 
+                s << ", " << sample_counter; 
+                spoofing_detected(s.str(), 10);
+            }
+        } 
+        
     }
 
 }
 
 double Spoofing_Detector::get_corr(boost::circular_buffer<double> a, boost::circular_buffer<double> b)
 {
-    int window_size = 1e3;
+    int window_size = 1e4;
     if(a.size() < window_size || b.size() < window_size)
-        {
-            DLOG(INFO) << "don't have enough SNR values to calculate correlation";
-            return 0; 
-        }
+        return 0; 
     
     double corr = get_cov(a, b) / (get_cov(a, a) * get_cov(b, b)); 
     return corr;
