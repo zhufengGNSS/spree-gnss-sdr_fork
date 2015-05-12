@@ -65,7 +65,8 @@ gps_l1_ca_sd_pvt_cc_sptr gps_l1_ca_make_sd_pvt_cc(unsigned int n_channels,
                                             bool flag_nmea_tty_port,
                                             std::string nmea_dump_filename,
                                             std::string nmea_dump_devname, 
-                                            Spoofing_Detector spoofing_detector); 
+                                            Spoofing_Detector spoofing_detector, 
+                                            std::string flog_filename); 
 
 /*!
  * \brief This class implements a block that computes the PVT solution
@@ -84,7 +85,8 @@ private:
                                                        bool flag_nmea_tty_port,
                                                        std::string nmea_dump_filename,
                                                        std::string nmea_dump_devname, 
-                                                       Spoofing_Detector spoofing_detector); 
+                                                       Spoofing_Detector spoofing_detector, 
+                                                       std::string flog_filename); 
     gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
                      boost::shared_ptr<gr::msg_queue> queue,
                      bool dump,
@@ -96,7 +98,8 @@ private:
                      bool flag_nmea_tty_port,
                      std::string nmea_dump_filename,
                      std::string nmea_dump_devname,
-                     Spoofing_Detector spoofing_detector); 
+                     Spoofing_Detector spoofing_detector, 
+                     std::string flog_filename); 
     boost::shared_ptr<gr::msg_queue> d_queue;
     bool d_dump;
     bool b_rinex_header_writen;
@@ -128,7 +131,7 @@ private:
 
     //logging for fingerprinting
     std::map<int, std::ofstream*> flog_files_map;
-    std::string flog_filename = "flog/sat_";
+    std::string d_flog_filename;
 
 public:
     ~gps_l1_ca_sd_pvt_cc (); //!< Default destructor

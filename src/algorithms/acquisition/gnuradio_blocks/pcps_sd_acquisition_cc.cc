@@ -275,7 +275,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             file.open (filename,  ios::out);
 */
             bool acquire_auxiliary_peaks = false;
-            DLOG(INFO) << "peak to acquire: " << d_peak;
+            //DLOG(INFO) << "peak to acquire: " << d_peak;
             if(d_peak != 1)  
                 {
                     DLOG(INFO) << "acquire aux";
@@ -453,9 +453,10 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     DLOG(INFO) << "### all peaks: ###";
                     for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)
                     {
-                        DLOG(INFO) << "peak " << rit->first 
+                        /*DLOG(INFO) << "peak " << rit->first 
                             << " code phase " << rit->second.code_phase 
                             << " doppler: " << rit->second.doppler;
+                        */
                         use_peak = true;
                         for (rit2=d_highest_peaks_reduced.rbegin(); rit2!=d_highest_peaks_reduced.rend(); ++rit2)
                         {
@@ -471,9 +472,9 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                 d_highest_peaks_reduced[rit->first] = rit->second;
                             }
                     }
-                    DLOG(INFO) << "#####";
+                    // DLOG(INFO) << "#####";
 
-                    DLOG(INFO) << "peaks size: "<< d_highest_peaks_reduced.size();
+                    //DLOG(INFO) << "peaks size: "<< d_highest_peaks_reduced.size();
                     //If there is more than one peak present, acquire the highest
                     if(d_peak == 0 && d_highest_peaks_reduced.size() > 0)
                     {
@@ -487,9 +488,10 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         DLOG(INFO) << "### peaks: ###";
                         for (rit=d_highest_peaks_reduced.rbegin(); rit!=d_highest_peaks_reduced.rend(); ++rit)
                         {
-                            DLOG(INFO) << "peak " << rit->first 
+                            /*DLOG(INFO) << "peak " << rit->first 
                                        << " code phase " << rit->second.code_phase 
                                        << " doppler: " << rit->second.doppler;
+                            */
                             if(i == d_peak)
                                 {
                                     found_peak = true; 
@@ -504,7 +506,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                             
                             ++i;
                         }
-                    DLOG(INFO) << "#####";
+                        //DLOG(INFO) << "#####";
                     }
             
                 }

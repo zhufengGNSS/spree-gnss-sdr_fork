@@ -414,7 +414,9 @@ bool gnss_sdr_supl_client::load_utc_xml(const std::string file_name)
     {
         std::ifstream ifs(file_name.c_str(), std::ifstream::binary | std::ifstream::in);
         boost::archive::xml_iarchive xml(ifs);
-        xml >> boost::serialization::make_nvp("GNSS-SDR_utc_map", this->gps_utc);
+        std::map<int, Gps_Utc_Model> utc_map;
+        xml >> boost::serialization::make_nvp("GNSS-SDR_utc_map", utc_map);
+        //this->gps_utc = utc_map.at==
         ifs.close();
         LOG(INFO) << "Loaded UTC model data";
     }

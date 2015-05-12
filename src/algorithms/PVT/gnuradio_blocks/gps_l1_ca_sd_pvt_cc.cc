@@ -58,11 +58,6 @@ extern concurrent_map<Sbas_Ephemeris> global_sbas_ephemeris_map;
 extern concurrent_queue<Spoofing_Message> global_spoofing_queue;
 extern concurrent_map<int> global_channel_status;
 extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
-struct Subframe{
-    std::string subframe;
-    int subframe_id;
-    double timestamp;
-};
 extern concurrent_map<Subframe> global_subframe_map;
 
 struct GPS_time_t{
@@ -74,9 +69,9 @@ struct GPS_time_t{
 extern concurrent_map<GPS_time_t> global_gps_time;
 
 gps_l1_ca_sd_pvt_cc_sptr
-gps_l1_ca_make_sd_pvt_cc(unsigned int nchannels, boost::shared_ptr<gr::msg_queue> queue, bool dump, std::string dump_filename, int averaging_depth, bool flag_averaging, int output_rate_ms, int display_rate_ms, bool flag_nmea_tty_port, std::string nmea_dump_filename, std::string nmea_dump_devname, Spoofing_Detector spoofing_detector)
+gps_l1_ca_make_sd_pvt_cc(unsigned int nchannels, boost::shared_ptr<gr::msg_queue> queue, bool dump, std::string dump_filename, int averaging_depth, bool flag_averaging, int output_rate_ms, int display_rate_ms, bool flag_nmea_tty_port, std::string nmea_dump_filename, std::string nmea_dump_devname, Spoofing_Detector spoofing_detector, std::string flog_filename)
 {
-    return gps_l1_ca_sd_pvt_cc_sptr(new gps_l1_ca_sd_pvt_cc(nchannels, queue, dump, dump_filename, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, spoofing_detector));
+    return gps_l1_ca_sd_pvt_cc_sptr(new gps_l1_ca_sd_pvt_cc(nchannels, queue, dump, dump_filename, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, spoofing_detector, flog_filename));
 }
 
 
@@ -90,7 +85,8 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
         bool flag_nmea_tty_port,
         std::string nmea_dump_filename,
         std::string nmea_dump_devname,
-        Spoofing_Detector spoofing_detector) :
+        Spoofing_Detector spoofing_detector,
+        std::string flog_filename) :
              gr::block("gps_l1_ca_sd_pvt_cc", gr::io_signature::make(nchannels, nchannels,  sizeof(Gnss_Synchro)),
              gr::io_signature::make(1, 1, sizeof(gr_complex)) )
 {
@@ -127,10 +123,12 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
 
     //spoofing
     d_spoofing_detector = spoofing_detector;
-    d_detect_spoofing = d_spoofing_detector.d_detect_spoofing;
     d_cno_detection = d_spoofing_detector.d_cno_detection;
     d_alt_detection = d_spoofing_detector.d_alt_detection;
     d_satpos_detection = d_spoofing_detector.d_satpos_detection;
+
+    //flog
+    d_flog_filename = flog_filename;
 
     b_rinex_header_writen = false;
     b_rinex_sbs_header_writen = false;
@@ -174,7 +172,7 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
     //create all logging files
     for(int i = 1; i != 33; i++)
         {
-            std::string tmp = flog_filename;
+            std::string tmp = d_flog_filename;
             tmp.append(boost::lexical_cast<std::string>(i));
             tmp.append(".dat");
             std::ofstream *flog_file = new std::ofstream(tmp.c_str(), std::ios::out | std::ios::binary);
@@ -234,7 +232,12 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
         }
 
    
-    //if(d_cno_detection && (d_sample_counter % d_output_rate_ms) == 0)
+    if((d_sample_counter % d_output_rate_ms) == 0)
+        {
+
+        }
+    double corr  = d_spoofing_detector.get_SNR_corr(channels_used, in, d_sample_counter);
+
     if(d_cno_detection) 
         {
             double stdev = d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
@@ -264,11 +267,8 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
             d_rx_time = in[i][0].d_TOW_at_current_symbol; // all the channels have the same RX timestamp (common RX time pseudoranges)
 
-            
-            DLOG(INFO) << "1 flog for " << in[i][0].PRN;
             if( flog_files_map.count(in[i][0].PRN))
                 {
-                    DLOG(INFO) << "flog for " << in[i][0].PRN;
                     flog_file = flog_files_map.at(in[i][0].PRN); 
                     if (flog_file->is_open())
                         {
@@ -283,6 +283,20 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                             flog_file->write((char*)&in[i][0].ELP, sizeof(float));
                             flog_file->write((char*)&in[i][0].MD, sizeof(float));
 
+                        }
+                    else
+                        {
+                            flog_file->open(d_flog_filename.c_str(), std::ios::out | std::ios::binary);
+                            flog_file->write((char*)&in[i][0].PRN, sizeof(float));
+                            flog_file->write((char*)&d_sample_counter, sizeof(unsigned long int));
+                            flog_file->write((char*)&in[i][0].Tracking_timestamp_secs, sizeof(double));
+                            flog_file->write((char*)&in[i][0].CN0_dB_hz, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Carrier_Doppler_hz, sizeof(double));
+                            flog_file->write((char*)&in[i][0].delta, sizeof(float));
+                            flog_file->write((char*)&in[i][0].RT, sizeof(float));
+                            flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
+                            flog_file->write((char*)&in[i][0].ELP, sizeof(float));
+                            flog_file->write((char*)&in[i][0].MD, sizeof(float));
                         }
                 }
         }

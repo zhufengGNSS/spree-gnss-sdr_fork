@@ -89,7 +89,9 @@ const double TWO_N59 = (1.73472347597681e-018);   //!< 2^-59
 const double TWO_N60 = (8.673617379884036e-19);   //!< 2^-60
 
 
+const double PI_TWO_N11 = (0.0015339807878856412);  //!< Pi*2^-11
 const double PI_TWO_N19 = (5.992112452678286e-006);  //!< Pi*2^-19
+const double PI_TWO_N20 = (2.996056226339143e-006);  //!< Pi*2^-20
 const double PI_TWO_N43 = (3.571577341960839e-013);  //!< Pi*2^-43
 const double PI_TWO_N31 = (1.462918079267160e-009);  //!< Pi*2^-31
 const double PI_TWO_N38 = (1.142904749427469e-011);  //!< Pi*2^-38

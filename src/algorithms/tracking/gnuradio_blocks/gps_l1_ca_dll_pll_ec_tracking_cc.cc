@@ -379,7 +379,6 @@ int Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::general_work (int noutput_items, gr_vector
                     //d_sample_counter_seconds = d_sample_counter_seconds + (((double)samples_offset) / (double)d_fs_in);
                     d_sample_counter = d_sample_counter + samples_offset; //count for the processed samples
                     d_pull_in = false;
-                    //std::cout<<" samples_offset="<<samples_offset<<"\r\n";
                     consume_each(samples_offset); //shift input to perform alignment with local replica
                     return 1;
                 }
@@ -535,7 +534,7 @@ int Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::general_work (int noutput_items, gr_vector
             current_synchro_data.CN0_dB_hz = (double)d_CN0_SNV_dB_Hz;
 
 
-            //Vestigial
+            //Vestigial - flog
             float delta_ = delta(*d_Early, *d_Late, *d_Prompt);
             float RT_ = RT(*d_Early, *d_Late, *d_Prompt);
             float Extra_RT_ = RT(*d_Extra_Early, *d_Extra_Late, *d_Prompt);
@@ -547,6 +546,8 @@ int Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::general_work (int noutput_items, gr_vector
             current_synchro_data.ELP = ELP_;
             current_synchro_data.MD = MD_;
             current_synchro_data.sample_counter = d_sample_counter;
+
+
             *out[0] = current_synchro_data;
 
             // ########## DEBUG OUTPUT
