@@ -123,6 +123,7 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
 
     //spoofing
     d_spoofing_detector = spoofing_detector;
+    d_detect_spoofing = spoofing_detector.d_ap_detection;
     d_cno_detection = d_spoofing_detector.d_cno_detection;
     d_alt_detection = d_spoofing_detector.d_alt_detection;
     d_satpos_detection = d_spoofing_detector.d_satpos_detection;
@@ -209,7 +210,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 {
                     if(channel_status.count(i) && channel_status.at(i) != 2)
                         {
-
                             channels.push_back(i);
 
                             //use the channel that is tracking the  highest peak
@@ -234,16 +234,21 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
    
     if((d_sample_counter % d_output_rate_ms) == 0)
         {
-
+            //double corr  = d_spoofing_detector.get_SNR_corr(channels_used, in, d_sample_counter);
         }
-    double corr  = d_spoofing_detector.get_SNR_corr(channels_used, in, d_sample_counter);
 
     if(d_cno_detection) 
         {
             double stdev = d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
              //log the standard deviation
-            d_dump_snr_file.write((char*)&d_sample_counter, sizeof(unsigned long int));
-            d_dump_snr_file.write((char*)&stdev, sizeof(double));
+            //d_dump_snr_file.write((char*)&d_sample_counter, sizeof(unsigned long int));
+            //d_dump_snr_file.write((char*)&stdev, sizeof(double));
+        }
+
+    //only sample every 1000 sample
+    if((d_sample_counter % 1000) == 0)
+        {
+            d_spoofing_detector.SNR_delta_RT_calc(channels_used, in, d_sample_counter);
         }
 
     unsigned int i = 0;
@@ -300,13 +305,18 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                         }
                 }
         }
+
+
     bool spoofed = false;
-   /* 
+    
     Spoofing_Message spm;
     spoofed = global_spoofing_queue.try_pop(spm);
     if(spoofed)
-        global_spoofing_queue.
-*/
+        {
+           while( !global_spoofing_queue.empty())
+                global_spoofing_queue.try_pop(spm);
+        }
+
     //cancel tracking on auxiliary channels if no spoofing has been detected.
     if(d_detect_spoofing && !spoofed) 
         {
@@ -315,10 +325,8 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
                 {
                     i = *it; 
-                   // DLOG(INFO) << "check " << i;
                     if (in[i][0].Flag_valid_pseudorange && (channel_status.count(i) && channel_status.at(i) == 1))
                         {
-                    //        DLOG(INFO) << i << " is valid";
                             if (std::find(channels_used.begin(), channels_used.end(), i) == channels_used.end())
                                 {
                                     if(!PRN_to_uid.count(in[i][0].PRN))
@@ -332,7 +340,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     
                                     if(!d_spoofing_detector.checked_subframes(uid, uid_u))
                                         {
-                                            //DLOG(INFO) << "channel was not checked yet";
                                             continue;
                                         }
                                     global_subframe_map.remove(uid);

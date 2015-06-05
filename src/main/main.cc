@@ -98,7 +98,7 @@ struct GPS_time_t{
 
 concurrent_map<GPS_time_t> global_gps_time;
 concurrent_map<double> global_last_gps_time;
-concurrent_map<int> global_channel_status;  //status 0: newly acquired, status 1: received the first 3 subframes, 
+concurrent_map<int> global_channel_status;  //status 1: received a subframe 
                                             //status 2: reset by PVT because no spoofing detected 
 struct Subframe{
     std::string subframe;

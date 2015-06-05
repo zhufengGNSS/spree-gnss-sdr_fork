@@ -53,8 +53,8 @@
 /*!
  * \todo Include in definition header file
  */
-#define CN0_ESTIMATION_SAMPLES 20
-#define MINIMUM_VALID_CN0 25
+#define CN0_ESTIMATION_SAMPLES 200
+#define MINIMUM_VALID_CN0 40
 #define MAXIMUM_LOCK_FAIL_COUNTER 20
 #define CARRIER_LOCK_THRESHOLD 0.85
 
