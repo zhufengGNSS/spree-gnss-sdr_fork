@@ -65,6 +65,49 @@ struct Subframe{
     double timestamp;
 };
 
+struct SatBuff{
+    int cb_window = 100;
+    int PRN;
+    boost::circular_buffer<double> SNR_cb = boost::circular_buffer<double> (cb_window); 
+    boost::circular_buffer<double> delta_cb = boost::circular_buffer<double> (cb_window); 
+    boost::circular_buffer<double> RT_cb = boost::circular_buffer<double> (cb_window); 
+    double last_snr;
+    double last_rt;
+    double last_delta;
+    int count = 0;
+
+    void add(Gnss_Synchro in){
+        //if the difference between any two sample is more than 0.001
+        //do not add value but nan instead.  
+        count++;
+
+        double max_diff = 0.01;
+        double snr = in.CN0_dB_hz; 
+        double rt = in.RT; 
+        double delta = in.delta; 
+
+        if( last_snr && abs(snr - last_snr) < max_diff)
+            {
+                SNR_cb.push_back(snr);
+            }
+
+        if( last_rt && abs(rt - last_rt) < max_diff)
+            {
+                RT_cb.push_back(rt);
+            }
+
+        if( last_delta && abs(delta - last_delta) < max_diff)
+            {
+                SNR_cb.push_back(delta);
+            }
+
+        last_snr = snr; 
+        last_delta = delta; 
+        last_rt = rt; 
+    }
+};
+
+
 /*!
  * \brief provides spoofing detection 
  *
@@ -120,16 +163,17 @@ public:
     std::map<int, boost::circular_buffer<double>> satellite_SNR;
     double get_SNR_corr(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
     double get_corr(boost::circular_buffer<double> a, boost::circular_buffer<double> b);
+
+    std::map<int, SatBuff> sat_buffs;
+    double SNR_delta_RT_calc(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
+    void calc_mean_var(int sample_counter);
+    int snr_sum = 0;
+    int delta_sum = 0;
+    int rt_sum = 0; 
+    int count = 0;
     
     //supl
     gnss_sdr_supl_client supl_client_;
-/*
-    std::string d_default_eph_server = "supl.google.com";
-    int supl_mcc = 244;
-    int supl_mns = 5; 
-    int supl_lac = 0x59e2;
-    int supl_ci = 0x31b0;
-*/
 
     /*!
      * \brief Default destructor.

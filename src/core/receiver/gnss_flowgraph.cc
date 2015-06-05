@@ -491,7 +491,6 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         if (!available_GNSS_signals_.empty() && acq_channels_count_ < max_acq_channels_)
 =======
         DLOG(INFO) << "peak " << channel_to_peak.at(who);
-        global_channel_status.add(who, 1);
 
         if(spoofing_detection){
             nr_acq_peaks = nr_acquired_peaks.at(acq_PRN);

@@ -46,7 +46,6 @@
 #include "gnss_sdr_supl_client.h"
 
 
-
 extern concurrent_queue<Spoofing_Message> global_spoofing_queue;
 extern concurrent_map<double> global_last_gps_time;
 
@@ -78,7 +77,7 @@ Spoofing_Detector::Spoofing_Detector(bool ap_detection, bool inter_satellite_che
     d_inter_satellite_check = inter_satellite_check;
     d_external_nav_check = external_nav_check;
     d_max_rx_discrepancy = max_rx_discrepancy/1e6; //[ns] -> [ms]
-    d_max_rx_discrepancy = 0.0005; //[ns] -> [ms]
+    DLOG(INFO) << "max dis " << d_max_rx_discrepancy;
     d_max_tow_discrepancy = max_tow_discrepancy/1e3; //[ms] -> [s]
 }
 
@@ -103,7 +102,7 @@ Spoofing_Detector::~Spoofing_Detector()
 void Spoofing_Detector::spoofing_detected(std::string description, int spoofing_case)
 {
     DLOG(INFO) << "SPOOFING DETECTED " << description;
-//    std::cout << "SPOOFING DETECTED " << description << std::endl;
+    std::cout << "SPOOFING DETECTED " << description << std::endl;
     Spoofing_Message msg;
     msg.spoofing_case = spoofing_case;
     msg.description = description;
@@ -231,35 +230,188 @@ void Spoofing_Detector::check_GPS_time()
             GPS_week = gps_time.week; 
             if(GPS_week == 0)
                 continue;
+
             if(gps_time.timestamp > largest)
                 largest = gps_time.timestamp;
             if(gps_time.timestamp < smallest)
                 smallest  = gps_time.timestamp;
 
-            //DLOG(INFO) << "ts " << gps_time.timestamp;
             TOW = GPS_week*604800+gps_time.TOW;
             GPS_TOW.insert(TOW);
             subframe_IDs.insert(gps_time.subframe_id);
+            DLOG(INFO) << "ts " << gps_time.timestamp << " TOW: " << TOW << " subframe: " << gps_time.subframe_id << " " << it->first;
         }
 
-    if(subframe_IDs.size() > 1 || std::abs(largest-smallest) > 30000) // 30 s 
+    /*if(std::abs(largest-smallest) > 29e3) // 29 s 
     {
         DLOG(INFO) << "Not all satellites have received the latest subframe, don't compare GPS time " << subframe_IDs.size() << " " <<std::abs(largest-smallest);
-    }
-    else if(GPS_TOW.size() >1)
+        return;
+    }*/
+
+    if(GPS_TOW.size() > subframe_IDs.size())
     {
         std::string s =  "satellites GPS TOW are not synced";
         spoofing_detected(s, 4);
 
         for(std::set<int>::iterator it = GPS_TOW.begin(); it != GPS_TOW.end(); ++it)
             {
-                //DLOG(INFO) << "TOW " << *it; 
+                DLOG(INFO) << "TOW " << *it; 
             }
         for(std::set<int>::iterator it = subframe_IDs.begin(); it != subframe_IDs.end(); ++it)
             {
-                //DLOG(INFO) << "subframe " << *it; 
+                DLOG(INFO) << "subframe " << *it; 
             }
     }
+}
+
+double Spoofing_Detector::SNR_delta_RT_calc(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
+{
+    int window_size = 1e2;
+    std::vector<unsigned int> PRNs;
+    unsigned int PRN, i;
+    for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
+    {
+        i = *it;
+        PRN  = in[i][0].PRN;
+        PRNs.push_back(PRN);
+
+        //we have a buffer with previous SNR samples
+        if(!sat_buffs.count(PRN)) 
+            {
+                SatBuff satbuff;
+                satbuff.PRN = PRN;
+                sat_buffs[PRN] = satbuff; 
+            }
+        sat_buffs.at(PRN).add(in[i][0]);
+    }
+
+    //remove satellites form the buffers if they are no longer being tracked
+    std::list<unsigned int> sats_to_be_removed;
+    for(std::map<int, SatBuff>::iterator it = sat_buffs.begin(); it != sat_buffs.end(); it++)
+        {
+            if( std::find(PRNs.begin(), PRNs.end(), it->first) == PRNs.end())
+                {
+                    sats_to_be_removed.push_back(it->first);
+                }
+        }
+
+    for(std::list<unsigned int>::iterator it = sats_to_be_removed.begin(); it != sats_to_be_removed.end(); ++it)
+    {
+        sat_buffs.erase(*it); 
+    }
+    
+    //caluclate the mean of the variances
+    calc_mean_var(sample_counter);
+
+}
+
+double get_mean(boost::circular_buffer<double> v)
+{
+    double sum = 0;
+
+    for(boost::circular_buffer<double>::iterator it = v.begin(); it != v.end(); it++)
+        {
+            sum += *it;
+        }
+
+    return (sum / v.size());
+}
+
+double get_cov(boost::circular_buffer<double> a, boost::circular_buffer<double> b)
+{
+    double mean_a = get_mean(a);
+    double mean_b = get_mean(b);
+    
+    double sum = 0;
+    if(a.size() != b.size())
+        {
+            DLOG(ERROR) << "vectors are not same length, can't calculate convariance";
+            return 0;
+        }
+
+    for(int i = 0; i < a.size(); i++)
+        {
+            sum += ( a[i]-mean_a ) * ( b[i]-mean_b ); 
+        }
+    return sum / a.size();
+}
+
+void Spoofing_Detector::calc_mean_var(int sample_counter)
+{
+    int window = 100;
+    std::vector<double> snr_vars;
+    std::vector<double> delta_vars;
+    std::vector<double> rt_vars;
+    double snr_var, delta_var, rt_var;
+    for(std::map<int, SatBuff>::iterator it = sat_buffs.begin(); it != sat_buffs.end(); it++)
+        {
+            SatBuff sb = it->second;
+            if( sb.count < window )
+                continue;
+
+            snr_var = get_cov(sb.SNR_cb, sb.SNR_cb);
+            delta_var = get_cov(sb.delta_cb, sb.delta_cb);
+            rt_var = get_cov(sb.RT_cb, sb.RT_cb);
+            
+            snr_vars.push_back(snr_var);
+            delta_vars.push_back(delta_var);
+            rt_vars.push_back(rt_var);
+        }
+
+    double snr_mean = std::accumulate(snr_vars.begin(), snr_vars.end(), 0.0)/window; 
+    double delta_mean = std::accumulate(delta_vars.begin(), delta_vars.end(), 0.0)/window; 
+    double rt_mean = std::accumulate(rt_vars.begin(), rt_vars.end(), 0.0)/window; 
+
+    if( snr_mean > 8 )
+        {
+            std::stringstream s;
+            s << " the SNR indicates a spoofing attack"; 
+            s << " SNR: " << snr_mean;
+            s << ", " << sample_counter; 
+            spoofing_detected(s.str(), 10);
+        }
+    if(  rt_mean > 0.7)
+        {
+            std::stringstream s;
+            s << " the RT of the signal indicates a spoofing attack"; 
+            s << " RT: " << rt_mean;
+            s << ", " << sample_counter; 
+            spoofing_detected(s.str(), 10);
+        }
+
+    if( snr_mean > 2) 
+        snr_sum +=1; 
+    if( rt_mean > 0.04) 
+        rt_sum +=1; 
+    if( snr_mean > 0.03) 
+        delta_sum +=1; 
+    count += 1;
+
+
+    if( count >= 20)
+        {
+            int sp = 0;
+            if( snr_sum > 10)
+                sp +=1;
+            if( rt_sum > 10)
+                sp +=1;
+            if( delta_sum > 10)
+                sp +=1;
+
+            if( sp >= 2) 
+                {
+                    std::stringstream s;
+                    s << " the SNR and/or vestigial parameters suggest spoofing attack"; 
+                    s << ", " << sample_counter; 
+                    spoofing_detected(s.str(), 10);
+                }
+            
+            count = 0;
+            snr_sum = 0;
+            rt_sum = 0;
+            delta_sum = 0;
+            
+        }
 }
 
 double Spoofing_Detector::StdDeviation(std::vector<double> v)
@@ -288,37 +440,7 @@ double get_stdDev(std::vector<double> v, double mean)
 
 }
 
-double get_mean(boost::circular_buffer<double> v)
-{
-    double sum = 0;
 
-    for(boost::circular_buffer<double>::iterator it = v.begin(); it != v.end(); it++)
-        {
-            sum += *it;
-        }
-
-    return (sum / v.size());
-}
-
-
-double get_cov(boost::circular_buffer<double> a, boost::circular_buffer<double> b)
-{
-    double mean_a = get_mean(a);
-    double mean_b = get_mean(b);
-    
-    double sum = 0;
-    if(a.size() != b.size())
-        {
-            DLOG(ERROR) << "vectors are not same length, can't calculate convariance";
-            return 0;
-        }
-
-    for(int i = 0; i < a.size(); i++)
-        {
-            sum += ( a[i]-mean_a ) * ( b[i]-mean_b ); 
-        }
-    return sum / a.size();
-}
 
 double Spoofing_Detector::get_SNR_corr(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
 {
@@ -383,7 +505,7 @@ double Spoofing_Detector::get_corr(boost::circular_buffer<double> a, boost::circ
     int window_size = 1e3;
     if(a.size() < window_size || b.size() < window_size)
         {
-            DLOG(INFO) << "don't have enough SNR values to calculate correlation";
+            //DLOG(INFO) << "don't have enough SNR values to calculate correlation";
             return 0; 
         }
     
@@ -454,7 +576,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
     {
         subframe = it->second;
         
-        if(subframe.PRN != PRN)
+        if(subframe.PRN != PRN) 
             continue;
         smallest = subframe;
         largest = subframe;
@@ -468,7 +590,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
         if(subframe.PRN != PRN)
             continue;
 
-        DLOG(INFO) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << subframe.timestamp;
+        //DLOG(INFO) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
     
         if(smallest.timestamp > subframe.timestamp) 
         {
@@ -491,27 +613,16 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
         {
             if(largest.subframe_id != smallest.subframe_id)
                 {
-                    spoofed = false;
-                /*
-                    diff = largest.id-smallest.id;
-                    if(diff < 0 && diff != -4)
+                    diff = largest.subframe_id-smallest.subframe_id;
+                    if(std::abs(largest_t-smallest_t)/std::fmod(diff, 5) > 6001) 
                         {
                             spoofed = true;
                         }
-                    else if(diff > 1)
-                        {
-                            spoofed = true;
-                        }
-                    else if(std::abs(largest_t-smallest_t) > 6001) 
-                        {
-                            spoofed = true;
-                        }
-                */
                 }
             else
                 {
                     spoofed = true;
-                } 
+                }
         }
 
     if(spoofed)
@@ -523,6 +634,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
             s << std::setprecision(5) << "subframes: " << largest.subframe_id << " " << smallest.subframe_id << std::endl;
             s << "time difference: " << std::abs(largest_t-smallest_t)*1e6 << " [ns]" << std::endl;
             s << "distance: " << distance <<" [m]";
+            std::cout << "RX " <<  PRN << std::setprecision(15) << smallest_t << " "<< largest_t << " " << std::abs(largest_t-smallest_t)*1e6 << " " << distance << std::endl;
             spoofing_detected(s.str(), 1);
         }
 }
@@ -541,9 +653,9 @@ bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB
                 DLOG(INFO) << "Subframes timestamps are zero";
                 return 0;
             }
-
+/*
         //one of the ephemeris data has not been updated.
-        if(std::abs(subframeA.timestamp -subframeB.timestamp) > 1)
+        if(std::abs(subframeA.timestamp -subframeB.timestamp) > 3000)
             {
                 DLOG(INFO) << "Subframes timestamps differ more than one" << std::endl
                 << subframeA.timestamp << " " << subframeB.timestamp << std::endl
@@ -551,7 +663,7 @@ bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB
                 << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
                 return 0;
             }
-            
+  */          
         if(subframeA.subframe != subframeB.subframe && subframeA.subframe != "" && subframeB.subframe != "")
             {
                 std::stringstream s;
