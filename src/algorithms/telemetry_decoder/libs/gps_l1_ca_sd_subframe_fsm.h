@@ -52,31 +52,30 @@
 #include "gps_utc_model.h"
 #include "spoofing_detector.h"
 
-#include <iostream>
-
 #include <fstream>
+
 namespace sc = boost::statechart;
 namespace mpl = boost::mpl;
 
-struct gps_subframe_fsm_S0;
-struct gps_subframe_fsm_S1;
-struct gps_subframe_fsm_S2;
-struct gps_subframe_fsm_S3;
-struct gps_subframe_fsm_S4;
-struct gps_subframe_fsm_S5;
-struct gps_subframe_fsm_S6;
-struct gps_subframe_fsm_S7;
-struct gps_subframe_fsm_S8;
-struct gps_subframe_fsm_S9;
-struct gps_subframe_fsm_S10;
-struct gps_subframe_fsm_S11;
+struct gps_sd_subframe_fsm_S0;
+struct gps_sd_subframe_fsm_S1;
+struct gps_sd_subframe_fsm_S2;
+struct gps_sd_subframe_fsm_S3;
+struct gps_sd_subframe_fsm_S4;
+struct gps_sd_subframe_fsm_S5;
+struct gps_sd_subframe_fsm_S6;
+struct gps_sd_subframe_fsm_S7;
+struct gps_sd_subframe_fsm_S8;
+struct gps_sd_subframe_fsm_S9;
+struct gps_sd_subframe_fsm_S10;
+struct gps_sd_subframe_fsm_S11;
 
 
 /*!
  * \brief This class implements a Finite State Machine that handles the decoding
  *  of the GPS L1 C/A NAV message
  */
-class GpsL1CaSdSubframeFsm : public sc::state_machine< GpsL1CaSdSubframeFsm, gps_subframe_fsm_S0 >
+class GpsL1CaSdSubframeFsm : public sc::state_machine< GpsL1CaSdSubframeFsm, gps_sd_subframe_fsm_S0 >
 {
 public:
     GpsL1CaSdSubframeFsm(); //!< The constructor starts the Finite State Machine
@@ -84,7 +83,7 @@ public:
     // channel and satellite info
     int i_channel_ID;              //!< Channel id
     unsigned int i_satellite_PRN;  //!< Satellite PRN number
-    unsigned int i_peak;  //!< which peak the channel is tracking 
+    unsigned int i_peak;  //!< which peak this channel is tracking 
 
     concurrent_queue<Gps_Ephemeris> *d_ephemeris_queue; //!< Ephemeris queue
     concurrent_queue<Gps_Iono> *d_iono_queue;           //!< Ionospheric parameters queue
@@ -116,9 +115,13 @@ public:
     void Event_gps_word_preamble(); //!< FSM event: word preamble detected
     
     //Spoofing detection
-    Spoofing_Detector *spoofing_detector;
-    bool detect_spoofing = true;
-    
+    Spoofing_Detector spoofing_detector;
+    bool detect_spoofing = false;
+    bool ap_detection = false;
+    bool inter_satellite_check  = false;
+    bool external_nav_check  = false;
+    bool new_subframe = false;
+    int unique_id = 0;
 };
 
 #endif
