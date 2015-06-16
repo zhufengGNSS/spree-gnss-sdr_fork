@@ -40,9 +40,6 @@
 #include "gps_iono.h"
 #include "gps_almanac.h"
 #include "gps_utc_model.h"
-#include "spoofing_detector.h"
-
-#include <fstream>
 
 namespace sc = boost::statechart;
 namespace mpl = boost::mpl;
@@ -73,7 +70,6 @@ public:
     // channel and satellite info
     int i_channel_ID;              //!< Channel id
     unsigned int i_satellite_PRN;  //!< Satellite PRN number
-    unsigned int i_peak;  //!< which peak this channel is tracking 
 
     Gps_Navigation_Message d_nav; //!< GPS L1 C/A navigation message object
 
@@ -100,15 +96,6 @@ public:
     void Event_gps_word_valid();    //!< FSM event: the received word is valid
     void Event_gps_word_invalid();  //!< FSM event: the received word is not valid
     void Event_gps_word_preamble(); //!< FSM event: word preamble detected
-    
-    //Spoofing detection
-    Spoofing_Detector spoofing_detector;
-    bool detect_spoofing = false;
-    bool ap_detection = false;
-    bool inter_satellite_check  = false;
-    bool external_nav_check  = false;
-    bool new_subframe = false;
-    int unique_id = 0;
 };
 
 #endif

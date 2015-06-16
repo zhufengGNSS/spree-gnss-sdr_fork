@@ -18,6 +18,7 @@
 
 set(TELEMETRY_DECODER_LIB_SOURCES 
      gps_l1_ca_subframe_fsm.cc 
+     gps_l1_ca_sd_subframe_fsm.cc 
      viterbi_decoder.cc   
      ../../libs/spoofing_detector.cc
 )

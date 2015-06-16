@@ -36,7 +36,7 @@
 #include <gnuradio/block.h>
 #include <gnuradio/msg_queue.h>
 #include "GPS_L1_CA.h"
-#include "gps_l1_ca_subframe_fsm.h"
+#include "gps_l1_ca_sd_subframe_fsm.h"
 #include "concurrent_queue.h"
 #include "gnss_satellite.h"
 #include <iostream>
@@ -130,7 +130,8 @@ private:
     //double d_preamble_duration_seconds;
     // navigation message vars
     Gps_Navigation_Message d_nav;
-    GpsL1CaSubframeFsm d_GPS_FSM;
+    //GpsL1CaSubframeFsm d_GPS_FSM;
+    GpsL1CaSdSubframeFsm d_GPS_FSM;
 
     boost::shared_ptr<gr::msg_queue> d_queue;
     unsigned int d_vector_length;
