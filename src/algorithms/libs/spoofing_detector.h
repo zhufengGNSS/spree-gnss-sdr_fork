@@ -66,26 +66,31 @@ struct Subframe{
 };
 
 struct SatBuff{
-    int cb_window = 100;
     int PRN;
-    boost::circular_buffer<double> SNR_cb = boost::circular_buffer<double> (cb_window); 
-    boost::circular_buffer<double> delta_cb = boost::circular_buffer<double> (cb_window); 
-    boost::circular_buffer<double> RT_cb = boost::circular_buffer<double> (cb_window); 
+    boost::circular_buffer<double> SNR_cb; 
+    boost::circular_buffer<double> delta_cb; 
+    boost::circular_buffer<double> RT_cb;
     double last_snr;
     double last_rt;
     double last_delta;
     int count = 0;
 
+    void init(int cb_window){
+        SNR_cb = boost::circular_buffer<double> (cb_window); 
+        delta_cb = boost::circular_buffer<double> (cb_window); 
+        RT_cb = boost::circular_buffer<double> (cb_window); 
+    };
+
     void add(Gnss_Synchro in){
-        //if the difference between any two sample is more than 0.001
-        //do not add value but nan instead.  
         count++;
 
-        double max_diff = 0.01;
+        double max_diff = 0.001;
         double snr = in.CN0_dB_hz; 
         double rt = in.RT; 
         double delta = in.delta; 
 
+        //if the difference between any two sample is more than 0.001
+        //do not add value 
         if( last_snr && abs(snr - last_snr) < max_diff)
             {
                 SNR_cb.push_back(snr);
@@ -98,7 +103,7 @@ struct SatBuff{
 
         if( last_delta && abs(delta - last_delta) < max_diff)
             {
-                SNR_cb.push_back(delta);
+                delta_cb.push_back(delta);
             }
 
         last_snr = snr; 
@@ -127,7 +132,8 @@ public:
     * \brief Constructor called from PVT 
     */
     Spoofing_Detector(bool ap_detection, bool cno_detection, int cno_count, double cno_min, 
-                    bool alt_detection, double max_alt, bool satpos_detection, int snr_moving_avg_window);
+                    bool alt_detection, double max_alt, bool satpos_detection, int snr_moving_avg_window, 
+                    int snr_delta_rt_cb_window);
 
     void check_new_TOW(double current_time_ms, int new_week, double new_TOW);
     void check_middle_earth(double sqrtA);
@@ -159,13 +165,14 @@ public:
     double d_cno_min = 1.0;
     int d_cno_count = 4;
     int d_snr_moving_avg_window = 1000;
+    int d_snr_delta_rt_cb_window = 100;
     boost::circular_buffer<double> stdev_cb;
     std::map<int, boost::circular_buffer<double>> satellite_SNR;
     double get_SNR_corr(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
     double get_corr(boost::circular_buffer<double> a, boost::circular_buffer<double> b);
 
     std::map<int, SatBuff> sat_buffs;
-    double SNR_delta_RT_calc(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
+    void SNR_delta_RT_calc(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
     void calc_mean_var(int sample_counter);
     int snr_sum = 0;
     int delta_sum = 0;

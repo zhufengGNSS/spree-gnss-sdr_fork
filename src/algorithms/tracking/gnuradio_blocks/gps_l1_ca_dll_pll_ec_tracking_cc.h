@@ -194,6 +194,9 @@ private:
 
     std::map<std::string, std::string> systemName;
     std::string sys;
+
+    
+    int CN0_ESTIMATION_SAMPLES;
 };
 
 #endif //GNSS_SDR_GPS_L1_CA_DLL_PLL_EC_TRACKING_CC_H

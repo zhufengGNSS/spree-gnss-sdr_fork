@@ -53,7 +53,7 @@
 /*!
  * \todo Include in definition header file
  */
-#define CN0_ESTIMATION_SAMPLES 200
+//#define CN0_ESTIMATION_SAMPLES 500 
 #define MINIMUM_VALID_CN0 40
 #define MAXIMUM_LOCK_FAIL_COUNTER 20
 #define CARRIER_LOCK_THRESHOLD 0.85
@@ -100,6 +100,7 @@ Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc(
         gr::block("Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc", gr::io_signature::make(1, 1, sizeof(gr_complex)),
                 gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
 {
+
     // initialize internal vars
     d_queue = queue;
     d_dump = dump;
@@ -107,6 +108,8 @@ Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc(
     d_fs_in = fs_in;
     d_vector_length = vector_length;
     d_dump_filename = dump_filename;
+
+    CN0_ESTIMATION_SAMPLES = d_fs_in / 50e3; 
 
     // Initialize tracking  ==========================================
     d_code_loop_filter.set_DLL_BW(dll_bw_hz);
@@ -176,6 +179,7 @@ Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc(
     systemName["S"] = std::string("SBAS");
     systemName["E"] = std::string("Galileo");
     systemName["C"] = std::string("Compass");
+
 }
 
 void Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::stop_tracking()
@@ -545,6 +549,10 @@ int Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::general_work (int noutput_items, gr_vector
             current_synchro_data.Extra_RT = Extra_RT_;
             current_synchro_data.ELP = ELP_;
             current_synchro_data.MD = MD_;
+            current_synchro_data.Early_I = (double)(*d_Early).real();
+            current_synchro_data.Early_Q = (double)(*d_Late).imag();
+            current_synchro_data.Late_I = (double)(*d_Late).real();
+            current_synchro_data.Late_Q = (double)(*d_Late).imag();
             current_synchro_data.sample_counter = d_sample_counter;
 
 
@@ -581,9 +589,9 @@ int Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::general_work (int noutput_items, gr_vector
                     if (floor(d_sample_counter / d_fs_in) != d_last_seg)
                         {
                             
-                            /*
                             LOG(INFO) << "Tracking CH " << d_channel <<  ": Satellite " << Gnss_Satellite(systemName[sys], d_acquisition_gnss_synchro->PRN)
                                       << ", CN0 = " << d_CN0_SNV_dB_Hz << " [dB-Hz]" << ", lock = " << d_carrier_lock_test;
+                            /*
                             //std::cout<<"TRK CH "<<d_channel<<" Carrier_lock_test="<<d_carrier_lock_test<< std::endl;
                             float Ptot = 0;
                             for (int i=0; i<CN0_ESTIMATION_SAMPLES; i++)

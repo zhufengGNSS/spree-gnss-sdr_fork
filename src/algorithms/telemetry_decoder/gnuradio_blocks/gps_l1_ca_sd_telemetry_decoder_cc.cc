@@ -361,7 +361,6 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
         {
             std::string tmp = std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel);
             int unique_id = std::stoi(tmp);
-            DLOG(INFO) << "remove from subframe map " << d_satellite.get_PRN() << " " << unique_id;
             global_subframe_map.remove((int)unique_id);
             global_subframe_check.remove((int)unique_id);
             global_gps_time.remove((int)unique_id);

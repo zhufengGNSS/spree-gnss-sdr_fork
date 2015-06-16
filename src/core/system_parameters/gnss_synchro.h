@@ -54,6 +54,10 @@ public:
     //Tracking
     double Prompt_I;                //!< Set by Tracking processing block
     double Prompt_Q;                //!< Set by Tracking processing block
+    double Early_I;                //!< Set by Tracking processing block
+    double Early_Q;                //!< Set by Tracking processing block
+    double Late_I;                //!< Set by Tracking processing block
+    double Late_Q;                //!< Set by Tracking processing block
     double CN0_dB_hz;               //!< Set by Tracking processing block
     double Carrier_Doppler_hz;      //!< Set by Tracking processing block
     double Carrier_phase_rads;      //!< Set by Tracking processing block
