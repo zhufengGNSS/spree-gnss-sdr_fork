@@ -271,7 +271,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                     gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(in[i][0].PRN, in[i][0])); // store valid pseudoranges in a map
                 }
             d_rx_time = in[i][0].d_TOW_at_current_symbol; // all the channels have the same RX timestamp (common RX time pseudoranges)
-
+/*
             if( flog_files_map.count(in[i][0].PRN))
                 {
                     flog_file = flog_files_map.at(in[i][0].PRN); 
@@ -287,6 +287,12 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                             flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
                             flog_file->write((char*)&in[i][0].ELP, sizeof(float));
                             flog_file->write((char*)&in[i][0].MD, sizeof(float));
+                            flog_file->write((char*)&in[i][0].Prompt_I, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Prompt_Q, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Late_I, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Late_Q, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Early_I, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Early_Q, sizeof(double));
 
                         }
                     else
@@ -302,8 +308,16 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                             flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
                             flog_file->write((char*)&in[i][0].ELP, sizeof(float));
                             flog_file->write((char*)&in[i][0].MD, sizeof(float));
+                            flog_file->write((char*)&in[i][0].Prompt_I, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Prompt_Q, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Late_I, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Late_Q, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Early_I, sizeof(double));
+                            flog_file->write((char*)&in[i][0].Early_Q, sizeof(double));
                         }
                 }
+*/
+    
         }
 
 

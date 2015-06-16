@@ -82,9 +82,11 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
     int cno_count = configuration->property("Spoofing.cno_count", 4);
     double cno_min = configuration->property("Spoofing.cno_min", 1.0);
     int snr_window_size = configuration->property("Spoofing.snr_window_size", 1000);
+    int snr_delta_rt_window_size = configuration->property("Spoofing.snr_delta_rt_window_size", 100);
     DLOG(INFO) << "cno_min: " << cno_min;
     Spoofing_Detector *spoofing_detector = new Spoofing_Detector(detect_spoofing, cno_detection, cno_count, cno_min, 
-                                                                alt_detection,  max_alt, satpos_detection, snr_window_size);
+                                                                alt_detection,  max_alt, satpos_detection, snr_window_size,
+                                                                snr_delta_rt_window_size);
     
     std::string default_flog_filename = "../data/flog/sat_"; 
 /*
@@ -96,9 +98,9 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
     std::cout << source << std::endl;
     path = "/media/data/aanjhan/"; 
     std::string flog_filename = path; 
-    flog_filename.append("flog2/").append(source).append("/sat_");
+    flog_filename.append("flog_I_Q/").append(source).append("/sat_");
     
-    std::string flog_path = path.append("flog2/").append(source);
+    std::string flog_path = path.append("flog_I_Q/").append(source);
     const boost::filesystem::path p (flog_path); 
     if (!boost::filesystem::exists(p))
         {
