@@ -246,6 +246,7 @@ void Gps_Ephemeris::satellitePosition(double transmitTime)
     // Correct radius
     r = a * (1 - d_e_eccentricity*cos(E)) +  d_Crc * cos(2*phi) +  d_Crs * sin(2*phi);
 
+
     // Correct inclination
     i = d_i_0 + d_IDOT * tk + d_Cic * cos(2*phi) + d_Cis * sin(2*phi);
 
@@ -259,7 +260,22 @@ void Gps_Ephemeris::satellitePosition(double transmitTime)
     d_satpos_X = cos(u) * r * cos(Omega) - sin(u) * r * cos(i) * sin(Omega);
     d_satpos_Y = cos(u) * r * sin(Omega) + sin(u) * r * cos(i) * cos(Omega);
     d_satpos_Z = sin(u) * r * sin(i);
-
+/*
+    std::cout << "r: " << r  
+               << " ecc: " << d_e_eccentricity
+               <<  " E: :" << E 
+               << " Crc: " << d_Crc 
+               << " Crs: " << d_Crs
+               << " phi" << phi
+               << " a: " << a 
+               << " u: " << u
+               << " i: " << i
+               << " Omega: " << Omega 
+               << "X: " << d_satpos_X
+               << "Y: " << d_satpos_Y
+               << "Z: " << d_satpos_Z
+               << std::endl;
+*/
     // Satellite's velocity. Can be useful for Vector Tracking loops
     double Omega_dot = d_OMEGA_DOT - OMEGA_EARTH_DOT;
     d_satvel_X = - Omega_dot * (cos(u) * r + sin(u) * r * cos(i)) + d_satpos_X * cos(Omega) - d_satpos_Y * cos(i) * sin(Omega);

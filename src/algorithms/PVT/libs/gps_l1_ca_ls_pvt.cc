@@ -92,6 +92,7 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
     double SV_clock_bias_s = 0;
 
     d_flag_averaging = flag_averaging;
+    std::stringstream ss;
 
     // ********************************************************************************
     // ****** PREPARE THE LEAST SQUARES DATA (SV POSITIONS MATRIX AND OBS VECTORS) ****
@@ -104,7 +105,7 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
         {
             // 1- find the ephemeris for the current SV observation. The SV PRN ID is the map key
             gps_ephemeris_iter = gps_ephemeris_map.find(gnss_pseudoranges_iter->first);
-            
+             
             if (gps_ephemeris_iter != gps_ephemeris_map.end())
                 {
                     /*!
@@ -114,6 +115,7 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
 
                     // COMMON RX TIME PVT ALGORITHM MODIFICATION (Like RINEX files)
                     // first estimate of transmit time
+                    //double Rx_time_ms = GPS_current_time;
                     double Rx_time = GPS_current_time;
                     double Tx_time = Rx_time - gnss_pseudoranges_iter->second.Pseudorange_m / GPS_C_m_s;
 
@@ -133,7 +135,10 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
                     d_visible_satellites_IDs[valid_obs] = gps_ephemeris_iter->second.i_satellite_PRN;
                     d_visible_satellites_CN0_dB[valid_obs] = gnss_pseudoranges_iter->second.CN0_dB_hz;
                     valid_obs++;
-
+    
+                    ss << gnss_pseudoranges_iter->first << " " << std::setprecision(9)<< obs(obs_counter) 
+                                                        << " " << gnss_pseudoranges_iter->second.Pseudorange_m 
+                                                        << " " << SV_clock_bias_s << " "; 
                     // SV ECEF DEBUG OUTPUT
                     DLOG(INFO) << "(new)ECEF satellite SV ID=" << gps_ephemeris_iter->second.i_satellite_PRN
                             << " X=" << gps_ephemeris_iter->second.d_satpos_X
@@ -154,6 +159,8 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
                 }
             obs_counter++;
         }
+
+    d_pseudoranges  = ss.str();
 
     // ********************************************************************************
     // ****** SOLVE LEAST SQUARES******************************************************
@@ -183,7 +190,16 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
                 }
             // Compute UTC time and print PVT solution
             double secondsperweek = 604800.0; // number of seconds in one week (7*24*60*60)
+            double milli, micro, nano;
+
+            milli = modf(utc, &intpart)*1e3;
+            micro  = modf(milli, &intpart)*1e3;
+            nano = modf(micro, &intpart)*1e3;
+
             boost::posix_time::time_duration t = boost::posix_time::seconds(utc + secondsperweek * static_cast<double>(GPS_week));
+                                                + boost::posix_time::millisec(milli)
+                                                + boost::posix_time::microsec(micro)
+                                                + boost::posix_time::nanosec(nano);
             // 22 August 1999 last GPS time roll over
             boost::posix_time::ptime p_time(boost::gregorian::date(1999, 8, 22), t);
             d_position_UTC_time = p_time;

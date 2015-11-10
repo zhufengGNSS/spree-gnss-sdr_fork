@@ -286,11 +286,9 @@ Gps_L1_Ca_Dll_Pll_Tracking_cc::~Gps_L1_Ca_Dll_Pll_Tracking_cc()
 {
     d_dump_file.close();
     d_dump_signal.close();
-    d_dump_signal_wo.close();
 
     volk_free(d_local_code_shift_chips);
     volk_free(d_correlator_outs);
-    volk_free(d_prompt_code);
     volk_free(d_ca_code);
 
     delete[] d_Prompt_buffer;
@@ -445,6 +443,21 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
             current_synchro_data.Flag_valid_symbol_output = true;
             current_synchro_data.correlation_length_ms = 1;
 
+            //Vestigial - flog
+            float delta_ = delta(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            float RT_ = RT(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            float ELP_ = ELP(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            float MD_ = MD(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            current_synchro_data.delta = delta_;
+            current_synchro_data.RT = RT_;
+            current_synchro_data.ELP = ELP_;
+            current_synchro_data.MD = MD_;
+            current_synchro_data.Early_I = (double)(*d_correlator_outs[0]).real();
+            current_synchro_data.Early_Q = (double)(*d_correlator_outs[0]).imag();
+            current_synchro_data.Late_I = (double)(*d_correlator_outs[2]).real();
+            current_synchro_data.Late_Q = (double)(*d_correlator_outs[2]).imag();
+            current_synchro_data.sample_counter = d_sample_counter;
+
             if (floor(d_sample_counter / d_fs_in) != d_last_seg)
             {
                 d_last_seg = floor(d_sample_counter / d_fs_in);
@@ -564,22 +577,7 @@ void Gps_L1_Ca_Dll_Pll_Tracking_cc::set_channel(unsigned int channel)
                     }
                 }
 
-            if (d_dump_signal.is_open() == false)
-                {
-                    try
-                    {
-                            d_dump_signal_filename.append(boost::lexical_cast<std::string>(d_channel));
-                            d_dump_signal_filename.append(".dat");
-                            d_dump_signal.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-                            d_dump_signal.open(d_dump_signal_filename.c_str(), std::ios::out | std::ios::binary);
-                            LOG(INFO) << "Tracking signal dump enabled on channel " << d_channel << " Log file: " << d_dump_signal_filename.c_str() << std::endl;
-                    }
-                    catch (std::ifstream::failure e)
-                    {
-                            LOG(WARNING) << "channel " << d_channel << " Exception opening trk signal dump file " << e.what() << std::endl;
-                    }
-                }
-
+/*
             if (d_dump_signal_wo.is_open() == false)
                 {
                     try
@@ -595,6 +593,7 @@ void Gps_L1_Ca_Dll_Pll_Tracking_cc::set_channel(unsigned int channel)
                             LOG(WARNING) << "channel " << d_channel << " Exception opening trk signal dump file " << e.what() << std::endl;
                     }
                 }
+*/
         }
 }
 

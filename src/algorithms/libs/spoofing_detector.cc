@@ -372,7 +372,6 @@ void Spoofing_Detector::SNR_delta_RT_calc(std::list<unsigned int> channels, Gnss
                 sat_buffs[PRN] = satbuff; 
             }
         sat_buffs.at(PRN).add(in[i][0]);
-        std::cout << "SNR, delta, rt: " << in[i][0].CN0_dB_hz << " "  << in[i][0].delta << " " << in[i][0].RT<< std::endl; 
     }
 
     //remove satellites form the buffers if they are no longer being tracked
@@ -469,7 +468,6 @@ void Spoofing_Detector::calc_mean_var(int sample_counter)
             snr_var = get_var(sb.SNR_cb);
             delta_var = get_var(sb.delta_cb);
             rt_var = get_var(sb.RT_cb); 
-            std::cout << "vars: " << snr_var << " " << delta_var << " " << rt_var << std::endl;
             
             snr_vars.push_back(snr_var);
             delta_vars.push_back(delta_var);
@@ -483,7 +481,6 @@ void Spoofing_Detector::calc_mean_var(int sample_counter)
     double delta_mean = std::accumulate(delta_vars.begin(), delta_vars.end(), 0.0) / delta_vars.size(); 
     double rt_mean = std::accumulate(rt_vars.begin(), rt_vars.end(), 0.0) / delta_vars.size(); 
     DLOG(INFO) << "SNR, delta, rt mean: " << snr_mean << " " << delta_mean << " " << rt_mean;
-    std::cout << "SNR, delta, rt mean: " << snr_mean << " " << delta_mean << " " << rt_mean << std::endl;
 
     if( snr_mean > 8 )
         {
@@ -756,10 +753,10 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
             double distance = std::abs(largest_t-smallest_t)*GPS_C_m_s/1e3; 
             std::stringstream s;
             s << " for satellite " << PRN;
-            s << std::setprecision(10) << " RX times not consistent " << smallest_t << " "<< largest_t<< std::endl;
+            s << std::setprecision(16) << " RX times not consistent " << smallest_t << " "<< largest_t << " " << largest_t-smallest_t <<  std::endl;
             s << std::setprecision(5) << "subframes: " << largest.subframe_id << " " << smallest.subframe_id << std::endl;
             s << "time difference: " << std::abs(largest_t-smallest_t)*1e6 << " [ns]" << std::endl;
-            s << "distance: " << distance <<" [m]";
+            s << std::setprecision(16) << "distance: " << distance <<" [m]";
             std::cout << "RX " <<  PRN << std::setprecision(15) << smallest_t << " "<< largest_t << " " << std::abs(largest_t-smallest_t)*1e6 << " " << distance << std::endl;
             spoofing_detected(s.str(), 1);
         }

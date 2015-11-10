@@ -656,6 +656,7 @@ int Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::general_work (int noutput_items, gr_vector
             {
                     if (d_enable_tracking == true)
                         {
+                            /*
                             //Log the PRN
                             d_dump_file.write((char*)&PRN, sizeof(float));
                             // EPR
@@ -702,7 +703,6 @@ int Gps_L1_Ca_Dll_Pll_Ec_Tracking_cc::general_work (int noutput_items, gr_vector
                             d_dump_vestigial.write((char*)&ELP_, sizeof(float));
                             d_dump_vestigial.write((char*)&MD_, sizeof(float));
 
-                            /*
                             const gr_complex* din = (gr_complex*) input_items[0]; //PRN start block alignment
                             const gr_complex* din_wo = d_carr_wo;
                             float in_I;

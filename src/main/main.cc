@@ -75,7 +75,6 @@
     #include <cuda_runtime.h>
 #endif
 
-
 using google::LogMessage;
 
 DECLARE_string(log_dir);

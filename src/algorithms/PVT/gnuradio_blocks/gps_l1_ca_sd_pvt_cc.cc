@@ -169,7 +169,7 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
                     }
                 }
             }
-
+/*
     //create all logging files
     for(int i = 1; i != 33; i++)
         {
@@ -180,7 +180,7 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
             flog_file->exceptions (std::ifstream::failbit | std::ifstream::badbit );
             flog_files_map[i] = flog_file;
         }
-
+*/
 }
 
 
@@ -239,7 +239,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
 
     if(d_cno_detection) 
         {
-            double stdev = d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
+            //double stdev = d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
              //log the standard deviation
             //d_dump_snr_file.write((char*)&d_sample_counter, sizeof(unsigned long int));
             //d_dump_snr_file.write((char*)&stdev, sizeof(double));
@@ -248,7 +248,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
     //only sample every 1000 sample
     if((d_sample_counter % 1000) == 0)
         {
-            d_spoofing_detector.SNR_delta_RT_calc(channels_used, in, d_sample_counter);
+            //    d_spoofing_detector.SNR_delta_RT_calc(channels_used, in, d_sample_counter);
         }
 
     unsigned int i = 0;
@@ -271,55 +271,61 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                     gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(in[i][0].PRN, in[i][0])); // store valid pseudoranges in a map
                 }
             d_rx_time = in[i][0].d_TOW_at_current_symbol; // all the channels have the same RX timestamp (common RX time pseudoranges)
-/*
-            if( flog_files_map.count(in[i][0].PRN))
-                {
-                    flog_file = flog_files_map.at(in[i][0].PRN); 
-                    if (flog_file->is_open())
-                        {
-                            flog_file->write((char*)&in[i][0].PRN, sizeof(float));
-                            flog_file->write((char*)&d_sample_counter, sizeof(unsigned long int));
-                            flog_file->write((char*)&in[i][0].Tracking_timestamp_secs, sizeof(double));
-                            flog_file->write((char*)&in[i][0].CN0_dB_hz, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Carrier_Doppler_hz, sizeof(double));
-                            flog_file->write((char*)&in[i][0].delta, sizeof(float));
-                            flog_file->write((char*)&in[i][0].RT, sizeof(float));
-                            flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
-                            flog_file->write((char*)&in[i][0].ELP, sizeof(float));
-                            flog_file->write((char*)&in[i][0].MD, sizeof(float));
-                            flog_file->write((char*)&in[i][0].Prompt_I, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Prompt_Q, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Late_I, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Late_Q, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Early_I, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Early_Q, sizeof(double));
-
-                        }
-                    else
-                        {
-                            flog_file->open(d_flog_filename.c_str(), std::ios::out | std::ios::binary);
-                            flog_file->write((char*)&in[i][0].PRN, sizeof(float));
-                            flog_file->write((char*)&d_sample_counter, sizeof(unsigned long int));
-                            flog_file->write((char*)&in[i][0].Tracking_timestamp_secs, sizeof(double));
-                            flog_file->write((char*)&in[i][0].CN0_dB_hz, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Carrier_Doppler_hz, sizeof(double));
-                            flog_file->write((char*)&in[i][0].delta, sizeof(float));
-                            flog_file->write((char*)&in[i][0].RT, sizeof(float));
-                            flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
-                            flog_file->write((char*)&in[i][0].ELP, sizeof(float));
-                            flog_file->write((char*)&in[i][0].MD, sizeof(float));
-                            flog_file->write((char*)&in[i][0].Prompt_I, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Prompt_Q, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Late_I, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Late_Q, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Early_I, sizeof(double));
-                            flog_file->write((char*)&in[i][0].Early_Q, sizeof(double));
-                        }
-                }
-*/
-    
+            //d_rx_time_ms = in[i][0].d_TOW_at_current_symbol_ms; // all the channels have the same RX timestamp (common RX time pseudoranges)
         }
 
+/*
+    for(unsigned int i = 0; i<d_nchannels; ++i)
+        {
+        if( flog_files_map.count(in[i][0].PRN))
+            {
+                flog_file = flog_files_map.at(in[i][0].PRN); 
+                if (flog_file->is_open())
+                    {
+                        flog_file->write((char*)&in[i][0].PRN, sizeof(float));
+                        flog_file->write((char*)&d_sample_counter, sizeof(unsigned long int));
+                        flog_file->write((char*)&in[i][0].Tracking_timestamp_secs, sizeof(double));
+                        flog_file->write((char*)&in[i][0].CN0_dB_hz, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Carrier_Doppler_hz, sizeof(double));
+                        flog_file->write((char*)&in[i][0].delta, sizeof(float));
+                        flog_file->write((char*)&in[i][0].RT, sizeof(float));
+                        flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
+                        flog_file->write((char*)&in[i][0].ELP, sizeof(float));
+                        flog_file->write((char*)&in[i][0].MD, sizeof(float));
+                        flog_file->write((char*)&in[i][0].Flag_valid_word, sizeof(bool));
+*                          flog_file->write((char*)&in[i][0].Prompt_I, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Prompt_Q, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Late_I, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Late_Q, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Early_I, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Early_Q, sizeof(double))
+                    }
+                else
+                    {
+                        flog_file->open(d_flog_filename.c_str(), std::ios::out | std::ios::binary);
+                        flog_file->write((char*)&in[i][0].PRN, sizeof(float));
+                        flog_file->write((char*)&d_sample_counter, sizeof(unsigned long int));
+                        flog_file->write((char*)&in[i][0].Tracking_timestamp_secs, sizeof(double));
+                        flog_file->write((char*)&in[i][0].CN0_dB_hz, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Carrier_Doppler_hz, sizeof(double));
+                        flog_file->write((char*)&in[i][0].delta, sizeof(float));
+                        flog_file->write((char*)&in[i][0].RT, sizeof(float));
+                        flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
+                        flog_file->write((char*)&in[i][0].ELP, sizeof(float));
+                        flog_file->write((char*)&in[i][0].MD, sizeof(float));
+                        flog_file->write((char*)&in[i][0].Flag_valid_word, sizeof(bool));
+*                          flog_file->write((char*)&in[i][0].Prompt_I, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Prompt_Q, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Late_I, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Late_Q, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Early_I, sizeof(double));
+                        flog_file->write((char*)&in[i][0].Early_Q, sizeof(double));
+
+                    }
+            }
+    
+        }
+*/
 
     bool spoofed = false;
     
@@ -437,7 +443,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
 
      
     // ############ 2 COMPUTE THE PVT ################################
-    if (gnss_pseudoranges_map.size() > 0 and d_ls_pvt->gps_ephemeris_map.size() >0 and 0)
+    if (gnss_pseudoranges_map.size() > 0 and d_ls_pvt->gps_ephemeris_map.size() >0)
         {
             
             // compute on the fly PVT solution
@@ -517,9 +523,16 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             // DEBUG MESSAGE: Display position in console output
             if (((d_sample_counter % d_display_rate_ms) == 0) and d_ls_pvt->b_valid_position == true)
                 {
+                    /*
                     std::cout << "Position at " << boost::posix_time::to_simple_string(d_ls_pvt->d_position_UTC_time)
                               << " is Lat = " << d_ls_pvt->d_latitude_d << " [deg], Long = " << d_ls_pvt->d_longitude_d
                               << " [deg], Height= " << d_ls_pvt->d_height_m << " [m]" << std::endl;
+                    */
+                    std::cout << "Position at " << boost::posix_time::to_simple_string(d_ls_pvt->d_position_UTC_time)
+                              << " " << d_sample_counter << " " 
+                              << " is Lat = " << d_ls_pvt->d_latitude_d << " [deg], Long = " << d_ls_pvt->d_longitude_d
+                              << " [deg], Height= " << d_ls_pvt->d_height_m << " [m] " 
+                              << d_ls_pvt->d_pseudoranges << std::endl;
 
                     LOG(INFO) << "Position at " << boost::posix_time::to_simple_string(d_ls_pvt->d_position_UTC_time)
                               << " is Lat = " << d_ls_pvt->d_latitude_d << " [deg], Long = " << d_ls_pvt->d_longitude_d
