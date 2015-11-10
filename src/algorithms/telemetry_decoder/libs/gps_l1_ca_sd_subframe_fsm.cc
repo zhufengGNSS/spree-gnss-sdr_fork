@@ -34,6 +34,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+
 extern concurrent_map<bool> global_channel_status;
 
 extern concurrent_map<Subframe> global_subframe_map;
@@ -283,10 +285,17 @@ void GpsL1CaSdSubframeFsm::gps_subframe_to_nav_msg()
     std::cout << "NAV Message: received subframe "
         << subframe_ID << " from satellite "
         << Gnss_Satellite(std::string("GPS"), i_satellite_PRN) 
+        << " tow: " << d_nav.get_TOW() 
         << " at time: " << this->d_preamble_time_ms
         << " in channel: " << i_channel_ID 
         << " sat id"  << i_satellite_PRN << "0" << i_peak<< "0" << i_channel_ID<< std::endl << std::endl
         <<  "subframe: " << d_nav.get_subframe(subframe_ID) << std::endl << std::endl;
+
+        std::cout << "TOW: " 
+            << subframe_ID << " " 
+            << Gnss_Satellite(std::string("GPS"), i_satellite_PRN) 
+            << " at time: " << this->d_preamble_time_ms
+            << " tow: " << d_nav.get_TOW() << std::endl;
 
     global_channel_status.add(d_nav.i_channel_ID, 1); 
     if( inter_satellite_check || ap_detection )

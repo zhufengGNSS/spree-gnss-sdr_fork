@@ -89,18 +89,27 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
                                                                 snr_delta_rt_window_size);
     
     std::string default_flog_filename = "../data/flog/sat_"; 
-/*
+
     std::string source_filename = configuration->property("SignalSource.filename", default_flog_filename);
-    std::string path = "/media/data2/aanjhan/bern-zrh-drive/";
-    //std::string path = "/media/data2/aanjhan/";
+    std::string extention = ".bin";
+    source_filename  = source_filename.substr(0, source_filename.size()-extention.size()); 
+
+    std::size_t s = source_filename.find_last_of("/\\");
+    std::string source = source_filename.substr(s+1);
+    std::cout << source_filename << " " << source << std::endl;
+
+/*
+    //std::string path = "/media/data2/aanjhan/bern-zrh-drive/";
+    std::string path = "/media/data2/aanjhan/";
     std::string extention = ".bin";
     std::string source  = source_filename.substr(path.size(), source_filename.size()-path.size()-extention.size()); 
     std::cout << source << std::endl;
-    path = "/media/data/aanjhan/"; 
+*/
+    std::string path = "/media/data2/hildur/texbat/flog/"; 
     std::string flog_filename = path; 
-    flog_filename.append("flog_I_Q/").append(source).append("/sat_");
+    flog_filename.append(source).append("/sat_");
     
-    std::string flog_path = path.append("flog_I_Q/").append(source);
+    std::string flog_path = path.append(source);
     const boost::filesystem::path p (flog_path); 
     if (!boost::filesystem::exists(p))
         {
@@ -110,10 +119,10 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
                 << std::endl;
             boost::filesystem::create_directory(p);
         }
-*/
-    std::string flog_filename = configuration->property("Spoofing.flog_filename", default_flog_filename);
 
-//    std::cout << flog_filename << std::endl;
+    //std::string flog_filename = configuration->property("Spoofing.flog_filename", default_flog_filename);
+
+    std::cout << "vestigial logging will be done at: " << flog_filename << std::endl;
 
     // make PVT object
     pvt_ = gps_l1_ca_make_sd_pvt_cc(in_streams_, queue_, dump_, dump_filename_, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, *spoofing_detector, flog_filename);

@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with GNSS-SDR. If not, see <http://www.gnu.org/licenses/>.
 #
+add_definitions( -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 
 set(PVT_GR_BLOCKS_SOURCES 
 	gps_l1_ca_pvt_cc.cc

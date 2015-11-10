@@ -656,15 +656,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                 }
 
             channels_.at(who)->stop_tracking();        
-            if(PRN == 7)
-            {
-                std::cout << " acquired peaks ";
-                for(std::deque<int>::iterator it = acquired_peaks.at(PRN).begin(); it != acquired_peaks.at(PRN).end(); ++it)
-                {
-                    std::cout<< *it << ", ";
-                }
-                std::cout << std::endl;
-            }
+
 
     default:
         break;

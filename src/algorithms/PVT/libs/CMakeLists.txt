@@ -17,6 +17,7 @@
 #
 
 add_definitions( -DGNSS_SDR_VERSION="${VERSION}" )
+add_definitions( -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG)
 
 set(PVT_LIB_SOURCES 
      pvt_solution.cc
