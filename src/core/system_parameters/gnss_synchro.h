@@ -32,6 +32,7 @@
 #define GNSS_SDR_GNSS_SYNCHRO_H_
 
 #include "gnss_signal.h"
+#include <gnuradio/gr_complex.h>
 
 
 /*!
@@ -91,6 +92,10 @@ public:
     float Extra_RT;
     float ELP;
     float MD;
+    gr_complex* Early;
+    gr_complex* Prompt;
+    gr_complex* Late;
+    
     unsigned long int sample_counter;
 };
 

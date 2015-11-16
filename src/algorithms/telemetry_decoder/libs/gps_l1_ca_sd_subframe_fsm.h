@@ -116,11 +116,6 @@ public:
     
     //Spoofing detection
     Spoofing_Detector spoofing_detector;
-    bool detect_spoofing = false;
-    bool ap_detection = false;
-    bool inter_satellite_check  = false;
-    bool external_nav_check  = false;
-    bool new_subframe = false;
     int unique_id = 0;
 };
 

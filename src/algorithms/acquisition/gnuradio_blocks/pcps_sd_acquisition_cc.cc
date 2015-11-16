@@ -236,7 +236,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
     case 1:
         {
 
-            //std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
             // initialize acquisition algorithm
             int doppler;
@@ -290,24 +290,11 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             volk_32f_accumulator_s32f_a(&d_input_power, d_magnitude, d_fft_size);
             d_input_power /= (float)d_fft_size;
             
-             std::map<double,  std::map< std::string, double>> peaks;
-             std::map<int,  std::vector<float>> peaks2;
-            for (unsigned int doppler_index=0;doppler_index<d_num_doppler_bins;doppler_index++)
-                {
-                    doppler=-(int)d_doppler_max+d_doppler_step*doppler_index;
-                    peaks2[doppler] =  std::vector<float> (d_fft_size);
-                }
-/*
-            for(unsigned int i = 0; i< 10; i++)
-                {
-                    std::cout << "in " << in[i] << " ss: " << d_sample_counter << std::endl;
-                
-                }
+             std::vector<float> peaks;
 
-*/            
-
-            //std::cout << "! " << in[0] << " " << in[1] << " " << in[0]*in[1] << std::endl;
-            float threshold_spoofing = d_threshold * d_input_power * (fft_normalization_factor * fft_normalization_factor); 
+            //float threshold_spoofing = d_threshold * d_input_power * (fft_normalization_factor * fft_normalization_factor); 
+            float threshold_spoofing  =  d_threshold * d_input_power; 
+            std::map<float, Peak> d_highest_peaks;
 
             // 2- Doppler frequency search loop
             for (unsigned int doppler_index=0;doppler_index<d_num_doppler_bins;doppler_index++)
@@ -344,17 +331,35 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     {    
                         for(unsigned int i = 0; i < d_fft_size; i++)
                         {
-                            /*
+                           /* 
                                if(d_magnitude[i] > threshold_spoofing)
                                {
-                               tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
                                std::map< std::string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
                                peaks[tmp] = mtmp;
                                }
                              */
-                            peaks2.at(doppler).push_back(tmp);
-
+                            tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
+                            peaks.push_back(tmp);
                         }
+                        //Find the local maxima for the peaks for each doppler bin
+                        Persistence1D p;
+                        std::vector<float> dp; 
+                        if(*std::max_element(peaks.begin(), peaks.end()) >= threshold_spoofing) 
+                            {
+                                p.RunPersistence(peaks);
+                                std::vector <TPairedExtrema> Extrema;
+                                p.GetPairedExtrema(Extrema, 0);
+
+                                for( std::vector< TPairedExtrema >::iterator it = Extrema.begin(); it != Extrema.end(); it++)
+                                {
+                                        Peak peak;
+                                    peak.mag = peaks.at((*it).MaxIndex);
+                                    peak.doppler = (double)doppler; 
+                                    peak.code_phase = (*it).MaxIndex%d_samples_per_code;
+                                    d_highest_peaks[peak.mag] = peak;
+                                }   
+                        }
+                        peaks.clear();
                     }
 
                     // 4- record the maximum peak and the associated synchronization parameters
@@ -414,7 +419,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             bool found_peak = false;
             if(acquire_auxiliary_peaks)
                 {    
-                    //Find the local maxima for the peaks for each doppler bin
+/*                    //Find the local maxima for the peaks for each doppler bin
                     Persistence1D p;
                      std::vector<float> dp; 
                     threshold_spoofing = threshold_spoofing/(fft_normalization_factor * fft_normalization_factor);
@@ -437,16 +442,15 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                     d_highest_peaks[peak.mag] = peak;
                                 }
                         }
-
+*/
 
                     std::map<float, Peak>::reverse_iterator rit;
                     std::map<float, Peak>::reverse_iterator rit2;
                     std::map<float, Peak> d_highest_peaks_reduced;
                     bool use_peak;
-                    DLOG(INFO) << "### all peaks: ###";
+                    DLOG(INFO) << "### all peaks: ###" << d_highest_peaks.size();
                     for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)
                     {
-                        use_peak = true;
                         for (rit2=d_highest_peaks_reduced.rbegin(); rit2!=d_highest_peaks_reduced.rend(); ++rit2)
                         {
                             if(abs(rit->second.code_phase - rit2->second.code_phase) <= 2 && 
@@ -492,11 +496,16 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     }
             
                 }
-/*
+
            std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
            auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>( t2 - t1 ).count();
-           std::cout << "duration " << acquire_auxiliary_peaks << " " << duration << std::endl;
-  */          
+           DLOG(INFO) << "duration " << acquire_auxiliary_peaks << " " << duration;
+
+           if(acquire_auxiliary_peaks)
+           {
+               found_peak = false; 
+               d_test_statistics = 0;
+           }
 
             DLOG(INFO) << "found peak: " << found_peak << " aux " << acquire_auxiliary_peaks ;
             if (!d_bit_transition_flag)

@@ -135,16 +135,23 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
                     d_visible_satellites_IDs[valid_obs] = gps_ephemeris_iter->second.i_satellite_PRN;
                     d_visible_satellites_CN0_dB[valid_obs] = gnss_pseudoranges_iter->second.CN0_dB_hz;
                     valid_obs++;
-    
-                    ss << gnss_pseudoranges_iter->first << " " << std::setprecision(9)<< obs(obs_counter) 
+   /* 
+                    ss << gnss_pseudoranges_iter->first << " " << std::setprecision(9) << obs(obs_counter) 
                                                         << " " << gnss_pseudoranges_iter->second.Pseudorange_m 
                                                         << " " << SV_clock_bias_s << " "; 
+*/
+                    ss << std::setprecision(9) << gps_ephemeris_iter->second.i_satellite_PRN
+                          << " " << gps_ephemeris_iter->second.d_satpos_X
+                          << " " << gps_ephemeris_iter->second.d_satpos_Y
+                          << " " << gps_ephemeris_iter->second.d_satpos_Z
+                          << " " << obs(obs_counter) << " | ";
                     // SV ECEF DEBUG OUTPUT
                     DLOG(INFO) << "(new)ECEF satellite SV ID=" << gps_ephemeris_iter->second.i_satellite_PRN
                             << " X=" << gps_ephemeris_iter->second.d_satpos_X
                             << " [m] Y=" << gps_ephemeris_iter->second.d_satpos_Y
                             << " [m] Z=" << gps_ephemeris_iter->second.d_satpos_Z
                             << " [m] PR_obs=" << obs(obs_counter) << " [m]";
+
 
                     // compute the UTC time for this SV (just to print the associated UTC timestamp)
                     GPS_week = gps_ephemeris_iter->second.i_GPS_week;
