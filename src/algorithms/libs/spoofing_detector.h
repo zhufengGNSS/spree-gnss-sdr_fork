@@ -51,6 +51,15 @@
 #include "gps_utc_model.h"
 #include "gps_ref_time.h"
 #include "gnss_sdr_supl_client.h"
+#include "configuration_interface.h"
+#include "gps_navigation_message.h"
+#include "gps_ephemeris.h"
+
+struct sEph{
+    double Crs;
+    double Crc;
+    double time;
+};
 
 struct Satpos{
     double x;
@@ -81,13 +90,13 @@ struct SatBuff{
         RT_cb = boost::circular_buffer<double> (cb_window); 
     };
 
-    void add(Gnss_Synchro in){
+    void add(float CN0, float RT, float Delta){
         count++;
 
         double max_diff = 0.001;
-        double snr = in.CN0_dB_hz; 
-        double rt = in.RT; 
-        double delta = in.delta; 
+        double snr = CN0; 
+        double rt = RT; 
+        double delta = Delta; 
 
         //if the difference between any two sample is more than 0.001
         //do not add value 
@@ -124,56 +133,49 @@ public:
      * \brief Default constructor.
      */
     Spoofing_Detector();
-    /*!
-    * \brief Constructor called from telemetry 
-    */
-    Spoofing_Detector(bool ap_detection, bool inter_satellite_check, bool external_nav_check, double max_rx_discrepancy, double max_tow_discrepancy);
-    /*!
-    * \brief Constructor called from PVT 
-    */
-    Spoofing_Detector(bool ap_detection, bool cno_detection, int cno_count, double cno_min, 
-                    bool alt_detection, double max_alt, bool satpos_detection, int snr_moving_avg_window, 
-                    int snr_delta_rt_cb_window);
+    Spoofing_Detector(ConfigurationInterface* configuration);
 
-    void check_new_TOW(double current_time_ms, int new_week, double new_TOW);
-    void check_middle_earth(double sqrtA);
+    void New_subframe(int subframe_ID, int PRN, int channel, int uid, Gps_Navigation_Message nav, double time);
     std::map<unsigned int, Satpos> Satpos_map;
     void check_position(double lat, double lng, double alt);
     void check_satpos(unsigned int sat, double time, double x, double y, double z); 
-    void check_GPS_time();
-    void check_ap_subframe(unsigned int uid, unsigned int PRN, unsigned int subframe_id);
-    void check_inter_satellite_subframe(unsigned int uid, unsigned int subframe_id);
-    void check_RX_time(unsigned int PRN, unsigned int subframe_id);
-    bool checked_subframes(unsigned int id1, unsigned int id2);
     double check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
-    void check_external_ephemeris(Gps_Ephemeris internal, int PRN);
     void check_external_utc(Gps_Utc_Model time_internal);
     void check_external_iono(Gps_Iono internal);
-    void check_external_almanac(std::map<int,Gps_Almanac> internal);
-    void check_external_gps_time(int internal_week, int internal_TOW);
+    // APT 
+    bool d_APT;
+    int d_APT_ch_per_sat;
+    double d_APT_max_rx_discrepancy;
 
+    //PPE 
+    bool d_PPE;
+    int d_PPE_window_size;
+    boost::circular_buffer<double> ppe_cb = boost::circular_buffer<double> (d_PPE_window_size);
 
-    bool d_ap_detection = false; 
-    bool d_inter_satellite_check = false; 
-    bool d_external_nav_check = false; 
-    bool d_cno_detection = false; 
-    bool d_alt_detection = false; 
-    bool d_satpos_detection = false; 
-    double d_max_rx_discrepancy = 1e-6;
-    double d_max_tow_discrepancy = 20e-3;
-    double d_max_alt = 2e3;
-    double d_cno_min = 1.0;
-    int d_cno_count = 4;
-    int d_snr_moving_avg_window = 1000;
-    int d_snr_delta_rt_cb_window = 100;
-    boost::circular_buffer<double> stdev_cb;
+    double d_PPE_sampling;
+    double  d_CN0_threshold;
+    double d_RT_threshold;
+    double d_Delta_threshold;
+
+    //NAVI configuration
+    bool d_NAVI_TOW;
+    double d_NAVI_TOW_max_discrepancy;
+    bool d_NAVI_inter_satellite;
+    bool d_NAVI_external;
+    bool d_NAVI_alt;
+    double d_NAVI_max_alt;
+    sEph d_eph;
+    double d_Crc;
+    double d_Crs;
+
     std::map<int, boost::circular_buffer<double>> satellite_SNR;
     double get_SNR_corr(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
     double get_corr(boost::circular_buffer<double> a, boost::circular_buffer<double> b);
 
     std::map<int, SatBuff> sat_buffs;
-    void SNR_delta_RT_calc(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
+    void PPE_moving_var(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
     void calc_mean_var(int sample_counter);
+    void calc_max_var(int sample_counter);
     int snr_sum = 0;
     int delta_sum = 0;
     int rt_sum = 0; 
@@ -197,6 +199,15 @@ private:
     bool compare_almanac(Gps_Almanac a, Gps_Almanac b);
     void lookup_external_nav_data(int source, int type);
     void set_supl_client();
+    void check_new_TOW(double current_time_ms, int new_week, double new_TOW);
+    void check_middle_earth(double sqrtA);
+    void check_GPS_time();
+    void check_inter_satellite_subframe(unsigned int uid, unsigned int subframe_id);
+    void check_RX_time(unsigned int PRN, unsigned int subframe_id);
+    void check_external_almanac(std::map<int,Gps_Almanac> internal);
+    void check_external_gps_time(int internal_week, int internal_TOW);
+    void check_external_ephemeris(Gps_Ephemeris internal, int PRN);
+    void check_and_update_ephemeris(Gps_Ephemeris eph, double time);
 };
 
 #endif

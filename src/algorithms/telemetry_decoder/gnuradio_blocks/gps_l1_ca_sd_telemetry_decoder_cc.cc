@@ -146,10 +146,7 @@ gps_l1_ca_sd_telemetry_decoder_cc::gps_l1_ca_sd_telemetry_decoder_cc(
     d_average_count=0;
 
     //set_history(d_samples_per_bit*8); // At least a history of 8 bits are needed to correlate with the preamble
-     d_GPS_FSM.inter_satellite_check  = spoofing_detector.d_inter_satellite_check; 
-     d_GPS_FSM.ap_detection = spoofing_detector.d_ap_detection; 
-     d_GPS_FSM.external_nav_check = spoofing_detector.d_external_nav_check; 
-     d_GPS_FSM.spoofing_detector = spoofing_detector; 
+    d_GPS_FSM.spoofing_detector = spoofing_detector; 
 }
 
 

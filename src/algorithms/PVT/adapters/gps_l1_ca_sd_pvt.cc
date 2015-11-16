@@ -73,20 +73,7 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
     std::string nmea_dump_devname;
     nmea_dump_devname = configuration->property(role + ".nmea_dump_devname", default_nmea_dump_devname);
 
-    //spoofing detection
-    bool detect_spoofing = configuration->property("Spoofing.ap_detection", false);
-    bool cno_detection = configuration->property("Spoofing.cno_detection", false);
-    bool alt_detection = configuration->property("Spoofing.alt_detection", false);
-    bool satpos_detection = configuration->property("Spoofing.satpos_detection", false);
-    double max_alt = configuration->property("Spoofing.alt_max", 2e3);
-    int cno_count = configuration->property("Spoofing.cno_count", 4);
-    double cno_min = configuration->property("Spoofing.cno_min", 1.0);
-    int snr_window_size = configuration->property("Spoofing.snr_window_size", 1000);
-    int snr_delta_rt_window_size = configuration->property("Spoofing.snr_delta_rt_window_size", 100);
-    DLOG(INFO) << "cno_min: " << cno_min;
-    Spoofing_Detector *spoofing_detector = new Spoofing_Detector(detect_spoofing, cno_detection, cno_count, cno_min, 
-                                                                alt_detection,  max_alt, satpos_detection, snr_window_size,
-                                                                snr_delta_rt_window_size);
+    Spoofing_Detector *spoofing_detector = new Spoofing_Detector(configuration);
     
     std::string default_flog_filename = "../data/flog/sat_"; 
 

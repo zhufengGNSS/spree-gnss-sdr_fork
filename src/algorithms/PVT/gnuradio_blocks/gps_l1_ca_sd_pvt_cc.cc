@@ -123,10 +123,8 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
 
     //spoofing
     d_spoofing_detector = spoofing_detector;
-    d_detect_spoofing = spoofing_detector.d_ap_detection;
-    d_cno_detection = d_spoofing_detector.d_cno_detection;
-    d_alt_detection = d_spoofing_detector.d_alt_detection;
-    d_satpos_detection = d_spoofing_detector.d_satpos_detection;
+    d_APT = spoofing_detector.d_APT;
+    d_PPE_sampling = spoofing_detector.d_PPE_sampling;
 
     //flog
     d_flog_filename = flog_filename;
@@ -231,24 +229,10 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 }
         }
 
-   
-    if((d_sample_counter % d_output_rate_ms) == 0)
-        {
-            //double corr  = d_spoofing_detector.get_SNR_corr(channels_used, in, d_sample_counter);
-        }
 
-    if(d_cno_detection) 
+    if((d_sample_counter % d_PPE_sampling) == 0)
         {
-            //double stdev = d_spoofing_detector.check_SNR(channels_used, in, d_sample_counter);
-             //log the standard deviation
-            //d_dump_snr_file.write((char*)&d_sample_counter, sizeof(unsigned long int));
-            //d_dump_snr_file.write((char*)&stdev, sizeof(double));
-        }
-
-    //only sample every 1000 sample
-    if((d_sample_counter % 1000) == 0)
-        {
-            //    d_spoofing_detector.SNR_delta_RT_calc(channels_used, in, d_sample_counter);
+            d_spoofing_detector.PPE_moving_var(channels_used, in, d_sample_counter);
         }
 
     unsigned int i = 0;
@@ -262,7 +246,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             int unique_id = std::stoi(tmp);
             PRN_to_uid[in[i][0].PRN] = unique_id; 
 
-            if(d_detect_spoofing)
+            if(d_APT)
                 {
                     gnss_pseudoranges_map.insert(std::pair<int,Gnss_Synchro>(unique_id, in[i][0])); // store valid pseudoranges in a map
                 }
@@ -338,7 +322,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
         }
 
     //cancel tracking on auxiliary channels if no spoofing has been detected.
-    if(d_detect_spoofing && !spoofed) 
+    if(d_APT && !spoofed) 
         {
             ControlMessageFactory* cmf = new ControlMessageFactory();
             unsigned int i = 0;
@@ -357,11 +341,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     int uid = std::stoi(tmp);
                                     int uid_u = PRN_to_uid.at(in[i][0].PRN); //uid of channel with the same sat that is used in the PVT
                                      
-                                    
-                                    if(!d_spoofing_detector.checked_subframes(uid, uid_u))
-                                        {
-                                            continue;
-                                        }
                                     global_subframe_map.remove(uid);
                                     global_gps_time.remove(uid);
                                     global_subframe_check.remove(uid);
@@ -488,14 +467,11 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                         }
 
                 //Check if the value of the position is logical and if the satellites have movement is probable.
-                if(d_alt_detection)
+                if(d_ls_pvt->b_valid_position == true)
                     {
-                        if(d_ls_pvt->b_valid_position == true)
-                        {
-                            d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
-                        }
+                        d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
                     }
-
+/*
                 if(d_satpos_detection)
                     {
                         std::map<int,Gps_Ephemeris>::iterator gps_ephemeris_iter2;
@@ -516,8 +492,8 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                             }
                         }
                     }
+*/
                 }
-
 
 
             // DEBUG MESSAGE: Display position in console output
@@ -531,8 +507,8 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                     std::cout << "Position at " << boost::posix_time::to_simple_string(d_ls_pvt->d_position_UTC_time)
                               << " " << d_sample_counter << " " 
                               << " is Lat = " << d_ls_pvt->d_latitude_d << " [deg], Long = " << d_ls_pvt->d_longitude_d
-                              << " [deg], Height= " << d_ls_pvt->d_height_m << " [m] " 
-                              << d_ls_pvt->d_pseudoranges << std::endl;
+                              << " [deg], Height= " << d_ls_pvt->d_height_m << " [m] " << std::endl; 
+                    std::cout << "constellation " << d_ls_pvt->d_pseudoranges << std::endl;
 
                     LOG(INFO) << "Position at " << boost::posix_time::to_simple_string(d_ls_pvt->d_position_UTC_time)
                               << " is Lat = " << d_ls_pvt->d_latitude_d << " [deg], Long = " << d_ls_pvt->d_longitude_d

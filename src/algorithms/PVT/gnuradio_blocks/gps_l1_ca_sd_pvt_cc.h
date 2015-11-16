@@ -120,12 +120,10 @@ private:
 
 
     Spoofing_Detector d_spoofing_detector;
+    bool d_APT;
+    int d_PPE_sampling;
+
     double d_rx_time;
-    double d_max_discrepancy;
-    bool d_detect_spoofing;
-    bool d_cno_detection;
-    bool d_alt_detection;
-    bool d_satpos_detection;
     gps_l1_ca_ls_pvt *d_ls_pvt;
     std::map<unsigned int, unsigned int> PRN_to_uchannel;
 
