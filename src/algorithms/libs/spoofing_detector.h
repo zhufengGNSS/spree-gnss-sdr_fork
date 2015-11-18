@@ -150,7 +150,7 @@ public:
     //PPE 
     bool d_PPE;
     int d_PPE_window_size;
-    boost::circular_buffer<double> ppe_cb = boost::circular_buffer<double> (d_PPE_window_size);
+    boost::circular_buffer<double> ppe_cb;
 
     double d_PPE_sampling;
     double  d_CN0_threshold;

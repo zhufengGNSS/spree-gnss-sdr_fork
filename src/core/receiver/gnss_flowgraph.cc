@@ -754,7 +754,7 @@ void GNSSFlowgraph::init()
 
 
     spoofing_detection = configuration_->property("Spoofing.APT", false);
-    nr_acq = configuration_->property("Spoofing.APT_ch_per_sat", 2);
+    nr_peaks = configuration_->property("Spoofing.APT_ch_per_sat", 2);
 
     // fill the available_GNSS_signals_ queue with the satellites ID's to be searched by the acquisition
     set_signals_list();
