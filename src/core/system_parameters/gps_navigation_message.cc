@@ -451,6 +451,7 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
         }
     
     std::string subframe_string = subframe_bits.to_string<char,std::string::traits_type,std::string::allocator_type>();
+    //std::cout << subframe_string << std::endl;
 
     subframe_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, SUBFRAME_ID));
 
@@ -746,7 +747,9 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
                 os << " " << almanac.d_Delta_i; 
                 os << " " << almanac.d_M_0; 
                 os << " " << almanac.d_e_eccentricity; 
+                os.precision(6);
                 os << " " << almanac.d_sqrt_A; 
+                os.precision(15);
                 os << " " << almanac.d_OMEGA0; 
                 os << " " << almanac.d_OMEGA; 
                 os << " " << almanac.d_OMEGA_DOT; 

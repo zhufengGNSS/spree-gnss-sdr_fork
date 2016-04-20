@@ -261,25 +261,8 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     << d_threshold << ", doppler_max: " << d_doppler_max
                     << ", doppler_step: " << d_doppler_step;
 
-   /* 
-            std::ofstream file;
-            std::string filename;
-            int acq_nr = 0;
-            bool write = false;
-            //while(!write && d_gnss_synchro->PRN == 13)
-            //    {
-                    filename = "acq_data/CH" + std::to_string(d_channel) + "_sat" +  std::to_string(d_gnss_synchro->PRN) + "_" + std::to_string(acq_nr); 
-                    std::ifstream ifile(filename);
-                    if (!ifile) {
-                        write = true;
-                        // The file exists, and is open for input
-                    }
-                    acq_nr += 1;
-            //    }
-            file.open (filename,  std::ios::out);
-*/
             bool acquire_auxiliary_peaks = false;
-            if(d_peak != 1)  
+            if(d_peak != 0)  
                 {
                     DLOG(INFO) << "acquire aux";
                     acquire_auxiliary_peaks = true;
@@ -292,8 +275,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             
              std::vector<float> peaks;
 
-            //float threshold_spoofing = d_threshold * d_input_power * (fft_normalization_factor * fft_normalization_factor); 
-            float threshold_spoofing  =  d_threshold * d_input_power; 
+            float threshold_spoofing = d_threshold * d_input_power * (fft_normalization_factor * fft_normalization_factor); 
             std::map<float, Peak> d_highest_peaks;
 
             // 2- Doppler frequency search loop
@@ -326,20 +308,11 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
 
                     // Normalize the maximum value to correct the scale factor introduced by FFTW
                     magt = d_magnitude[indext] / (fft_normalization_factor * fft_normalization_factor);
-                    float tmp = 0.0;
                     if(acquire_auxiliary_peaks)
                     {    
                         for(unsigned int i = 0; i < d_fft_size; i++)
                         {
-                           /* 
-                               if(d_magnitude[i] > threshold_spoofing)
-                               {
-                               std::map< std::string, double> mtmp = {{"code phase", (double)( i%d_samples_per_code)}, {"doppler", (double)doppler}, {"sample counter", d_sample_counter} };
-                               peaks[tmp] = mtmp;
-                               }
-                             */
-                            tmp = d_magnitude[i] / (fft_normalization_factor * fft_normalization_factor);
-                            peaks.push_back(tmp);
+                            peaks.push_back(d_magnitude[i]);
                         }
                         //Find the local maxima for the peaks for each doppler bin
                         Persistence1D p;
@@ -352,11 +325,14 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
 
                                 for( std::vector< TPairedExtrema >::iterator it = Extrema.begin(); it != Extrema.end(); it++)
                                 {
-                                        Peak peak;
-                                    peak.mag = peaks.at((*it).MaxIndex);
-                                    peak.doppler = (double)doppler; 
-                                    peak.code_phase = (*it).MaxIndex%d_samples_per_code;
-                                    d_highest_peaks[peak.mag] = peak;
+                                    if( peaks.at((*it).MaxIndex) >= threshold_spoofing)
+                                        {
+                                            Peak peak;
+                                            peak.mag = peaks.at((*it).MaxIndex) / (fft_normalization_factor * fft_normalization_factor);
+                                            peak.doppler = (double)doppler; 
+                                            peak.code_phase = (*it).MaxIndex%d_samples_per_code;
+                                            d_highest_peaks[peak.mag] = peak;
+                                        }
                                 }   
                         }
                         peaks.clear();
@@ -380,7 +356,6 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                 d_gnss_synchro->Acq_doppler_hz = (double)doppler;
                                 d_gnss_synchro->Acq_samplestamp_samples = d_sample_counter;
                                 // 5- Compute the test statistics and compare to the threshold
-                                //d_test_statistics = 2 * d_fft_size * d_mag / d_input_power;
                                 d_test_statistics = d_mag / d_input_power;
 
                             }
@@ -403,7 +378,6 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         }
                 }
             
-            //file.close();
 
             DLOG(INFO) << "satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
             DLOG(INFO) << "d_peak " << d_peak; 
@@ -419,31 +393,6 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             bool found_peak = false;
             if(acquire_auxiliary_peaks)
                 {    
-/*                    //Find the local maxima for the peaks for each doppler bin
-                    Persistence1D p;
-                     std::vector<float> dp; 
-                    threshold_spoofing = threshold_spoofing/(fft_normalization_factor * fft_normalization_factor);
-                     std::map<float, Peak> d_highest_peaks;
-                    for( std::map<int,  std::vector<float>>::iterator it = peaks2.begin(); it!=peaks2.end(); ++it)
-                        {
-                            dp = it->second;
-                            if(*std::max_element(dp.begin(), dp.end()) < threshold_spoofing) 
-                                continue;
-                            p.RunPersistence(dp);
-                             std::vector <TPairedExtrema> Extrema;
-                            p.GetPairedExtrema(Extrema, 0);
-
-                            for( std::vector< TPairedExtrema >::iterator it2 = Extrema.begin(); it2 != Extrema.end(); it2++)
-                                {
-                                    Peak peak;
-                                    peak.mag = dp.at((*it2).MaxIndex);
-                                    peak.doppler = it->first;
-                                    peak.code_phase = (*it2).MaxIndex%d_samples_per_code;
-                                    d_highest_peaks[peak.mag] = peak;
-                                }
-                        }
-*/
-
                     std::map<float, Peak>::reverse_iterator rit;
                     std::map<float, Peak>::reverse_iterator rit2;
                     std::map<float, Peak> d_highest_peaks_reduced;
@@ -451,13 +400,16 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     DLOG(INFO) << "### all peaks: ###" << d_highest_peaks.size();
                     for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)
                     {
+                        use_peak = true;
+                        DLOG(INFO) << rit->second.code_phase << " " << rit->second.doppler <<" "<< rit->second.mag;
                         for (rit2=d_highest_peaks_reduced.rbegin(); rit2!=d_highest_peaks_reduced.rend(); ++rit2)
                         {
-                            if(abs(rit->second.code_phase - rit2->second.code_phase) <= 2 && 
+                            if(abs(rit->second.code_phase - rit2->second.code_phase) <= 1 && 
                                abs(rit->second.doppler - rit2->second.doppler) <= d_doppler_step)
                                 {
                                     use_peak = false;
                                 }
+
                         } 
 
                         if(use_peak)
@@ -465,9 +417,16 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                                 d_highest_peaks_reduced[rit->first] = rit->second;
                             }
                     }
-
+                    
+                    /*DLOG(INFO) << "### ###";
+                    for (rit=d_highest_peaks_reduced.rbegin(); rit!=d_highest_peaks_reduced.rend(); ++rit)
+                    {
+                        DLOG(INFO) << rit->second.code_phase << " " << rit->second.doppler <<" "<< rit->second.mag;
+                    }
+                    DLOG(INFO) << "### ###";
+*/
                     //If there is more than one peak present, acquire the highest
-                    if(d_peak == 0 && d_highest_peaks_reduced.size() > 0)
+                    if(d_peak == 1 && d_highest_peaks_reduced.size() > 0)
                     {
                         found_peak = true;
                     }
@@ -503,8 +462,8 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
 
            if(acquire_auxiliary_peaks)
            {
-               found_peak = false; 
-               d_test_statistics = 0;
+               //found_peak = false; 
+               //d_test_statistics = 0;
            }
 
             DLOG(INFO) << "found peak: " << found_peak << " aux " << acquire_auxiliary_peaks ;

@@ -109,7 +109,6 @@ GpsL1CaSdPvt::GpsL1CaSdPvt(ConfigurationInterface* configuration,
 
     //std::string flog_filename = configuration->property("Spoofing.flog_filename", default_flog_filename);
 
-    std::cout << "vestigial logging will be done at: " << flog_filename << std::endl;
 
     // make PVT object
     pvt_ = gps_l1_ca_make_sd_pvt_cc(in_streams_, queue_, dump_, dump_filename_, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, *spoofing_detector, flog_filename);

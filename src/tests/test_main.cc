@@ -126,7 +126,14 @@ struct GPS_time_t{
     int subframe_id;
 };
 
+struct sEph{
+    Gps_Ephemeris ephemeris;
+    double time;
+    bool changed;
+};
+
 concurrent_map<GPS_time_t> global_gps_time;
+concurrent_map<sEph> global_sEph_map;
 concurrent_map<double> global_last_gps_time;
 concurrent_map<std::map<std::string, int>> global_code_phase;
 //concurrent_map<bool> global_channel_status;
