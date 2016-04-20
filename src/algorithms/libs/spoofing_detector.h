@@ -56,9 +56,9 @@
 #include "gps_ephemeris.h"
 
 struct sEph{
-    double Crs;
-    double Crc;
+    Gps_Ephemeris ephemeris;
     double time;
+    bool changed;
 };
 
 struct Satpos{
@@ -72,6 +72,7 @@ struct Subframe{
     unsigned int subframe_id;
     unsigned int PRN;
     double timestamp;
+    unsigned int toa;
 };
 
 struct SatBuff{
@@ -142,6 +143,7 @@ public:
     double check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
     void check_external_utc(Gps_Utc_Model time_internal);
     void check_external_iono(Gps_Iono internal);
+    bool RX_time_checked(unsigned int PRN);
     // APT 
     bool d_APT;
     int d_APT_ch_per_sat;
@@ -164,7 +166,6 @@ public:
     bool d_NAVI_external;
     bool d_NAVI_alt;
     double d_NAVI_max_alt;
-    sEph d_eph;
     double d_Crc;
     double d_Crs;
 
@@ -193,6 +194,7 @@ private:
     void spoofing_detected(std::string description, int spoofing_case); 
     double StdDeviation(std::vector<double> v);
     bool compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b);
+    bool compare_ephemeris_dTOW(Gps_Ephemeris a, Gps_Ephemeris b);
     bool compare_utc(Gps_Utc_Model a, Gps_Utc_Model b);
     bool compare_iono(Gps_Iono a, Gps_Iono b);
     bool compare_subframes(Subframe subframeA, Subframe subframeB, int idA, int idB);
@@ -207,7 +209,7 @@ private:
     void check_external_almanac(std::map<int,Gps_Almanac> internal);
     void check_external_gps_time(int internal_week, int internal_TOW);
     void check_external_ephemeris(Gps_Ephemeris internal, int PRN);
-    void check_and_update_ephemeris(Gps_Ephemeris eph, double time);
+    void check_and_update_ephemeris(int PRN, Gps_Ephemeris eph, double time);
 };
 
 #endif

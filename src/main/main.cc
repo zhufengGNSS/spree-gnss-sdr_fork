@@ -95,7 +95,14 @@ struct GPS_time_t{
     int subframe_id;
 };
 
+struct sEph{
+    Gps_Ephemeris ephemeris;
+    double time;
+    bool changed;
+};
+
 concurrent_map<GPS_time_t> global_gps_time;
+concurrent_map<sEph> global_sEph_map;
 concurrent_map<double> global_last_gps_time;
 concurrent_map<int> global_channel_status;  //status 1: received a subframe 
                                             //status 2: reset by PVT because no spoofing detected 

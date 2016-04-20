@@ -210,11 +210,11 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
             // 22 August 1999 last GPS time roll over
             boost::posix_time::ptime p_time(boost::gregorian::date(1999, 8, 22), t);
             d_position_UTC_time = p_time;
-
+/*
             LOG(INFO) << "(new)Position at " << boost::posix_time::to_simple_string(p_time)
-            << " is Lat = " << d_latitude_d << " [deg], Long = " << d_longitude_d
-            << " [deg], Height= " << d_height_m << " [m]" << " RX time offset= " << d_rx_dt_m << " [s]";
-
+                      << " is Lat = " << d_latitude_d << " [deg], Long = " << d_longitude_d
+                      << " [deg], Height= " << d_height_m << " [m]" << " RX time offset= " << d_rx_dt_m << " [s]";
+*/
             // ###### Compute DOPs ########
             compute_DOP();
 

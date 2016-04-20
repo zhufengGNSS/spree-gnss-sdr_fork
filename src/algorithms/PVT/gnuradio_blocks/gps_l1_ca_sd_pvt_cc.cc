@@ -167,18 +167,6 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
                     }
                 }
             }
-/*
-    //create all logging files
-    for(int i = 1; i != 33; i++)
-        {
-            std::string tmp = d_flog_filename;
-            tmp.append(boost::lexical_cast<std::string>(i));
-            tmp.append(".dat");
-            std::ofstream *flog_file = new std::ofstream(tmp.c_str(), std::ios::out | std::ios::binary);
-            flog_file->exceptions (std::ifstream::failbit | std::ifstream::badbit );
-            flog_files_map[i] = flog_file;
-        }
-*/
 }
 
 
@@ -213,17 +201,17 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                             //use the channel that is tracking the  highest peak
                             if(channel_added.count(in[i][0].PRN))
                                 {
-                                    if(channel_added.at(in[i][0].PRN) != 1 && in[i][0].peak < channel_added.at(in[i][0].PRN))
+                                    if(in[i][0].peak < channel_added.at(in[i][0].PRN))
                                         {
                                             channels_used.remove(channel_added.at(in[i][0].PRN));
                                             channels_used.push_back(i);
-                                            channel_added[in[i][0].PRN] = i; 
+                                            channel_added[in[i][0].PRN] = in[i][0].peak; 
                                         }
                                 }
                             else
                                 {
                                     channels_used.push_back(i);
-                                    channel_added[in[i][0].PRN] = i; 
+                                    channel_added[in[i][0].PRN] = in[i][0].peak; 
                                 }
                         }
                 }
@@ -258,58 +246,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             //d_rx_time_ms = in[i][0].d_TOW_at_current_symbol_ms; // all the channels have the same RX timestamp (common RX time pseudoranges)
         }
 
-/*
-    for(unsigned int i = 0; i<d_nchannels; ++i)
-        {
-        if( flog_files_map.count(in[i][0].PRN))
-            {
-                flog_file = flog_files_map.at(in[i][0].PRN); 
-                if (flog_file->is_open())
-                    {
-                        flog_file->write((char*)&in[i][0].PRN, sizeof(float));
-                        flog_file->write((char*)&d_sample_counter, sizeof(unsigned long int));
-                        flog_file->write((char*)&in[i][0].Tracking_timestamp_secs, sizeof(double));
-                        flog_file->write((char*)&in[i][0].CN0_dB_hz, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Carrier_Doppler_hz, sizeof(double));
-                        flog_file->write((char*)&in[i][0].delta, sizeof(float));
-                        flog_file->write((char*)&in[i][0].RT, sizeof(float));
-                        flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
-                        flog_file->write((char*)&in[i][0].ELP, sizeof(float));
-                        flog_file->write((char*)&in[i][0].MD, sizeof(float));
-                        flog_file->write((char*)&in[i][0].Flag_valid_word, sizeof(bool));
-*                          flog_file->write((char*)&in[i][0].Prompt_I, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Prompt_Q, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Late_I, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Late_Q, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Early_I, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Early_Q, sizeof(double))
-                    }
-                else
-                    {
-                        flog_file->open(d_flog_filename.c_str(), std::ios::out | std::ios::binary);
-                        flog_file->write((char*)&in[i][0].PRN, sizeof(float));
-                        flog_file->write((char*)&d_sample_counter, sizeof(unsigned long int));
-                        flog_file->write((char*)&in[i][0].Tracking_timestamp_secs, sizeof(double));
-                        flog_file->write((char*)&in[i][0].CN0_dB_hz, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Carrier_Doppler_hz, sizeof(double));
-                        flog_file->write((char*)&in[i][0].delta, sizeof(float));
-                        flog_file->write((char*)&in[i][0].RT, sizeof(float));
-                        flog_file->write((char*)&in[i][0].Extra_RT, sizeof(float));
-                        flog_file->write((char*)&in[i][0].ELP, sizeof(float));
-                        flog_file->write((char*)&in[i][0].MD, sizeof(float));
-                        flog_file->write((char*)&in[i][0].Flag_valid_word, sizeof(bool));
-*                          flog_file->write((char*)&in[i][0].Prompt_I, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Prompt_Q, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Late_I, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Late_Q, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Early_I, sizeof(double));
-                        flog_file->write((char*)&in[i][0].Early_Q, sizeof(double));
-
-                    }
-            }
-    
-        }
-*/
 
     bool spoofed = false;
     
@@ -321,6 +257,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 global_spoofing_queue.try_pop(spm);
         }
 
+    spoofed = false;
     //cancel tracking on auxiliary channels if no spoofing has been detected.
     if(d_APT && !spoofed) 
         {
@@ -329,11 +266,15 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             for(std::list<unsigned int>::iterator it = channels.begin(); it != channels.end(); ++it)
                 {
                     i = *it; 
-                    if (in[i][0].Flag_valid_pseudorange && (channel_status.count(i) && channel_status.at(i) == 1))
+                    if (std::find(channels_used.begin(), channels_used.end(), i) == channels_used.end())
                         {
-                            if (std::find(channels_used.begin(), channels_used.end(), i) == channels_used.end())
-                                {
+                        if (in[i][0].Flag_valid_pseudorange && (channel_status.count(i) && channel_status.at(i) == 1))
+                            {
                                     if(!PRN_to_uid.count(in[i][0].PRN))
+                                        continue;
+                                    bool ch = d_spoofing_detector.RX_time_checked(in[i][0].PRN);
+                                    DLOG(INFO) << "checked?? " << ch; 
+                                    if( !ch)
                                         continue;
 
                                     std::string tmp = std::to_string(in[i][0].PRN);
@@ -346,7 +287,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     global_subframe_check.remove(uid);
                                     global_channel_status.add(i, 2);
                                     DLOG(INFO) << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " << i;
-                                    std::cout << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " << i  << " " << uid << std::endl;
+                                    //std::cout << "send no spoofing to flowgraph " << in[i][0].PRN << " ch: " << i  << " " << uid << std::endl;
                                     if (d_queue != gr::msg_queue::sptr())
                                         {
                                             d_queue->handle(cmf->GetQueueMessage(i, 4));
@@ -508,7 +449,8 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                               << " " << d_sample_counter << " " 
                               << " is Lat = " << d_ls_pvt->d_latitude_d << " [deg], Long = " << d_ls_pvt->d_longitude_d
                               << " [deg], Height= " << d_ls_pvt->d_height_m << " [m] " << std::endl; 
-                    std::cout << "constellation " << d_ls_pvt->d_pseudoranges << std::endl;
+//                    std::cout << "constellation " << d_ls_pvt->d_pseudoranges << std::endl;
+
 
                     LOG(INFO) << "Position at " << boost::posix_time::to_simple_string(d_ls_pvt->d_position_UTC_time)
                               << " is Lat = " << d_ls_pvt->d_latitude_d << " [deg], Long = " << d_ls_pvt->d_longitude_d

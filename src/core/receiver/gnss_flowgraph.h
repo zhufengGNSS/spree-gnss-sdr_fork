@@ -148,7 +148,7 @@ private:
     std::list<Gnss_Signal> available_GNSS_signals_;
     std::vector<unsigned int> channels_state_;
     std::map<int, int> nr_acquired_peaks;                   // keeps track of how many channels are acquiring each satellite
-    std::map<int, std::deque<int>> acquired_peaks;          // keeps track of which peak is beigng tracked 
+    std::map<int, int> next_peak;
     std::map<int, int> channel_to_peak;                     // keeps track of which channel track which peak 
     std::map<int, int> acquired_state;                  //keeps track of which channel is acq based on the 2nd highest 
     std::map<int, unsigned int> PVT_to_channel;                 //which the channels signal is used in the PVT calculation 

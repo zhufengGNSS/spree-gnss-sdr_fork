@@ -354,14 +354,18 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
     current_synchro_data.Prn_timestamp_ms = in[0][0].Tracking_timestamp_secs * 1000.0;
     current_synchro_data.Prn_timestamp_at_preamble_ms = Prn_timestamp_at_preamble_ms;
 
-    if(!current_synchro_data.Flag_valid_word)
+    //if(!current_synchro_data.Flag_valid_word)
+    if(!(d_flag_frame_sync == true and d_flag_parity == true))
         {
             std::string tmp = std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel);
             int unique_id = std::stoi(tmp);
+            DLOG(INFO) << "flag valid word: remove " << (int)unique_id << " "
+            << d_flag_frame_sync << " " << d_flag_parity << " " <<  flag_TOW_set;
             global_subframe_map.remove((int)unique_id);
             global_subframe_check.remove((int)unique_id);
             global_gps_time.remove((int)unique_id);
         }
+
 
     if(d_dump == true)
         {
