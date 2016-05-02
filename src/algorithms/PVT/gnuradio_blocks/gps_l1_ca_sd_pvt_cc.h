@@ -65,8 +65,7 @@ gps_l1_ca_sd_pvt_cc_sptr gps_l1_ca_make_sd_pvt_cc(unsigned int n_channels,
                                             bool flag_nmea_tty_port,
                                             std::string nmea_dump_filename,
                                             std::string nmea_dump_devname, 
-                                            Spoofing_Detector spoofing_detector, 
-                                            std::string flog_filename); 
+                                            Spoofing_Detector spoofing_detector); 
 
 /*!
  * \brief This class implements a block that computes the PVT solution
@@ -85,8 +84,7 @@ private:
                                                        bool flag_nmea_tty_port,
                                                        std::string nmea_dump_filename,
                                                        std::string nmea_dump_devname, 
-                                                       Spoofing_Detector spoofing_detector, 
-                                                       std::string flog_filename); 
+                                                       Spoofing_Detector spoofing_detector); 
     gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
                      boost::shared_ptr<gr::msg_queue> queue,
                      bool dump,
@@ -98,8 +96,7 @@ private:
                      bool flag_nmea_tty_port,
                      std::string nmea_dump_filename,
                      std::string nmea_dump_devname,
-                     Spoofing_Detector spoofing_detector, 
-                     std::string flog_filename); 
+                     Spoofing_Detector spoofing_detector); 
     boost::shared_ptr<gr::msg_queue> d_queue;
     bool d_dump;
     bool b_rinex_header_writen;
@@ -127,9 +124,6 @@ private:
     gps_l1_ca_ls_pvt *d_ls_pvt;
     std::map<unsigned int, unsigned int> PRN_to_uchannel;
 
-    //logging for fingerprinting
-    std::map<int, std::ofstream*> flog_files_map;
-    std::string d_flog_filename;
 
 public:
     ~gps_l1_ca_sd_pvt_cc (); //!< Default destructor
