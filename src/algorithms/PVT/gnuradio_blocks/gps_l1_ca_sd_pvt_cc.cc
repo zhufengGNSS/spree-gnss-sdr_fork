@@ -69,9 +69,9 @@ struct GPS_time_t{
 extern concurrent_map<GPS_time_t> global_gps_time;
 
 gps_l1_ca_sd_pvt_cc_sptr
-gps_l1_ca_make_sd_pvt_cc(unsigned int nchannels, boost::shared_ptr<gr::msg_queue> queue, bool dump, std::string dump_filename, int averaging_depth, bool flag_averaging, int output_rate_ms, int display_rate_ms, bool flag_nmea_tty_port, std::string nmea_dump_filename, std::string nmea_dump_devname, Spoofing_Detector spoofing_detector, std::string flog_filename)
+gps_l1_ca_make_sd_pvt_cc(unsigned int nchannels, boost::shared_ptr<gr::msg_queue> queue, bool dump, std::string dump_filename, int averaging_depth, bool flag_averaging, int output_rate_ms, int display_rate_ms, bool flag_nmea_tty_port, std::string nmea_dump_filename, std::string nmea_dump_devname, Spoofing_Detector spoofing_detector)
 {
-    return gps_l1_ca_sd_pvt_cc_sptr(new gps_l1_ca_sd_pvt_cc(nchannels, queue, dump, dump_filename, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, spoofing_detector, flog_filename));
+    return gps_l1_ca_sd_pvt_cc_sptr(new gps_l1_ca_sd_pvt_cc(nchannels, queue, dump, dump_filename, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, spoofing_detector)); 
 }
 
 
@@ -85,8 +85,7 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
         bool flag_nmea_tty_port,
         std::string nmea_dump_filename,
         std::string nmea_dump_devname,
-        Spoofing_Detector spoofing_detector,
-        std::string flog_filename) :
+        Spoofing_Detector spoofing_detector):
              gr::block("gps_l1_ca_sd_pvt_cc", gr::io_signature::make(nchannels, nchannels,  sizeof(Gnss_Synchro)),
              gr::io_signature::make(1, 1, sizeof(gr_complex)) )
 {
@@ -125,9 +124,6 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
     d_spoofing_detector = spoofing_detector;
     d_APT = spoofing_detector.d_APT;
     d_PPE_sampling = spoofing_detector.d_PPE_sampling;
-
-    //flog
-    d_flog_filename = flog_filename;
 
     b_rinex_header_writen = false;
     b_rinex_sbs_header_writen = false;
@@ -225,7 +221,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
 
     unsigned int i = 0;
     std::map<unsigned int, unsigned int> PRN_to_uid;
-    std::ofstream *flog_file;
     for(std::list<unsigned int>::iterator it = channels_used.begin(); it != channels_used.end(); ++it)
         {
             i = *it; 
