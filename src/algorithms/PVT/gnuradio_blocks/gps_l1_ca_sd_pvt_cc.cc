@@ -38,6 +38,7 @@
 #include <gnuradio/gr_complex.h>
 #include <gnuradio/io_signature.h>
 #include <glog/logging.h>
+#include <gflags/gflags.h>
 #include "control_message_factory.h"
 #include "gnss_synchro.h"
 #include "concurrent_map.h"
@@ -46,6 +47,8 @@
 #include "spoofing_message.h"
 
 using google::LogMessage;
+//DECLARE_string(spoofing_report_dir);
+DEFINE_string(spoofing_report_dir, ".", "Use gnss-sdr --spoofing_report_dir=/path/to/report to specify where the spoofing report is stored.");
 
 extern concurrent_map<Gps_Ephemeris> global_gps_ephemeris_map;
 extern concurrent_map<Gps_Iono> global_gps_iono_map;
@@ -124,6 +127,38 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
     d_spoofing_detector = spoofing_detector;
     d_APT = spoofing_detector.d_APT;
     d_PPE_sampling = spoofing_detector.d_PPE_sampling;
+    bool d_spoofing_report = true;
+    if(d_spoofing_report)
+        {
+        if (d_spoofing_report_file.is_open() == false)
+            {
+                try
+                {
+                    const boost::filesystem::path p (FLAGS_spoofing_report_dir);
+                    if (!boost::filesystem::exists(p))
+                        {
+                            DLOG(INFO) << "The path "
+                                << FLAGS_spoofing_report_dir
+                                << " does not exist, attempting to create it";
+                            boost::filesystem::create_directory(p);
+                        }
+                        
+                    boost::posix_time::ptime t = boost::posix_time::second_clock::universal_time();
+                    std::stringstream spoofing_report_filename;
+                    spoofing_report_filename <<  FLAGS_spoofing_report_dir
+                    << "spoofing_report-"
+                    << boost::posix_time::to_iso_string(t)
+                    << ".txt";
+                    d_spoofing_report_file.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+                    d_spoofing_report_file.open(spoofing_report_filename.str(), std::ios::out );
+                    LOG(INFO) << "Spoofing report enabled, " << " file: " << spoofing_report_filename.str() << std::endl;
+                }
+                catch (std::ifstream::failure e)
+                {
+                    LOG(WARNING) << " Exception opening spoofing report file " << e.what() << std::endl;
+                }
+            }
+        }
 
 
     b_rinex_header_writen = false;
@@ -172,6 +207,7 @@ gps_l1_ca_sd_pvt_cc::~gps_l1_ca_sd_pvt_cc()
 {
     d_dump_file.close();
     d_dump_snr_file.close();
+    d_spoofing_report_file.close();
 }
 
 int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_items,
@@ -246,18 +282,28 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
     bool spoofed = false;
     std::set<unsigned int> spoofed_sats; 
     Spoofing_Message spm;
-    spoofed = global_spoofing_queue.try_pop(spm);
-    if(spoofed)
-        {
-           while( !global_spoofing_queue.empty())
-                global_spoofing_queue.try_pop(spm);
-            if( spm.spoofing_case > 2)
-                spoofed = true;
-            
-            spoofed_sats.insert(spm.satellites.begin(), spm.satellites.end());
-           //std::cout << spm.description << std::endl;
-        }
+    while( !global_spoofing_queue.empty())
+    {
+        global_spoofing_queue.try_pop(spm);
+        if( spm.spoofing_case > 2)
+            spoofed = true;
 
+        spoofed_sats.insert(spm.satellites.begin(), spm.satellites.end());
+        if( spm.spoofing_case == 1 || spm.spoofing_case == 2 || spm.spoofing_case == 3)
+        {
+            DLOG(INFO) << "spoofing case " << spm.spoofing_case << " " << spm.spoofing_report;
+            try
+            {
+                d_spoofing_report_file << spm.spoofing_report;
+                d_spoofing_report_file.flush();
+            }
+            catch (std::ifstream::failure e)
+            {
+                LOG(WARNING) << "Exception writing to spoofing report " << e.what();
+            }
+        }
+    }
+                
     //cancel tracking on auxiliary channels if no spoofing has been detected.
     if(d_APT && !spoofed) 
         {

@@ -160,15 +160,18 @@ Spoofing_Detector::~Spoofing_Detector()
  */
 void Spoofing_Detector::spoofing_detected(Spoofing_Message msg)
 {
+    int width = 80;
+    std::string sp = "SPOOFING DETECTED";
+
     std::string description = msg.description;
     std::stringstream s;
-    s << '+' << std::setw(77) << std::setfill('-') << "+\n"; 
-    s << std::setw(51) << std::setfill(' ') << "SPOOFING DETECTED" << std::setw(35) << std::setfill(' ') << "\n\n";
+    s << '+' << std::setw(width-3) << std::setfill('-') << "+\n"; 
+    s << std::setw( (width+sp.length())/2 ) << std::setfill(' ') << sp << std::setw( (width-sp.length())/2 ) << std::setfill(' ') << "\n\n";
     s << std::setw(2) << std::setfill(' ') << description << "\n";
-    s << '+' << std::setw(76) << std::setfill('-') << "+\n\n"; 
+    s << '+' << std::setw(width-2) << std::setfill('-') << "+\n\n"; 
 
     std::cout << s.str();
-    DLOG(INFO) << "SPOOFING DETECTED " << description;
+    DLOG(INFO) << sp << " " << description;
 
     global_spoofing_queue.push(msg);
 }
@@ -209,17 +212,19 @@ void Spoofing_Detector::check_position(double lat, double lng, double alt)
  */
 void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week, double new_TOW)
 {
-    DLOG(INFO) << "TOW " << new_TOW << " " << new_week;
     if( new_TOW == 0 )
         return;
 
     std::map<int, double> old_GPS_time;
     old_GPS_time = global_last_gps_time.get_map_copy();
+    //DLOG(INFO) << "TOW " << new_TOW << " " << new_week << " " << old_GPS_time.size();
 
     int old_gps_time, new_gps_time;
     double duration;
-    if(old_GPS_time.size() > 2 && new_week != 0)
+    if(old_GPS_time.size() > 2)
     {
+        DLOG(INFO) << "TOW " << new_TOW << " " << new_week << "\n"
+                   << "old TOW " << old_GPS_time.at(0) << " " << old_GPS_time.at(1);
         if( old_GPS_time.at(0) == 0)
             old_GPS_time.at(0) = new_week;
         else if( new_week == 0)
@@ -236,43 +241,20 @@ void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week,
         if( std::abs(std::abs(new_gps_time-old_gps_time)-duration) > d_NAVI_TOW_max_discrepancy) 
             {
                 std::stringstream s;
+                std::stringstream sr;
                 s << "Navigational message manipulation detected\n";
-                //s << "Difference in received TOW not consistent with time duration between navigational messages\n";
-                //s << "Old TOW: " << old_GPS_time.at(1) << " New TOW: " << new_TOW << "\n";
                 s << "Time between the reception of the two navigational messages: " << duration << " s\n";
                 s << "Difference in TOW values: " << new_gps_time-old_gps_time << " s\n";
+                sr << "At " << current_timestamp_ms/1e3 << " s a navigational message manipulation was detected. ";
+                sr << "The time between the reception of the two navigational messages was " << duration << " s and the ";
+                sr << " difference in the TOW values was " << new_gps_time-old_gps_time << " s\n";
                 Spoofing_Message msg;
                 msg.spoofing_case = 3;
                 std::set<unsigned int> sats = {};
                 msg.satellites = sats;
                 msg.description = s.str();
+                msg.spoofing_report = sr.str();
                 spoofing_detected(msg);
-                   /* 
-                if(old_gps_time < new_gps_time)
-                    {
-                        std::stringstream s;
-                        s << " received new ephemeris TOW that is later than last received one and incorrect";
-                        s << " difference: " << new_gps_time-old_gps_time;
-                        s << " duration: " << duration << std::endl;
-                        s << " gps times : " << new_gps_time << " " << old_gps_time; 
-                        s << " times : " << current_timestamp_ms << " " << old_timestamp_ms; 
-                        s << " tow: " << new_TOW << " " << old_GPS_time.at(1);
-                        s << " week: " << new_week << " " << old_GPS_time.at(0);
-                        spoofing_detected(s.str(), 3);
-                    }
-                else
-                    {
-                        std::stringstream s;
-                        s << " received new ephemeris TOW that is earlier than last received one and incorrect";
-                        s << " difference: " << new_gps_time-old_gps_time;
-                        s << " duration: " << duration << std::endl;
-                        s << " gps times : " << new_gps_time << " " << old_gps_time; 
-                        s << " times : " << current_timestamp_ms << " " << old_timestamp_ms; 
-                        s << " tow: " << new_TOW << " " << old_GPS_time.at(1);
-                        s << " week: " << new_week << " " << old_GPS_time.at(0);
-                        spoofing_detected(s.str(), 3);
-                    }
-                    */
             }
     }
 
@@ -424,11 +406,15 @@ void Spoofing_Detector::check_GPS_time()
     if(GPS_TOW.size() > subframe_IDs.size())
     {
         std::string s =  "Satellites GPS TOW are not synced";
+        std::stringstream sr;
+        sr << "At " << largest/1e3 << " s a navigational message manipulation was detected. ";
+        sr <<  "The TOW of the satellites are not synced. ";
         Spoofing_Message msg;
         msg.spoofing_case = 4;
         std::set<unsigned int> sats = {};
         msg.satellites = sats;
         msg.description = s;
+        msg.spoofing_report = sr.str();
         spoofing_detected(msg);
 
         for(std::set<int>::iterator it = GPS_TOW.begin(); it != GPS_TOW.end(); ++it)
@@ -876,6 +862,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
         {
             double distance = std::abs(largest_t-smallest_t)*GPS_C_m_s/1e3; 
             std::stringstream s;
+            std::stringstream sr;
             /*
             s << " for satellite " << PRN;
             s << std::setprecision(16) << " RX times not consistent " <<  std::endl;
@@ -893,6 +880,12 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
             std::set<unsigned int> sats = {PRN};
             msg.satellites = sats;
             msg.description = s.str();
+
+            sr << "At " << largest_t/1e3 << " s an auxiliary peak was detected for satellite " << PRN;
+            sr << " with peak seperation of " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns] which translates to a"; 
+            sr << " pseudorange change of " << std::setprecision(16) << distance <<" [m]\n"; 
+            
+            msg.spoofing_report = sr.str();
             spoofing_detected(msg);
         }
 }
@@ -935,30 +928,25 @@ bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB
         if(subframeA.subframe != subframeB.subframe && subframeA.subframe != "" && subframeB.subframe != "")
             {
                 std::stringstream s;
+                std::stringstream sr;
+                s << "Navigational message manipulation detected\n";
+                sr << "At " << subframeA.timestamp/1e3 << " s a navigational message manipulation was detected. ";
                 if( subframeA.PRN == subframeB.PRN)
                     {
-                        s << "Navigational message manipulation detected\n";
                         s << "Subframe " << subframeA.subframe_id << " not the same for two peaks of satellite " << subframeA.PRN << "\n"; 
-                        //s << "Subframes: \n" << subframeA.subframe << "\n" << subframeB.subframe << "\n"; 
-                /*
-                s << "Ephemeris data not consistent " << idA << " " << idB;
-                s << std::endl << "subframe id: " << subframeA.subframe_id;
-                s << std::endl << "timestamps: " << subframeA.timestamp << " " << subframeB.timestamp; 
-                s << std::endl << "subframes: ";
-                s << std::endl << subframeA.subframe << std::endl << subframeB.subframe;
-                */
+                        sr << "Subframe " << subframeA.subframe_id << " was not the same for two peaks of satellite " << subframeA.PRN << "\n"; 
                     }
                 else
                     {
-                        s << "Navigational message manipulation detected\n";
                         s << "Subframe " << subframeA.subframe_id << " not the same for satellites " << subframeA.PRN << " and " << subframeB.PRN << "\n"; 
-                        //s << "Subframes: \n" << subframeA.subframe << "\n" << subframeB.subframe << "\n"; 
+                        sr << "Subframe " << subframeA.subframe_id << " was not the same for satellites " << subframeA.PRN << " and " << subframeB.PRN << "\n"; 
                     }
                 Spoofing_Message msg;
                 msg.spoofing_case = 2;
                 std::set<unsigned int> sats = {subframeA.PRN, subframeB.PRN};
                 msg.satellites = sats;
                 msg.description = s.str();
+                msg.spoofing_report = sr.str();
                 spoofing_detected(msg);
             }
         else

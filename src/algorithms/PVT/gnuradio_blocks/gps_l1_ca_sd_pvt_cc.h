@@ -123,6 +123,9 @@ private:
     double d_rx_time;
     gps_l1_ca_ls_pvt *d_ls_pvt;
     std::map<unsigned int, unsigned int> PRN_to_uchannel;
+    //spoofing report
+    //std::string d_spoofing_report_filename;
+    std::ofstream d_spoofing_report_file;
 
 
 public:
