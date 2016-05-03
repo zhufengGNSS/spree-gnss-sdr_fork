@@ -71,7 +71,7 @@ extern concurrent_map<GPS_time_t> global_gps_time;
 gps_l1_ca_sd_pvt_cc_sptr
 gps_l1_ca_make_sd_pvt_cc(unsigned int nchannels, boost::shared_ptr<gr::msg_queue> queue, bool dump, std::string dump_filename, int averaging_depth, bool flag_averaging, int output_rate_ms, int display_rate_ms, bool flag_nmea_tty_port, std::string nmea_dump_filename, std::string nmea_dump_devname, Spoofing_Detector spoofing_detector)
 {
-    return gps_l1_ca_sd_pvt_cc_sptr(new gps_l1_ca_sd_pvt_cc(nchannels, queue, dump, dump_filename, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, spoofing_detector)); 
+    return gps_l1_ca_sd_pvt_cc_sptr(new gps_l1_ca_sd_pvt_cc(nchannels, queue, dump, dump_filename, averaging_depth, flag_averaging, output_rate_ms, display_rate_ms, flag_nmea_tty_port, nmea_dump_filename, nmea_dump_devname, spoofing_detector));
 }
 
 
@@ -85,7 +85,7 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
         bool flag_nmea_tty_port,
         std::string nmea_dump_filename,
         std::string nmea_dump_devname,
-        Spoofing_Detector spoofing_detector):
+        Spoofing_Detector spoofing_detector) :
              gr::block("gps_l1_ca_sd_pvt_cc", gr::io_signature::make(nchannels, nchannels,  sizeof(Gnss_Synchro)),
              gr::io_signature::make(1, 1, sizeof(gr_complex)) )
 {
@@ -124,6 +124,7 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
     d_spoofing_detector = spoofing_detector;
     d_APT = spoofing_detector.d_APT;
     d_PPE_sampling = spoofing_detector.d_PPE_sampling;
+
 
     b_rinex_header_writen = false;
     b_rinex_sbs_header_writen = false;
@@ -243,16 +244,20 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
 
 
     bool spoofed = false;
-    
+    std::set<unsigned int> spoofed_sats; 
     Spoofing_Message spm;
     spoofed = global_spoofing_queue.try_pop(spm);
     if(spoofed)
         {
            while( !global_spoofing_queue.empty())
                 global_spoofing_queue.try_pop(spm);
+            if( spm.spoofing_case > 2)
+                spoofed = true;
+            
+            spoofed_sats.insert(spm.satellites.begin(), spm.satellites.end());
+           //std::cout << spm.description << std::endl;
         }
 
-    spoofed = false;
     //cancel tracking on auxiliary channels if no spoofing has been detected.
     if(d_APT && !spoofed) 
         {
@@ -270,6 +275,11 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     bool ch = d_spoofing_detector.RX_time_checked(in[i][0].PRN);
                                     DLOG(INFO) << "checked?? " << ch; 
                                     if( !ch)
+                                        continue;
+
+                                    std::set<unsigned int>::iterator sit;
+                                    sit = spoofed_sats.find(in[i][0].PRN);
+                                    if(sit!=spoofed_sats.end())
                                         continue;
 
                                     std::string tmp = std::to_string(in[i][0].PRN);

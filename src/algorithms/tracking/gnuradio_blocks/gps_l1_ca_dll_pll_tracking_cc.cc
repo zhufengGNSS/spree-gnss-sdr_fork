@@ -187,7 +187,7 @@ Gps_L1_Ca_Dll_Pll_Tracking_cc::Gps_L1_Ca_Dll_Pll_Tracking_cc(
 void Gps_L1_Ca_Dll_Pll_Tracking_cc::stop_tracking()
     {
         DLOG(INFO) << "stopped tracking";
-        std::cout << "stopped tracking" << std::endl;
+        //std::cout << "stopped tracking" << std::endl;
         ControlMessageFactory* cmf = new ControlMessageFactory();
         if (d_queue != gr::msg_queue::sptr())
         {

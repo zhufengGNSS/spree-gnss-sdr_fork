@@ -40,7 +40,7 @@ class  Spoofing_Message
 {
 public:
     int spoofing_case;
-    std::list<int> satellites;
+    std::set<unsigned int> satellites;
     std::string description;
 };
 
