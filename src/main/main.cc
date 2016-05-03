@@ -177,7 +177,6 @@ int main(int argc, char** argv)
                     std::cout << "Logging with be done at " << FLAGS_log_dir << std::endl;
                 }
         }
-
     std::unique_ptr<ControlThread> control_thread(new ControlThread());
 
     // record startup time

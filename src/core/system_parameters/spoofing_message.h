@@ -42,6 +42,7 @@ public:
     int spoofing_case;
     std::set<unsigned int> satellites;
     std::string description;
+    std::string spoofing_report;
 };
 
 #endif
