@@ -206,6 +206,7 @@ private:
     void check_middle_earth(unsigned int PRN, double sqrtA);
     void check_GPS_time();
     void check_inter_satellite_subframe(unsigned int uid, unsigned int subframe_id);
+    void check_APT_subframe(unsigned int uid, unsigned int subframe_id);
     void check_RX_time(unsigned int PRN, unsigned int subframe_id);
     void check_external_almanac(std::map<int,Gps_Almanac> internal);
     void check_external_gps_time(int internal_week, int internal_TOW);
