@@ -285,7 +285,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                                     std::string tmp = std::to_string(in[i][0].PRN);
                                     tmp += "0"+std::to_string(in[i][0].peak)+"0"+std::to_string(i);
                                     int uid = std::stoi(tmp);
-                                    int uid_u = PRN_to_uid.at(in[i][0].PRN); //uid of channel with the same sat that is used in the PVT
+                                    //int uid_u = PRN_to_uid.at(in[i][0].PRN); //uid of channel with the same sat that is used in the PVT
                                      
                                     global_subframe_map.remove(uid);
                                     global_gps_time.remove(uid);
