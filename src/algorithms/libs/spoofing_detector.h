@@ -54,6 +54,7 @@
 #include "configuration_interface.h"
 #include "gps_navigation_message.h"
 #include "gps_ephemeris.h"
+#include "spoofing_message.h"
 
 struct sEph{
     Gps_Ephemeris ephemeris;
@@ -191,7 +192,7 @@ public:
     ~Spoofing_Detector();
 
 private:
-    void spoofing_detected(std::string description, int spoofing_case); 
+    void spoofing_detected(Spoofing_Message msg); 
     double StdDeviation(std::vector<double> v);
     bool compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b);
     bool compare_ephemeris_dTOW(Gps_Ephemeris a, Gps_Ephemeris b);
@@ -202,14 +203,14 @@ private:
     void lookup_external_nav_data(int source, int type);
     void set_supl_client();
     void check_new_TOW(double current_time_ms, int new_week, double new_TOW);
-    void check_middle_earth(double sqrtA);
+    void check_middle_earth(unsigned int PRN, double sqrtA);
     void check_GPS_time();
     void check_inter_satellite_subframe(unsigned int uid, unsigned int subframe_id);
     void check_RX_time(unsigned int PRN, unsigned int subframe_id);
     void check_external_almanac(std::map<int,Gps_Almanac> internal);
     void check_external_gps_time(int internal_week, int internal_TOW);
-    void check_external_ephemeris(Gps_Ephemeris internal, int PRN);
-    void check_and_update_ephemeris(int PRN, Gps_Ephemeris eph, double time);
+    void check_external_ephemeris(Gps_Ephemeris internal, unsigned int PRN);
+    void check_and_update_ephemeris(unsigned int PRN, Gps_Ephemeris eph, double time);
 };
 
 #endif

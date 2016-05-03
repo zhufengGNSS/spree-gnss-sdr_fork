@@ -36,7 +36,6 @@
 #include <gflags/gflags.h>
 #include "GPS_L1_CA.h"
 #include "control_message_factory.h"
-#include "spoofing_message.h"
 #include "concurrent_map.h"
 #include "concurrent_map_str.h"
 #include "concurrent_queue.h"
@@ -45,6 +44,7 @@
 #include <iomanip>
 #include "gnss_sdr_supl_client.h"
 #include <chrono>
+#include <iomanip>
 
 extern concurrent_map<bool> global_channel_status;
 
@@ -158,13 +158,18 @@ Spoofing_Detector::~Spoofing_Detector()
 /*!
  *  Logs the occurance of a spoofing alarm.
  */
-void Spoofing_Detector::spoofing_detected(std::string description, int spoofing_case)
+void Spoofing_Detector::spoofing_detected(Spoofing_Message msg)
 {
+    std::string description = msg.description;
+    std::stringstream s;
+    s << '+' << std::setw(91) << std::setfill('-') << "+\n"; 
+    s << std::setw(51) << std::setfill(' ') << "SPOOFING DETECTED" << std::setw(35) << std::setfill(' ') << "\n\n";
+    s << std::setw(2) << std::setfill(' ') << description << "\n";
+    s << '+' << std::setw(92) << std::setfill('-') << "+\n\n"; 
+
+    std::cout << s.str();
     DLOG(INFO) << "SPOOFING DETECTED " << description;
-    std::cout << "SPOOFING DETECTED " << description << std::endl;
-    Spoofing_Message msg;
-    msg.spoofing_case = spoofing_case;
-    msg.description = description;
+
     global_spoofing_queue.push(msg);
 }
 
@@ -177,27 +182,34 @@ void Spoofing_Detector::check_position(double lat, double lng, double alt)
     if(~d_NAVI_alt)
         return;
 
+    Spoofing_Message msg;
+    msg.spoofing_case = 4;
+    std::set<unsigned int> sats = {};
+    msg.satellites = sats;
     if(alt < 0)
         {
             std::string description = "Height of position is negative";
-            spoofing_detected(description, 4);
+            msg.description = description;
+            spoofing_detected(msg);
         }
     else if(alt > d_NAVI_max_alt)
         {
             std::stringstream s;
             s << "Height of position is above " <<alt << " km";
             std::string description = s.str();
-            spoofing_detected(description, 4);
+            msg.description = description;
+            spoofing_detected(msg);
         }
 }
 
 /*!
  *  check that new ephemeris TOW (from a certain satellite) is consistent with the latest received TOW
- *  and the time duration between them. If the differnce in these values is above the maximum allowed
+ *  and the time duration between them. If the difference in these values is above the maximum allowed
  *  value a spoofing alarm is raised.
  */
 void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week, double new_TOW)
 {
+    //DLOG(INFO) << "TOW " << new_TOW << " " << new_week;
     if( new_TOW == 0 || new_week == 0)
         return;
 
@@ -213,11 +225,23 @@ void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week,
         new_gps_time = new_week*seconds_per_week+new_TOW;
         //duration = round((current_timestamp_ms-old_timestamp_ms)/1000.0);
         duration = (current_timestamp_ms-old_timestamp_ms)/1000.0;
-        //DLOG(INFO) << "check new TOW " << duration << " " << std::abs(new_time-old_time);
+        //DLOG(INFO) << "check new TOW " << duration << " " << std::abs(new_gps_time-old_gps_time);
 
         if( std::abs(std::abs(new_gps_time-old_gps_time)-duration) > d_NAVI_TOW_max_discrepancy) 
             {
-                    
+                std::stringstream s;
+                s << "Navigational message manipulation detected\n";
+                //s << "Difference in received TOW not consistent with time duration between navigational messages\n";
+                //s << "Old TOW: " << old_GPS_time.at(1) << " New TOW: " << new_TOW << "\n";
+                s << "Time between the reception of the two navigational messages: " << duration << " s\n";
+                s << "Difference in TOW values: " << new_gps_time-old_gps_time << " s\n";
+                Spoofing_Message msg;
+                msg.spoofing_case = 3;
+                std::set<unsigned int> sats = {};
+                msg.satellites = sats;
+                msg.description = s.str();
+                spoofing_detected(msg);
+                   /* 
                 if(old_gps_time < new_gps_time)
                     {
                         std::stringstream s;
@@ -242,6 +266,7 @@ void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week,
                         s << " week: " << new_week << " " << old_GPS_time.at(0);
                         spoofing_detected(s.str(), 3);
                     }
+                    */
             }
     }
 
@@ -254,7 +279,7 @@ void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week,
  * Check the change in epehemeris data. Whether it changes more frequently than 2 hours and if the 
  * change for certain values is too great.
  */
-void Spoofing_Detector::check_and_update_ephemeris(int PRN, Gps_Ephemeris eph, double time)
+void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemeris eph, double time)
 { 
     std::map<int, sEph> sat_eph = global_sEph_map.get_map_copy();
     sEph new_eph;
@@ -268,25 +293,33 @@ void Spoofing_Detector::check_and_update_ephemeris(int PRN, Gps_Ephemeris eph, d
         bool the_same = compare_ephemeris_dTOW(eph, old_ephemeris.ephemeris);
         if(the_same)
             return;
+
+        Spoofing_Message msg;
+        msg.spoofing_case = 5;
+        std::set<unsigned int> sats = {PRN};
+        msg.satellites = sats;
         
         double TWO_HOURS_MS = 2*60*60*1000; //2 hours in ms 
         double TEN_MIN_MS= 10*60*1000; //10 min in ms 
         if(old_ephemeris.changed && time > old_ephemeris.time &&  abs( (old_ephemeris.time - time) -TWO_HOURS_MS) < TEN_MIN_MS)
             {
                 std::string s = "The Ephemeris has changed, though less than two hours have passed since the last change";
-                spoofing_detected(s, 5);
+                msg.description = s;
+                spoofing_detected(msg);
             }
 
         if(abs(eph.d_Crs-old_ephemeris.ephemeris.d_Crs) > d_Crs) 
             {
                 std::string s = "Crs change too great";
-                spoofing_detected(s, 5);
+                msg.description = s;
+                spoofing_detected(msg);
             }
 
         if(abs(eph.d_Crc-old_ephemeris.ephemeris.d_Crc) > d_Crc) 
             {
                 std::string s = "Crc change too great";
-                spoofing_detected(s, 5);
+                msg.description = s;
+                spoofing_detected(msg);
             }
         
         new_eph.changed = true;
@@ -298,12 +331,17 @@ void Spoofing_Detector::check_and_update_ephemeris(int PRN, Gps_Ephemeris eph, d
 /*!
  *  Check for middle of earth attack
  */
-void Spoofing_Detector::check_middle_earth(double sqrtA)
+void Spoofing_Detector::check_middle_earth(unsigned int PRN, double sqrtA)
 { 
     if(sqrtA == 0)
     {
         std::string s = "middle of the earth attack";
-        spoofing_detected(s, 5);
+        Spoofing_Message msg;
+        msg.spoofing_case = 5;
+        std::set<unsigned int> sats = {PRN};
+        msg.satellites = sats;
+        msg.description = s;
+        spoofing_detected(msg);
     }
 
 }  
@@ -312,12 +350,12 @@ void Spoofing_Detector::check_middle_earth(double sqrtA)
  *  Checks whether the change in the estimated satellite position is changing faster then made
  *  possible given the satellites speed given that the receiver is moving at a "normal" speed.
  */
-void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, double y, double z) 
+void Spoofing_Detector::check_satpos(unsigned int PRN, double time, double x, double y, double z) 
 {
     Satpos p;
-    if(Satpos_map.count(sat))
+    if(Satpos_map.count(PRN))
         {
-            p = Satpos_map.at(sat);
+            p = Satpos_map.at(PRN);
             double sat_speed = 1400e3/(60*60); // [m/s]
             double distance = sqrt(pow(p.x-x, 2)+pow(p.y-y, 2)+pow(p.z-z, 2));
             double time_diff = std::abs(time-p.time)/1000.0;
@@ -325,10 +363,15 @@ void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, do
             if(distance != 0  && ((distance - time_diff*sat_speed) > 500 || (distance - time_diff*sat_speed) < 10e3))
                 {
                     std::stringstream s;
-                    s << "New satellite position for sat: " << sat << " is further away from last reported position." << std::endl;
+                    s << "New satellite position for sat: " << PRN << " is further away from last reported position." << std::endl;
                     s << "  Distance: " << distance/1e3 << " [km] " << " time difference: " << time_diff << std::endl;
                     s << "  New pos: (" << p.x << ", " << p.y << ", " << p.z << ") old pos: (" << x << ", " << y << ", " << z << ")";
-                    spoofing_detected(s.str(), 5);
+                    Spoofing_Message msg;
+                    msg.spoofing_case = 5;
+                    std::set<unsigned int> sats = {PRN};
+                    msg.satellites = sats;
+                    msg.description = s.str();
+                    spoofing_detected(msg);
 
                 }
         }
@@ -337,7 +380,7 @@ void Spoofing_Detector::check_satpos(unsigned int sat, double time, double x, do
     p.y = y;
     p.y = z;
     p.time = time;
-    Satpos_map[sat] = p;
+    Satpos_map[PRN] = p;
 }
 
 /*!
@@ -375,7 +418,12 @@ void Spoofing_Detector::check_GPS_time()
     if(GPS_TOW.size() > subframe_IDs.size())
     {
         std::string s =  "satellites GPS TOW are not synced";
-        spoofing_detected(s, 4);
+        Spoofing_Message msg;
+        msg.spoofing_case = 4;
+        std::set<unsigned int> sats = {};
+        msg.satellites = sats;
+        msg.description = s;
+        spoofing_detected(msg);
 
         for(std::set<int>::iterator it = GPS_TOW.begin(); it != GPS_TOW.end(); ++it)
             {
@@ -502,13 +550,18 @@ void Spoofing_Detector::calc_max_var(int sample_counter)
                 max_rt_var = get_var(sb.RT_cb);
         }
 
+    Spoofing_Message msg;
+    msg.spoofing_case = 10;
+    std::set<unsigned int> sats = {};
+    msg.satellites = sats;
     if( max_snr_var >= d_CN0_threshold )
         {
             std::stringstream s;
             s << " the CN0 indicates a spoofing attack"; 
             s << " CN0: " << max_snr_var;
             s << ", " << sample_counter; 
-            spoofing_detected(s.str(), 10);
+            msg.description = s.str();
+            spoofing_detected(msg);
         }
     if( max_rt_var >= d_RT_threshold )
         {
@@ -516,7 +569,8 @@ void Spoofing_Detector::calc_max_var(int sample_counter)
             s << " the RT indicates a spoofing attack"; 
             s << " RT: " << max_rt_var;
             s << ", " << sample_counter; 
-            spoofing_detected(s.str(), 10);
+            msg.description = s.str();
+            spoofing_detected(msg);
         }
     if( max_delta_var >= d_Delta_threshold )
         {
@@ -524,7 +578,8 @@ void Spoofing_Detector::calc_max_var(int sample_counter)
             s << " the Delta indicates a spoofing attack"; 
             s << " Delta: " << max_delta_var;
             s << ", " << sample_counter; 
-            spoofing_detected(s.str(), 10);
+            msg.description = s.str();
+            spoofing_detected(msg);
         }
 }
 
@@ -628,13 +683,19 @@ double Spoofing_Detector::get_SNR_corr(std::list<unsigned int> channels, Gnss_Sy
         } 
     }
 
+    Spoofing_Message msg;
+    msg.spoofing_case = 10;
+    std::set<unsigned int> sats = {};
+    msg.satellites = sats;
+
     if(corr_sum > 3)
     {
         std::stringstream s;
         s << " the SNR correlation is above expected values, "; 
         s << " SNR: " << corr_sum; 
         s << ", " << sample_counter; 
-        spoofing_detected(s.str(), 10);
+        msg.description = s.str();
+        spoofing_detected(msg);
     }
     return corr_sum;
 
@@ -656,7 +717,7 @@ double Spoofing_Detector::get_corr(boost::circular_buffer<double> a, boost::circ
 
 double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter)
 {
-    int d_cno_count =4;
+    unsigned int d_cno_count =4;
     double d_cno_min = 1;
     if(channels.size() < d_cno_count)
         {
@@ -674,6 +735,10 @@ double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synch
     double stdev = StdDeviation(SNRs); 
     double mv_avg;
     
+    Spoofing_Message msg;
+    msg.spoofing_case = 10;
+    std::set<unsigned int> sats = {};
+    msg.satellites = sats;
     ppe_cb.push_back(stdev);
     if(ppe_cb.size() >= 1000)
         {
@@ -685,7 +750,8 @@ double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synch
                     s << " the SNR stdev is below expected values, "; 
                     s << " SNR: " << mv_avg; 
                     s << ", " << sample_counter; 
-                    spoofing_detected(s.str(), 10);
+                    msg.description = s.str();
+                    spoofing_detected(msg);
                 }
         }
     
@@ -713,6 +779,7 @@ bool Spoofing_Detector::RX_time_checked(unsigned int PRN)
     Subframe subframe;
     
     std::set<int> subframe_ids;     
+    int n = 0;     
 
     DLOG(INFO) << "checked?: ";
     for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
@@ -724,12 +791,13 @@ bool Spoofing_Detector::RX_time_checked(unsigned int PRN)
             continue;
 
         subframe_ids.insert(subframe.subframe_id);    
+        n++;
     }
 
-    if( subframe_ids.size() > 1)
-        return false;
-    else
+    if( subframe_ids.size() == 1 && n > 1) 
         return true;
+    else 
+        return false;
 }
 
 /*!
@@ -802,6 +870,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
         {
             double distance = std::abs(largest_t-smallest_t)*GPS_C_m_s/1e3; 
             std::stringstream s;
+            /*
             s << " for satellite " << PRN;
             s << std::setprecision(16) << " RX times not consistent " <<  std::endl;
             //s << std::setprecision(16) << " RX times not consistent " << smallest_t << " "<< largest_t << " " << largest_t-smallest_t <<  std::endl;
@@ -809,7 +878,16 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
             s << "time difference: " << std::abs(largest_t-smallest_t)*1e6 << " [ns]" << std::endl;
             s << std::setprecision(16) << "distance: " << distance <<" [m]";
             std::cout << "RX " <<  PRN << std::setprecision(15) << smallest_t << " "<< largest_t << " " << std::abs(largest_t-smallest_t)*1e6 << " " << distance << std::endl;
-            spoofing_detected(s.str(), 1);
+              */
+            s << "Auxiliary peak detected for satellite " << PRN << "\n";
+            s << "Peak seperation: " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns]\n"; 
+            s << "Pseudorange change: " << std::setprecision(16) << distance <<" [m]\n"; 
+            Spoofing_Message msg;
+            msg.spoofing_case = 1;
+            std::set<unsigned int> sats = {PRN};
+            msg.satellites = sats;
+            msg.description = s.str();
+            spoofing_detected(msg);
         }
 }
 
@@ -851,14 +929,31 @@ bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB
         if(subframeA.subframe != subframeB.subframe && subframeA.subframe != "" && subframeB.subframe != "")
             {
                 std::stringstream s;
+                if( subframeA.PRN == subframeB.PRN)
+                    {
+                        s << "Navigational message manipulation detected\n";
+                        s << "Subframe " << subframeA.subframe_id << " not the same for two peaks of satellite " << subframeA.PRN << "\n"; 
+                        //s << "Subframes: \n" << subframeA.subframe << "\n" << subframeB.subframe << "\n"; 
+                /*
                 s << "Ephemeris data not consistent " << idA << " " << idB;
                 s << std::endl << "subframe id: " << subframeA.subframe_id;
                 s << std::endl << "timestamps: " << subframeA.timestamp << " " << subframeB.timestamp; 
                 s << std::endl << "subframes: ";
                 s << std::endl << subframeA.subframe << std::endl << subframeB.subframe;
-
-                spoofing_detected(s.str(), 2);
-
+                */
+                    }
+                else
+                    {
+                        s << "Navigational message manipulation detected\n";
+                        s << "Subframe " << subframeA.subframe_id << " not the same for satellites " << subframeA.PRN << " and " << subframeB.PRN << "\n"; 
+                        //s << "Subframes: \n" << subframeA.subframe << "\n" << subframeB.subframe << "\n"; 
+                    }
+                Spoofing_Message msg;
+                msg.spoofing_case = 2;
+                std::set<unsigned int> sats = {subframeA.PRN, subframeB.PRN};
+                msg.satellites = sats;
+                msg.description = s.str();
+                spoofing_detected(msg);
             }
         else
             {
@@ -915,7 +1010,7 @@ void Spoofing_Detector::check_inter_satellite_subframe(unsigned int uid, unsigne
  *  Check whether the ephemeris data received from the satellites is consistent with
  *  ephemeris data received from an external source
  */
-void Spoofing_Detector::check_external_ephemeris(Gps_Ephemeris eph_internal, int PRN)
+void Spoofing_Detector::check_external_ephemeris(Gps_Ephemeris eph_internal, unsigned int PRN)
 {
     lookup_external_nav_data(1,1);
     std::map<int,Gps_Ephemeris> external;
@@ -933,7 +1028,12 @@ void Spoofing_Detector::check_external_ephemeris(Gps_Ephemeris eph_internal, int
                     LOG(INFO) << "External ephemeris not consistent with ephemeris records from satellite " << PRN; 
                     std::stringstream s;
                     s << "External ephemeris not consistent with ephemeris records from satellite " << PRN;
-                    spoofing_detected(s.str(), 0);
+                    Spoofing_Message msg;
+                    msg.spoofing_case = 0;
+                    std::set<unsigned int> sats = {PRN};
+                    msg.satellites = sats;
+                    msg.description = s.str();
+                    spoofing_detected(msg);
 
                 }
             else
@@ -970,8 +1070,13 @@ void Spoofing_Detector::check_external_utc(Gps_Utc_Model internal)
                     LOG(INFO) << "Externautc utc model not consistent with records from satellites "; 
 
                     std::stringstream s;
-                    s << "Externautc utc model not consistent with records from satellites "; 
-                    spoofing_detected(s.str(), 0);
+                    s << "External utc utc model not consistent with records from satellites "; 
+                    Spoofing_Message msg;
+                    msg.spoofing_case = 6;
+                    std::set<unsigned int> sats = {};
+                    msg.satellites = sats;
+                    msg.description = s.str();
+                    spoofing_detected(msg);
                 }
             else
                 {
@@ -1008,7 +1113,12 @@ void Spoofing_Detector::check_external_iono(Gps_Iono internal)
                     LOG(INFO) << "Externautc iono data not consistent with records from satellites "; 
                     std::stringstream s;
                     s << "Externautc iono data not consistent with records from satellites "; 
-                    spoofing_detected(s.str(), 0);
+                    Spoofing_Message msg;
+                    msg.spoofing_case = 6;
+                    std::set<unsigned int> sats = {};
+                    msg.satellites = sats;
+                    msg.description = s.str();
+                    spoofing_detected(msg);
                 }
             else
                 {
@@ -1045,7 +1155,12 @@ void Spoofing_Detector::check_external_gps_time(int internal_week, int internal_
                     LOG(INFO) << "External utc gps time not consistent with records from satellites "; 
                     std::stringstream s;
                     s << "External utc gps time not consistent with records from satellites "; 
-                    spoofing_detected(s.str(), 0);
+                    Spoofing_Message msg;
+                    msg.spoofing_case = 6;
+                    std::set<unsigned int> sats = {};
+                    msg.satellites = sats;
+                    msg.description = s.str();
+                    spoofing_detected(msg);
                 }
             else
                 {
@@ -1068,7 +1183,7 @@ void Spoofing_Detector::check_external_almanac(std::map<int, Gps_Almanac> intern
     std::map< int, Gps_Almanac> external_map;
     external_map = supl_client_.gps_almanac_map;
     
-    int PRN;
+    unsigned int PRN;
     Gps_Almanac internal;
     for(std::map<int, Gps_Almanac>::iterator it = internal_map.begin(); it != internal_map.end(); it++)
         { 
@@ -1086,7 +1201,12 @@ void Spoofing_Detector::check_external_almanac(std::map<int, Gps_Almanac> intern
                             LOG(INFO) << "Externautc almanac data not consistent with records from satellite " << PRN; 
                             std::stringstream s;
                             s << "Externautc almanac data not consistent with records from satellite " << PRN; 
-                            spoofing_detected(s.str(), 0);
+                            Spoofing_Message msg;
+                            msg.spoofing_case = 0;
+                            std::set<unsigned int> sats = {PRN};
+                            msg.satellites = sats;
+                            msg.description = s.str();
+                            spoofing_detected(msg);
                         }
                     else
                         {
@@ -1930,6 +2050,7 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, int channel, int 
 
     if( d_NAVI_TOW )
         {
+            DLOG(INFO) << "Check new TOW";
             check_new_TOW(time, GPS_week, TOW);
         }
 
@@ -1945,7 +2066,7 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, int channel, int 
     case 2:
         if(d_PPE)
         {
-            check_middle_earth(nav.get_sqrtA());
+            check_middle_earth(PRN, nav.get_sqrtA());
         }
         break;
     case 3: //we have a new set of ephemeris data for the current SV

@@ -267,7 +267,7 @@ void GpsL1CaSdSubframeFsm::gps_subframe_to_nav_msg()
         << " tow: " << d_nav.get_TOW() 
         << " at time: " << this->d_preamble_time_ms
         << " in channel: " << i_channel_ID 
-        << " sat id"  << i_satellite_PRN << "0" << i_peak<< "0" << i_channel_ID<< std::endl << std::endl;
+        << " id: "  << i_satellite_PRN << "0" << i_peak<< "0" << i_channel_ID<< std::endl << std::endl;
         //<<  "subframe: " << d_nav.get_subframe(subframe_ID) << std::endl << std::endl;
 /*
         std::cout << "TOW: " 

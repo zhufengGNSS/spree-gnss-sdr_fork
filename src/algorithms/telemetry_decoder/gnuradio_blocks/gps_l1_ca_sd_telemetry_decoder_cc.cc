@@ -248,10 +248,10 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
         }
     else
         {
+            preamble_diff = d_sample_counter - d_preamble_index;
             if (d_stat == 1)
                 {
                     file_corr_value << d_satellite.get_PRN() << ' ' << d_sample_counter << ' ' << abs(corr_value) <<  std::endl;
-                    preamble_diff = d_sample_counter - d_preamble_index;
                     if (preamble_diff > 6001)
                         {
                             std::string tmp = std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel);
@@ -262,6 +262,24 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
                             d_flag_frame_sync = false;
                             flag_TOW_set=false;
                         }
+                }
+            //Tracking test are not losing lock but gnss-sdr is trakcing noise or unable to find NAV message
+            //Send stop tracking to tracking module
+            else if (preamble_diff > 7000)
+                {
+                    std::string tmp = std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel);
+                    int unique_id = std::stoi(tmp);
+                    global_subframe_map.remove((int)unique_id);
+                    global_subframe_check.remove((int)unique_id);
+                    global_gps_time.remove((int)unique_id);
+
+                    ControlMessageFactory* cmf = new ControlMessageFactory();
+                    DLOG(INFO) << "No frame sync SAT: " <<  this->d_satellite << " preamble_diff= " << preamble_diff << "\n"
+                               << "Send no stop tracking to tracking module for sat " << this->d_satellite << " ch: " << d_channel;
+                    if (d_queue != gr::msg_queue::sptr())
+                    {
+                        d_queue->handle(cmf->GetQueueMessage(d_channel, 4));
+                    }
                 }
         }
 
@@ -359,8 +377,8 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items, gr_vecto
         {
             std::string tmp = std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel);
             int unique_id = std::stoi(tmp);
-            DLOG(INFO) << "flag valid word: remove " << (int)unique_id << " "
-            << d_flag_frame_sync << " " << d_flag_parity << " " <<  flag_TOW_set;
+           // DLOG(INFO) << "flag valid word: remove " << (int)unique_id << " "
+            //<< d_flag_frame_sync << " " << d_flag_parity << " " <<  flag_TOW_set;
             global_subframe_map.remove((int)unique_id);
             global_subframe_check.remove((int)unique_id);
             global_gps_time.remove((int)unique_id);
