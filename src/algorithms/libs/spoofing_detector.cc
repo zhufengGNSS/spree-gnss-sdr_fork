@@ -863,15 +863,6 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
             double distance = std::abs(largest_t-smallest_t)*GPS_C_m_s/1e3; 
             std::stringstream s;
             std::stringstream sr;
-            /*
-            s << " for satellite " << PRN;
-            s << std::setprecision(16) << " RX times not consistent " <<  std::endl;
-            //s << std::setprecision(16) << " RX times not consistent " << smallest_t << " "<< largest_t << " " << largest_t-smallest_t <<  std::endl;
-            //s << std::setprecision(5) << "subframes: " << largest.subframe_id << " " << smallest.subframe_id << std::endl;
-            s << "time difference: " << std::abs(largest_t-smallest_t)*1e6 << " [ns]" << std::endl;
-            s << std::setprecision(16) << "distance: " << distance <<" [m]";
-            std::cout << "RX " <<  PRN << std::setprecision(15) << smallest_t << " "<< largest_t << " " << std::abs(largest_t-smallest_t)*1e6 << " " << distance << std::endl;
-              */
             s << "Auxiliary peak detected for satellite " << PRN << "\n";
             s << "Peak seperation: " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns]\n"; 
             s << "Pseudorange change: " << std::setprecision(16) << distance <<" [m]\n"; 
@@ -881,9 +872,10 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
             msg.satellites = sats;
             msg.description = s.str();
 
-            sr << "At " << largest_t/1e3 << " s an auxiliary peak was detected for satellite " << PRN;
-            sr << " with peak seperation of " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns] which translates to a"; 
-            sr << " pseudorange change of " << std::setprecision(16) << distance <<" [m]\n"; 
+            sr << "At " << largest_t/1e3 << " s an auxiliary peak was detected for satellite " << PRN
+               << " with peak seperation of " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns] which translates to a" 
+               << " pseudorange change of " << std::setprecision(16) << distance <<" [m]. "
+               << "SPREE is configured to raise an alarm if a peak seperation of more than " << d_APT_max_rx_discrepancy*1e6 << " [ns] is detected\n."; 
             
             msg.spoofing_report = sr.str();
             spoofing_detected(msg);
