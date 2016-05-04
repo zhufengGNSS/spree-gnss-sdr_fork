@@ -155,6 +155,7 @@ int main(int argc, char** argv)
                               << std::endl
                               << "Use gnss-sdr --log_dir=/path/to/log to change that."
                               << std::endl;
+                    FLAGS_log_dir = boost::filesystem::temp_directory_path().string();
                 }
             else
                 {
