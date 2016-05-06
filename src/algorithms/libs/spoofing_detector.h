@@ -139,11 +139,11 @@ public:
 
     void New_subframe(int subframe_ID, int PRN, int channel, int uid, Gps_Navigation_Message nav, double time);
     std::map<unsigned int, Satpos> Satpos_map;
-    void check_position(double lat, double lng, double alt);
+    void check_position(double lat, double lng, double alt, double sample_counter);
     void check_satpos(unsigned int sat, double time, double x, double y, double z); 
     double check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
-    void check_external_utc(Gps_Utc_Model time_internal);
-    void check_external_iono(Gps_Iono internal);
+    void check_external_utc(Gps_Utc_Model time_internal, double timestamp);
+    void check_external_iono(Gps_Iono internal, double timestamp);
     bool RX_time_checked(unsigned int PRN);
     // APT 
     bool d_APT;
@@ -169,6 +169,8 @@ public:
     double d_NAVI_max_alt;
     double d_Crc;
     double d_Crs;
+
+    double d_fs_in;
 
     std::map<int, boost::circular_buffer<double>> satellite_SNR;
     double get_SNR_corr(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
@@ -203,14 +205,14 @@ private:
     void lookup_external_nav_data(int source, int type);
     void set_supl_client();
     void check_new_TOW(double current_time_ms, int new_week, double new_TOW);
-    void check_middle_earth(unsigned int PRN, double sqrtA);
+    void check_middle_earth(unsigned int PRN, double sqrtA, double timestamp);
     void check_GPS_time();
     void check_inter_satellite_subframe(unsigned int uid, unsigned int subframe_id);
     void check_APT_subframe(unsigned int uid, unsigned int subframe_id);
     void check_RX_time(unsigned int PRN, unsigned int subframe_id);
-    void check_external_almanac(std::map<int,Gps_Almanac> internal);
-    void check_external_gps_time(int internal_week, int internal_TOW);
-    void check_external_ephemeris(Gps_Ephemeris internal, unsigned int PRN);
+    void check_external_almanac(std::map<int,Gps_Almanac> internal, double timestamp);
+    void check_external_gps_time(int internal_week, int internal_TOW, double timestamp);
+    void check_external_ephemeris(Gps_Ephemeris internal, unsigned int PRN, double timestamp);
     void check_and_update_ephemeris(unsigned int PRN, Gps_Ephemeris eph, double time);
 };
 
