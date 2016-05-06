@@ -143,11 +143,16 @@ Spoofing_Detector::Spoofing_Detector(ConfigurationInterface* configuration)
     d_NAVI_alt = NAVI_alt;
     double NAVI_max_alt = configuration->property("Spoofing.NAVI_max_alt", 2e3);
     d_NAVI_max_alt = NAVI_max_alt;
+
     //Ephemeris thresholds
     double Crc = configuration->property("Spoofing.Crc", 2e3);
     d_Crc = Crc;
     double Crs = configuration->property("Spoofing.Crs", 2e3);
     d_Crs = Crs;
+
+    //sampling freq, to get timestamp from sample counter
+    double fs_in = configuration->property("GNSS-SDR.internal_fs_hz", 2048000);
+    d_fs_in = fs_in;
     
 }
 
@@ -180,7 +185,7 @@ void Spoofing_Detector::spoofing_detected(Spoofing_Message msg)
  *  Check that the estimated receiver position has normal values, that is is non negative and 
  *  below the configurable value alt 
  */
-void Spoofing_Detector::check_position(double lat, double lng, double alt) 
+void Spoofing_Detector::check_position(double lat, double lng, double alt, double sample_counter) 
 {
     if(~d_NAVI_alt)
         return;
@@ -191,16 +196,23 @@ void Spoofing_Detector::check_position(double lat, double lng, double alt)
     msg.satellites = sats;
     if(alt < 0)
         {
-            std::string description = "Height of position is negative";
-            msg.description = description;
+            std::stringstream s;
+            s << "Height of position is negative";
+            std::stringstream sr;
+            sr << "At " << sample_counter/(d_fs_in*1e3) << " the height of the calculated position was negative. The height was " << alt << " km.\n";
+            msg.description = s.str();
+            msg.spoofing_report = sr.str();
             spoofing_detected(msg);
         }
     else if(alt > d_NAVI_max_alt)
         {
             std::stringstream s;
             s << "Height of position is above " <<alt << " km";
-            std::string description = s.str();
-            msg.description = description;
+            std::stringstream sr;
+            sr << "At " << sample_counter/(d_fs_in*1e3) << " the height of the calculated position was " << alt 
+               << " km. SPREE is configured to raise an alarm if the altitude goes above " << d_NAVI_max_alt << ".\n";
+            msg.description = s.str();
+            msg.spoofing_report = sr.str();
             spoofing_detected(msg);
         }
 }
@@ -293,6 +305,10 @@ void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemer
             {
                 std::string s = "The Ephemeris has changed, though less than two hours have passed since the last change";
                 msg.description = s;
+                std::stringstream sr;
+                sr << "At " << time/1e3 << " s an ephemeris message was received that is different from the last one received" 
+                    << " even though less than 2 hours have passed since the last change in ephemeris data.\n";
+                msg.spoofing_report = sr.str();
                 spoofing_detected(msg);
             }
 
@@ -300,6 +316,11 @@ void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemer
             {
                 std::string s = "Crs change too great";
                 msg.description = s;
+                std::stringstream sr;
+                sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Crs" 
+                    << " was greater than is expected. Old value of Crs: " << old_ephemeris.ephemeris.d_Crs << " New value of Crs: " << eph.d_Crs
+                    << ". SPREE is configured to raise an alarm if the change in Crs is above " << d_Crs << ".\n" ;
+                msg.spoofing_report = sr.str();
                 spoofing_detected(msg);
             }
 
@@ -307,6 +328,11 @@ void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemer
             {
                 std::string s = "Crc change too great";
                 msg.description = s;
+                std::stringstream sr;
+                sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Crc" 
+                   << " was greater than is expected. Old value of Crc: " << old_ephemeris.ephemeris.d_Crc << " New value of Crc: " << eph.d_Crc
+                   << ". SPREE is configured to raise an alarm if the change in Crc is above " << d_Crc << ".\n" ;
+                msg.spoofing_report = sr.str();
                 spoofing_detected(msg);
             }
         
@@ -319,16 +345,20 @@ void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemer
 /*!
  *  Check for middle of earth attack
  */
-void Spoofing_Detector::check_middle_earth(unsigned int PRN, double sqrtA)
+void Spoofing_Detector::check_middle_earth(unsigned int PRN, double sqrtA, double timestamp)
 { 
     if(sqrtA == 0)
     {
-        std::string s = "Middle of the earth attack";
+        std::stringstream s;
+        s << "Middle of the earth attack detected for satellite " << PRN;
+        std::stringstream sr;
+        sr << "At " << timestamp/1e3 << " s a middle of the earth attack was detected for satellite " << PRN << ".\n";
         Spoofing_Message msg;
         msg.spoofing_case = 5;
         std::set<unsigned int> sats = {PRN};
         msg.satellites = sats;
-        msg.description = s;
+        msg.description = s.str();
+        msg.spoofing_report = sr.str();
         spoofing_detected(msg);
     }
 
@@ -354,11 +384,17 @@ void Spoofing_Detector::check_satpos(unsigned int PRN, double time, double x, do
                     s << "New satellite position for sat: " << PRN << " is further away from last reported position." << std::endl;
                     s << "  Distance: " << distance/1e3 << " [km] " << " time difference: " << time_diff << std::endl;
                     s << "  New pos: (" << p.x << ", " << p.y << ", " << p.z << ") old pos: (" << x << ", " << y << ", " << z << ")";
+                    std::stringstream sr;
+                    sr << "At " << time/1e3 << " s a new satellite position for sat: " << PRN << " was calculated that is further away from last reported position"
+                       << " than was expected." 
+                       << "  Distance: " << distance/1e3 << " [km] " << " time difference: " << time_diff 
+                       << "  New pos: (" << p.x << ", " << p.y << ", " << p.z << ") old pos: (" << x << ", " << y << ", " << z << ")\n";
                     Spoofing_Message msg;
                     msg.spoofing_case = 5;
                     std::set<unsigned int> sats = {PRN};
                     msg.satellites = sats;
                     msg.description = s.str();
+                    msg.spoofing_report = sr.str();
                     spoofing_detected(msg);
 
                 }
@@ -408,7 +444,7 @@ void Spoofing_Detector::check_GPS_time()
         std::string s =  "Satellites GPS TOW are not synced";
         std::stringstream sr;
         sr << "At " << largest/1e3 << " s a navigational message manipulation was detected. ";
-        sr <<  "The TOW of the satellites are not synced. ";
+        sr <<  "The TOW of the satellites are not synced.\n";
         Spoofing_Message msg;
         msg.spoofing_case = 4;
         std::set<unsigned int> sats = {};
@@ -553,6 +589,10 @@ void Spoofing_Detector::calc_max_var(int sample_counter)
             s << " CN0: " << max_snr_var;
             s << ", " << sample_counter; 
             msg.description = s.str();
+            std::stringstream sr;
+            sr << "At " << sample_counter/(d_fs_in*1e3) << " s the moving standard variantion of CN0 was above the expected value." 
+              << " CN0: " << max_snr_var << ". SPREE is configured to raise an alarm if it is above " << d_CN0_threshold << ".\n";
+            msg.spoofing_report = sr.str();
             spoofing_detected(msg);
         }
     if( max_rt_var >= d_RT_threshold )
@@ -562,6 +602,10 @@ void Spoofing_Detector::calc_max_var(int sample_counter)
             s << " RT: " << max_rt_var;
             s << ", " << sample_counter; 
             msg.description = s.str();
+            std::stringstream sr;
+            sr << "At " << sample_counter/(d_fs_in*1e3) << " s the moving standard variantion of RT was above the expected value." 
+              << " RT: " << max_rt_var << ". SPREE is configured to raise an alarm if it is above " << d_RT_threshold << ".\n";
+            msg.spoofing_report = sr.str();
             spoofing_detected(msg);
         }
     if( max_delta_var >= d_Delta_threshold )
@@ -571,6 +615,10 @@ void Spoofing_Detector::calc_max_var(int sample_counter)
             s << " Delta: " << max_delta_var;
             s << ", " << sample_counter; 
             msg.description = s.str();
+            std::stringstream sr;
+            sr << "At " << sample_counter/(d_fs_in*1e3) << " s the moving standard variantion of delta was above the expected value." 
+              << " Delta: " << max_delta_var << ". SPREE is configured to raise an alarm if it is above " << d_Delta_threshold << ".\n";
+            msg.spoofing_report = sr.str();
             spoofing_detected(msg);
         }
 }
@@ -687,6 +735,10 @@ double Spoofing_Detector::get_SNR_corr(std::list<unsigned int> channels, Gnss_Sy
         s << " SNR: " << corr_sum; 
         s << ", " << sample_counter; 
         msg.description = s.str();
+        std::stringstream sr;
+        sr << "At " << sample_counter/(d_fs_in*1e3) << " s the CN0 correlation was above the expected value." 
+          << " CN0: " << corr_sum << ". SPREE is configured to raise an alarm if it is above 3.\n";
+        msg.spoofing_report = sr.str();
         spoofing_detected(msg);
     }
     return corr_sum;
@@ -743,6 +795,10 @@ double Spoofing_Detector::check_SNR(std::list<unsigned int> channels, Gnss_Synch
                     s << " SNR: " << mv_avg; 
                     s << ", " << sample_counter; 
                     msg.description = s.str();
+                    std::stringstream sr;
+                    sr << "At " << sample_counter/(d_fs_in*1e3) << " s the CN0 standard deviation was below the expected value." 
+                      << " CN0: " << mv_avg << ". SPREE is configured to raise an alarm if it is below " << d_cno_min << ".\n";
+                    msg.spoofing_report = sr.str();
                     spoofing_detected(msg);
                 }
         }
@@ -875,7 +931,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
             sr << "At " << largest_t/1e3 << " s an auxiliary peak was detected for satellite " << PRN
                << " with peak seperation of " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns] which translates to a" 
                << " pseudorange change of " << std::setprecision(16) << distance <<" [m]. "
-               << "SPREE is configured to raise an alarm if a peak seperation of more than " << d_APT_max_rx_discrepancy*1e6 << " [ns] is detected\n."; 
+               << "SPREE is configured to raise an alarm if a peak seperation of more than " << d_APT_max_rx_discrepancy*1e6 << " [ns] is detected.\n"; 
             
             msg.spoofing_report = sr.str();
             spoofing_detected(msg);
@@ -1030,7 +1086,7 @@ void Spoofing_Detector::check_inter_satellite_subframe(unsigned int uid, unsigne
  *  Check whether the ephemeris data received from the satellites is consistent with
  *  ephemeris data received from an external source
  */
-void Spoofing_Detector::check_external_ephemeris(Gps_Ephemeris eph_internal, unsigned int PRN)
+void Spoofing_Detector::check_external_ephemeris(Gps_Ephemeris eph_internal, unsigned int PRN, double timestamp)
 {
     lookup_external_nav_data(1,1);
     std::map<int,Gps_Ephemeris> external;
@@ -1048,11 +1104,15 @@ void Spoofing_Detector::check_external_ephemeris(Gps_Ephemeris eph_internal, uns
                     LOG(INFO) << "External ephemeris not consistent with ephemeris records from satellite " << PRN; 
                     std::stringstream s;
                     s << "External ephemeris not consistent with ephemeris records from satellite " << PRN;
+                    std::stringstream sr;
+                    sr << "At " << timestamp/1e3 << " ephemeris records for satellite " << PRN 
+                       << "was received that is not consistent with ephemeris records from external sources.\n"; 
                     Spoofing_Message msg;
                     msg.spoofing_case = 0;
                     std::set<unsigned int> sats = {PRN};
                     msg.satellites = sats;
                     msg.description = s.str();
+                    msg.spoofing_report = sr.str();
                     spoofing_detected(msg);
 
                 }
@@ -1071,7 +1131,7 @@ void Spoofing_Detector::check_external_ephemeris(Gps_Ephemeris eph_internal, uns
  *  check whether the UTC Model data received from the satellites is consistent with
  *  UTC model data received from an external source
  */
-void Spoofing_Detector::check_external_utc(Gps_Utc_Model internal)
+void Spoofing_Detector::check_external_utc(Gps_Utc_Model internal, double timestamp)
 {
     if(~d_NAVI_external)
         return;
@@ -1091,11 +1151,14 @@ void Spoofing_Detector::check_external_utc(Gps_Utc_Model internal)
 
                     std::stringstream s;
                     s << "External utc utc model not consistent with records from satellites "; 
+                    std::stringstream sr;
+                    sr << "At " << timestamp/1e3 << " s UTC GPS time data was received that was not consistent with records from external sources.\n"; 
                     Spoofing_Message msg;
                     msg.spoofing_case = 6;
                     std::set<unsigned int> sats = {};
                     msg.satellites = sats;
                     msg.description = s.str();
+                    msg.spoofing_report = sr.str();
                     spoofing_detected(msg);
                 }
             else
@@ -1113,7 +1176,7 @@ void Spoofing_Detector::check_external_utc(Gps_Utc_Model internal)
  *  Check whether the Iono Model data received from the satellites is consistent with
  *  Iono model data received from an external source.
  */
-void Spoofing_Detector::check_external_iono(Gps_Iono internal)
+void Spoofing_Detector::check_external_iono(Gps_Iono internal, double timestamp)
 {
     if(~d_NAVI_external)
         return;
@@ -1133,11 +1196,14 @@ void Spoofing_Detector::check_external_iono(Gps_Iono internal)
                     LOG(INFO) << "Externautc iono data not consistent with records from satellites "; 
                     std::stringstream s;
                     s << "Externautc iono data not consistent with records from satellites "; 
+                    std::stringstream sr;
+                    sr << "At " << timestamp/1e3 << " s Ionospheric GPS time data was received that was not consistent with records from external sources.\n"; 
                     Spoofing_Message msg;
                     msg.spoofing_case = 6;
                     std::set<unsigned int> sats = {};
                     msg.satellites = sats;
                     msg.description = s.str();
+                    msg.spoofing_report = sr.str();
                     spoofing_detected(msg);
                 }
             else
@@ -1155,7 +1221,7 @@ void Spoofing_Detector::check_external_iono(Gps_Iono internal)
  *  Check whether the Gps time received from the satellites is consistent with
  *  Gps_Ref_Time model data received from an external source
  */
-void Spoofing_Detector::check_external_gps_time(int internal_week, int internal_TOW)
+void Spoofing_Detector::check_external_gps_time(int internal_week, int internal_TOW, double timestamp)
 {
     lookup_external_nav_data(1,0);
     Gps_Ref_Time external;
@@ -1172,14 +1238,17 @@ void Spoofing_Detector::check_external_gps_time(int internal_week, int internal_
             if( !the_same )
                 {
                     std::cout << "External gps time not consistent with records from satellites " << std::endl;
-                    LOG(INFO) << "External utc gps time not consistent with records from satellites "; 
+                    LOG(INFO) << "External gps time not consistent with records from satellites "; 
                     std::stringstream s;
-                    s << "External utc gps time not consistent with records from satellites "; 
+                    s << "External gps time not consistent with records from satellites "; 
+                    std::stringstream sr;
+                    sr << "At " << timestamp/1e3 << " s GPS time data was received that was not consistent with records from external sources.\n"; 
                     Spoofing_Message msg;
                     msg.spoofing_case = 6;
                     std::set<unsigned int> sats = {};
                     msg.satellites = sats;
                     msg.description = s.str();
+                    msg.spoofing_report = sr.str();
                     spoofing_detected(msg);
                 }
             else
@@ -1197,7 +1266,7 @@ void Spoofing_Detector::check_external_gps_time(int internal_week, int internal_
  *  Check whether the Almanac data received from the satellites is consistent with
  *  Almanac data received from an external source
  */
-void Spoofing_Detector::check_external_almanac(std::map<int, Gps_Almanac> internal_map)
+void Spoofing_Detector::check_external_almanac(std::map<int, Gps_Almanac> internal_map, double timestamp)
 {
     lookup_external_nav_data(1,0);
     std::map< int, Gps_Almanac> external_map;
@@ -1221,11 +1290,15 @@ void Spoofing_Detector::check_external_almanac(std::map<int, Gps_Almanac> intern
                             LOG(INFO) << "Externautc almanac data not consistent with records from satellite " << PRN; 
                             std::stringstream s;
                             s << "Externautc almanac data not consistent with records from satellite " << PRN; 
+                            std::stringstream sr;
+                            sr << "At " << timestamp/1e3 << " s almanac data not was recevied from satellite " << PRN 
+                               << " that was not consistent with records from external sources.\n"; 
                             Spoofing_Message msg;
                             msg.spoofing_case = 0;
                             std::set<unsigned int> sats = {PRN};
                             msg.satellites = sats;
                             msg.description = s.str();
+                            msg.spoofing_report = sr.str();
                             spoofing_detected(msg);
                         }
                     else
@@ -2081,13 +2154,13 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, int channel, int 
         //check when a new GPS week has arrived
         if( d_NAVI_external )
             {
-                check_external_gps_time(GPS_week, TOW);
+                check_external_gps_time(GPS_week, TOW, time);
             }
         break;
     case 2:
         if(d_PPE)
         {
-            check_middle_earth(PRN, nav.get_sqrtA());
+            check_middle_earth(PRN, nav.get_sqrtA(), time);
         }
         break;
     case 3: //we have a new set of ephemeris data for the current SV
@@ -2095,7 +2168,7 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, int channel, int 
             {
                 Gps_Ephemeris ephemeris = nav.get_ephemeris();
                 check_and_update_ephemeris(PRN, ephemeris, time);
-                check_external_ephemeris(ephemeris, PRN); 
+                check_external_ephemeris(ephemeris, PRN, time); 
             }
         break;
     case 4: // Possible IONOSPHERE and UTC model update (page 18)
@@ -2106,7 +2179,7 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, int channel, int 
             }
         if( d_NAVI_external )
             {
-                check_external_almanac(nav.get_almanac()); 
+                check_external_almanac(nav.get_almanac(), time); 
             }
         }
         break;
@@ -2120,7 +2193,7 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, int channel, int 
 
             if( d_NAVI_external )
                 {
-                    check_external_almanac(nav.get_almanac()); 
+                    check_external_almanac(nav.get_almanac(), time); 
                 }
         }
         break;

@@ -298,14 +298,14 @@ void GpsL1CaSdSubframeFsm::gps_subframe_to_nav_msg()
             {
                 Gps_Iono iono = d_nav.get_iono(); //notice that the read operation will clear the valid flag
                 d_iono_queue->push(iono);
-                spoofing_detector.check_external_iono(iono); 
+                spoofing_detector.check_external_iono(iono, this->d_preamble_time_ms); 
             }
         if (d_nav.flag_utc_model_valid == true)
             {
                 Gps_Utc_Model utc_model = d_nav.get_utc_model(); //notice that the read operation will clear the valid flag
                 d_utc_model_queue->push(utc_model);
 
-                spoofing_detector.check_external_utc(utc_model); 
+                spoofing_detector.check_external_utc(utc_model, this->d_preamble_time_ms); 
             }
         break;
     case 5:

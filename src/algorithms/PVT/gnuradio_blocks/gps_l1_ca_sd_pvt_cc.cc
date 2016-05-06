@@ -297,18 +297,15 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
             spoofed = true;
 
         spoofed_sats.insert(spm.satellites.begin(), spm.satellites.end());
-        if( spm.spoofing_case == 1 || spm.spoofing_case == 2 || spm.spoofing_case == 3)
+
+        try
         {
-            DLOG(INFO) << "spoofing case " << spm.spoofing_case << " " << spm.spoofing_report;
-            try
-            {
-                d_spoofing_report_file << spm.spoofing_report;
-                d_spoofing_report_file.flush();
-            }
-            catch (std::ifstream::failure e)
-            {
-                LOG(WARNING) << "Exception writing to spoofing report " << e.what();
-            }
+            d_spoofing_report_file << spm.spoofing_report;
+            d_spoofing_report_file.flush();
+        }
+        catch (std::ifstream::failure e)
+        {
+            LOG(WARNING) << "Exception writing to spoofing report " << e.what();
         }
     }
                 
@@ -469,7 +466,7 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items, gr_vector_int &ninput_
                 //Check if the value of the position is logical and if the satellites have movement is probable.
                 if(d_ls_pvt->b_valid_position == true)
                     {
-                        d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m); 
+                        d_spoofing_detector.check_position(d_ls_pvt->d_latitude_d, d_ls_pvt->d_longitude_d, d_ls_pvt->d_height_m, d_sample_counter); 
                     }
 /*
                 if(d_satpos_detection)
