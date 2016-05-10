@@ -145,10 +145,29 @@ Spoofing_Detector::Spoofing_Detector(ConfigurationInterface* configuration)
     d_NAVI_max_alt = NAVI_max_alt;
 
     //Ephemeris thresholds
-    double Crc = configuration->property("Spoofing.Crc", 2e3);
-    d_Crc = Crc;
-    double Crs = configuration->property("Spoofing.Crs", 2e3);
-    d_Crs = Crs;
+    //Subframe 1
+    d_A_f0 = configuration->property("Spoofing.A_f0", 0.00071864);
+    d_A_f1 = configuration->property("Spoofing.A_f1", 1.512e-11);
+    d_A_f2 = configuration->property("Spoofing.A_f2", 0);
+
+    //Subframe 2
+    d_Crs = configuration->property("Spoofing.Crs", 211.2812);
+    d_Delta_n = configuration->property("Spoofing.Delta_n", 1.4833e-09);
+    d_M_0 = configuration->property("Spoofing.M_0", 5.8043);
+    d_Cuc = configuration->property("Spoofing.Cuc", 1.0924e-05);
+    d_e_eccentricity = configuration->property("Spoofing.e_eccentricity", 0.014681);
+    d_Cus = configuration->property("Spoofing.Cus", 8.9295e-06);
+    d_sqrt_A = configuration->property("Spoofing.sqrt_A", 27.7088);
+
+    //Subframe 3
+    d_Cic = configuration->property("Spoofing.Cic", 8.2143e-07);
+    d_OMEGA0 = configuration->property("Spoofing.OMEGA0", 6.2831);
+    d_Cis = configuration->property("Spoofing.Cis", 8.7172e-07);
+    d_i_0 = configuration->property("Spoofing.i_0", 0.049075);
+    d_Crc = configuration->property("Spoofing.Crc", 194.7812);
+    d_OMEGA = configuration->property("Spoofing.OMEGA", 6.2829);
+    d_OMEGA_DOT = configuration->property("Spoofing.OMEGA_DOT", 9.9183e-10);
+    d_IDOT = configuration->property("Spoofing.IDOT", 9.129e-10);
 
     //sampling freq, to get timestamp from sample counter
     double fs_in = configuration->property("GNSS-SDR.internal_fs_hz", 2048000);
@@ -301,6 +320,7 @@ void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemer
         
         double TWO_HOURS_MS = 2*60*60*1000; //2 hours in ms 
         double TEN_MIN_MS= 10*60*1000; //10 min in ms 
+        double 24_HOURS_MS= 24*60*60*1000; //24 hours in ms 
         if(old_ephemeris.changed && time > old_ephemeris.time &&  abs( (old_ephemeris.time - time) -TWO_HOURS_MS) < TEN_MIN_MS)
             {
                 std::string s = "The Ephemeris has changed, though less than two hours have passed since the last change";
@@ -312,30 +332,226 @@ void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemer
                 spoofing_detected(msg);
             }
 
-        if(abs(eph.d_Crs-old_ephemeris.ephemeris.d_Crs) > d_Crs) 
+        if ( time - old_ephemeris.time < 24_HOURS_MS) 
             {
-                std::string s = "Crs change too great";
-                msg.description = s;
-                std::stringstream sr;
-                sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Crs" 
-                    << " was greater than is expected. Old value of Crs: " << old_ephemeris.ephemeris.d_Crs << " New value of Crs: " << eph.d_Crs
-                    << ". SPREE is configured to raise an alarm if the change in Crs is above " << d_Crs << ".\n" ;
-                msg.spoofing_report = sr.str();
-                spoofing_detected(msg);
+                if(abs(eph.d_A_f0-old_ephemeris.ephemeris.d_A_f0) > d_A_f0) 
+                    {
+                        std::string s = "A_f0 change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of A_f0" 
+                            << " was greater than is expected. Old value of A_f0: " << old_ephemeris.ephemeris.d_A_f0 << " New value of A_f0: " << eph.d_A_f0
+                            << ". SPREE is configured to raise an alarm if the change in A_f0 is above " << d_A_f0 << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_A_f1-old_ephemeris.ephemeris.d_A_f1) > d_A_f1) 
+                    {
+                        std::string s = "A_f1 change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of A_f1" 
+                            << " was greater than is expected. Old value of A_f1: " << old_ephemeris.ephemeris.d_A_f1 << " New value of A_f1: " << eph.d_A_f1
+                            << ". SPREE is configured to raise an alarm if the change in A_f1 is above " << d_A_f1 << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_A_f2-old_ephemeris.ephemeris.d_A_f2) > d_A_f2) 
+                    {
+                        std::string s = "A_f2 change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of A_f2" 
+                            << " was greater than is expected. Old value of A_f2: " << old_ephemeris.ephemeris.d_A_f2 << " New value of A_f2: " << eph.d_A_f2
+                            << ". SPREE is configured to raise an alarm if the change in A_f2 is above " << d_A_f2 << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_Crs-old_ephemeris.ephemeris.d_Crs) > d_Crs) 
+                    {
+                        std::string s = "Crs change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Crs" 
+                            << " was greater than is expected. Old value of Crs: " << old_ephemeris.ephemeris.d_Crs << " New value of Crs: " << eph.d_Crs
+                            << ". SPREE is configured to raise an alarm if the change in Crs is above " << d_Crs << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_Delta_n-old_ephemeris.ephemeris.d_Delta_n) > d_Delta_n) 
+                    {
+                        std::string s = "Delta_n change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Delta_n" 
+                            << " was greater than is expected. Old value of Delta_n: " << old_ephemeris.ephemeris.d_Delta_n << " New value of Delta_n: " << eph.d_Delta_n
+                            << ". SPREE is configured to raise an alarm if the change in Delta_n is above " << d_Delta_n << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_M_0-old_ephemeris.ephemeris.d_M_0) > d_M_0) 
+                    {
+                        std::string s = "M_0 change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of M_0" 
+                            << " was greater than is expected. Old value of M_0: " << old_ephemeris.ephemeris.d_M_0 << " New value of M_0: " << eph.d_M_0
+                            << ". SPREE is configured to raise an alarm if the change in M_0 is above " << d_M_0 << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_Cuc-old_ephemeris.ephemeris.d_Cuc) > d_Cuc) 
+                    {
+                        std::string s = "Cuc change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Cuc" 
+                            << " was greater than is expected. Old value of Cuc: " << old_ephemeris.ephemeris.d_Cuc << " New value of Cuc: " << eph.d_Cuc
+                            << ". SPREE is configured to raise an alarm if the change in Cuc is above " << d_Cuc << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_e_eccentricity-old_ephemeris.ephemeris.d_e_eccentricity) > d_e_eccentricity) 
+                    {
+                        std::string s = "e_eccentricity change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of e_eccentricity" 
+                            << " was greater than is expected. Old value of e_eccentricity: " 
+                            << old_ephemeris.ephemeris.d_e_eccentricity << " New value of e_eccentricity: " << eph.d_e_eccentricity
+                            << ". SPREE is configured to raise an alarm if the change in e_eccentricity is above " << d_e_eccentricity << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_Cus-old_ephemeris.ephemeris.d_Cus) > d_Cus) 
+                    {
+                        std::string s = "Cus change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Cus" 
+                            << " was greater than is expected. Old value of Cus: " << old_ephemeris.ephemeris.d_Cus << " New value of Cus: " << eph.d_Cus
+                            << ". SPREE is configured to raise an alarm if the change in Cus is above " << d_Cus << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_sqrt_A-old_ephemeris.ephemeris.d_sqrt_A) > d_sqrt_A) 
+                    {
+                        std::string s = "sqrt_A change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of sqrt_A" 
+                            << " was greater than is expected. Old value of sqrt_A: " << old_ephemeris.ephemeris.d_sqrt_A << " New value of sqrt_A: " << eph.d_sqrt_A
+                            << ". SPREE is configured to raise an alarm if the change in sqrt_A is above " << d_sqrt_A << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_Cic-old_ephemeris.ephemeris.d_Cic) > d_Cic) 
+                    {
+                        std::string s = "Cic change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Cic" 
+                            << " was greater than is expected. Old value of Cic: " << old_ephemeris.ephemeris.d_Cic << " New value of Cic: " << eph.d_Cic
+                            << ". SPREE is configured to raise an alarm if the change in Cic is above " << d_Cic << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_OMEGA0-old_ephemeris.ephemeris.d_OMEGA0) > d_OMEGA0) 
+                    {
+                        std::string s = "OMEGA0 change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of OMEGA0" 
+                            << " was greater than is expected. Old value of OMEGA0: " << old_ephemeris.ephemeris.d_OMEGA0 << " New value of OMEGA0: " << eph.d_OMEGA0
+                            << ". SPREE is configured to raise an alarm if the change in OMEGA0 is above " << d_OMEGA0 << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_Cis-old_ephemeris.ephemeris.d_Cis) > d_Cis) 
+                    {
+                        std::string s = "Cis change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Cis" 
+                            << " was greater than is expected. Old value of Cis: " << old_ephemeris.ephemeris.d_Cis << " New value of Cis: " << eph.d_Cis
+                            << ". SPREE is configured to raise an alarm if the change in Cis is above " << d_Cis << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_i_0-old_ephemeris.ephemeris.d_i_0) > d_i_0) 
+                    {
+                        std::string s = "i_0 change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of i_0" 
+                            << " was greater than is expected. Old value of i_0: " << old_ephemeris.ephemeris.d_i_0 << " New value of i_0: " << eph.d_i_0
+                            << ". SPREE is configured to raise an alarm if the change in i_0 is above " << d_i_0 << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_Crc-old_ephemeris.ephemeris.d_Crc) > d_Crc) 
+                    {
+                        std::string s = "Crc change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Crc" 
+                           << " was greater than is expected. Old value of Crc: " << old_ephemeris.ephemeris.d_Crc << " New value of Crc: " << eph.d_Crc
+                           << ". SPREE is configured to raise an alarm if the change in Crc is above " << d_Crc << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_OMEGA-old_ephemeris.ephemeris.d_OMEGA) > d_OMEGA) 
+                    {
+                        std::string s = "OMEGA change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of OMEGA" 
+                            << " was greater than is expected. Old value of OMEGA: " << old_ephemeris.ephemeris.d_OMEGA << " New value of OMEGA: " << eph.d_OMEGA
+                            << ". SPREE is configured to raise an alarm if the change in OMEGA is above " << d_OMEGA << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+                
+                if(abs(eph.d_OMEGA_DOT-old_ephemeris.ephemeris.d_OMEGA_DOT) > d_OMEGA_DOT) 
+                    {
+                        std::string s = "OMEGA_DOT change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of OMEGA_DOT" 
+                            << " was greater than is expected. Old value of OMEGA_DOT: " << old_ephemeris.ephemeris.d_OMEGA_DOT << " New value of OMEGA_DOT: " << eph.d_OMEGA_DOT
+                            << ". SPREE is configured to raise an alarm if the change in OMEGA_DOT is above " << d_OMEGA_DOT << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
+
+                if(abs(eph.d_IDOT-old_ephemeris.ephemeris.d_IDOT) > d_IDOT) 
+                    {
+                        std::string s = "IDOT change too great";
+                        msg.description = s;
+                        std::stringstream sr;
+                        sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of IDOT" 
+                            << " was greater than is expected. Old value of IDOT: " << old_ephemeris.ephemeris.d_IDOT << " New value of IDOT: " << eph.d_IDOT
+                            << ". SPREE is configured to raise an alarm if the change in IDOT is above " << d_IDOT << ".\n" ;
+                        msg.spoofing_report = sr.str();
+                        spoofing_detected(msg);
+                    }
             }
 
-        if(abs(eph.d_Crc-old_ephemeris.ephemeris.d_Crc) > d_Crc) 
-            {
-                std::string s = "Crc change too great";
-                msg.description = s;
-                std::stringstream sr;
-                sr << "At " << time/1e3 << " s an ephemeris message was received where the change in the value of Crc" 
-                   << " was greater than is expected. Old value of Crc: " << old_ephemeris.ephemeris.d_Crc << " New value of Crc: " << eph.d_Crc
-                   << ". SPREE is configured to raise an alarm if the change in Crc is above " << d_Crc << ".\n" ;
-                msg.spoofing_report = sr.str();
-                spoofing_detected(msg);
-            }
-        
         new_eph.changed = true;
     }
     global_sEph_map.write(PRN, new_eph); 
