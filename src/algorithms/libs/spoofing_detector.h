@@ -167,8 +167,30 @@ public:
     bool d_NAVI_external;
     bool d_NAVI_alt;
     double d_NAVI_max_alt;
-    double d_Crc;
+
+    //Subframe 1
+    double d_A_f0;
+    double d_A_f1;
+    double d_A_f2;
+
+    //Subframe 2
     double d_Crs;
+    double d_Delta_n;
+    double d_M_0;
+    double d_Cuc;
+    double d_e_eccentricity;
+    double d_Cus;
+    double d_sqrt_A;
+
+    //Subframe 3
+    double d_Cic;
+    double d_OMEGA0;
+    double d_Cis;
+    double d_i_0;
+    double d_Crc;
+    double d_OMEGA;
+    double d_OMEGA_DOT;
+    double d_IDOT;
 
     double d_fs_in;
 
