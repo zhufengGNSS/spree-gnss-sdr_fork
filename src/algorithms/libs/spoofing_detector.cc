@@ -146,28 +146,28 @@ Spoofing_Detector::Spoofing_Detector(ConfigurationInterface* configuration)
 
     //Ephemeris thresholds
     //Subframe 1
-    d_A_f0 = configuration->property("Spoofing.A_f0", 0.00071864);
-    d_A_f1 = configuration->property("Spoofing.A_f1", 1.512e-11);
+    d_A_f0 = configuration->property("Spoofing.A_f0", 9.7821e-05);
+    d_A_f1 = configuration->property("Spoofing.A_f1", 6.0822e-11);
     d_A_f2 = configuration->property("Spoofing.A_f2", 0);
 
     //Subframe 2
-    d_Crs = configuration->property("Spoofing.Crs", 211.2812);
-    d_Delta_n = configuration->property("Spoofing.Delta_n", 1.4833e-09);
-    d_M_0 = configuration->property("Spoofing.M_0", 5.8043);
-    d_Cuc = configuration->property("Spoofing.Cuc", 1.0924e-05);
-    d_e_eccentricity = configuration->property("Spoofing.e_eccentricity", 0.014681);
-    d_Cus = configuration->property("Spoofing.Cus", 8.9295e-06);
-    d_sqrt_A = configuration->property("Spoofing.sqrt_A", 27.7088);
+    d_Crs = configuration->property("Spoofing.Crs", 155.8438);
+    d_Delta_n = configuration->property("Spoofing.Delta_n", 1.6015e-09);
+    d_M_0 = configuration->property("Spoofing.M_0", 5.7698);
+    d_Cuc = configuration->property("Spoofing.Cuc", 8.177e-06);
+    d_e_eccentricity = configuration->property("Spoofing.e_eccentricity", 0.00035272);
+    d_Cus = configuration->property("Spoofing.Cus", 6.6664e-06);
+    d_sqrt_A = configuration->property("Spoofing.sqrt_A", 1.7939);
 
     //Subframe 3
-    d_Cic = configuration->property("Spoofing.Cic", 8.2143e-07);
+    d_Cic = configuration->property("Spoofing.Cic", 1.0394e-06);
     d_OMEGA0 = configuration->property("Spoofing.OMEGA0", 6.2831);
-    d_Cis = configuration->property("Spoofing.Cis", 8.7172e-07);
-    d_i_0 = configuration->property("Spoofing.i_0", 0.049075);
-    d_Crc = configuration->property("Spoofing.Crc", 194.7812);
-    d_OMEGA = configuration->property("Spoofing.OMEGA", 6.2829);
-    d_OMEGA_DOT = configuration->property("Spoofing.OMEGA_DOT", 9.9183e-10);
-    d_IDOT = configuration->property("Spoofing.IDOT", 9.129e-10);
+    d_Cis = configuration->property("Spoofing.Cis", 1.0058e-06);
+    d_i_0 = configuration->property("Spoofing.i_0", 0.0014017);
+    d_Crc = configuration->property("Spoofing.Crc", 140.9062);
+    d_OMEGA = configuration->property("Spoofing.OMEGA", 6.2831);
+    d_OMEGA_DOT = configuration->property("Spoofing.OMEGA_DOT", 9.4968e-10);
+    d_IDOT = configuration->property("Spoofing.IDOT", 8.0468e-10);
 
     //sampling freq, to get timestamp from sample counter
     double fs_in = configuration->property("GNSS-SDR.internal_fs_hz", 2048000);
