@@ -73,6 +73,7 @@
 #include "sbas_ephemeris.h"
 #include "sbas_time.h"
 #include "gnss_sdr_supl_client.h"
+#include "spoofing_message.h"
 
 
 #include "front_end_cal.h"
@@ -156,6 +157,35 @@ FrontEndCal_msg_rx::~FrontEndCal_msg_rx()
 {}
 
 // ###########################################################
+//For spoofing detection
+struct GPS_time_t{
+    int week;
+    double TOW;
+    double timestamp;    
+    int subframe_id;
+};
+
+struct sEph{
+    Gps_Ephemeris ephemeris;
+    double time;
+    bool changed;
+};
+
+concurrent_map<GPS_time_t> global_gps_time;
+concurrent_map<sEph> global_sEph_map;
+concurrent_map<double> global_last_gps_time;
+concurrent_map<int> global_channel_status;  //status 1: received a subframe 
+                                            //status 2: reset by PVT because no spoofing detected 
+struct Subframe{
+    std::string subframe;
+    unsigned int id;
+    unsigned int PRN;
+    double timestamp;    
+};
+
+concurrent_map<Subframe> global_subframe_map;
+concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
+concurrent_queue<Spoofing_Message> global_spoofing_queue;
 
 void wait_message()
 {
@@ -264,7 +294,6 @@ static time_t utc_time(int week, long tow) {
 
     return t;
 }
-
 
 int main(int argc, char** argv)
 {

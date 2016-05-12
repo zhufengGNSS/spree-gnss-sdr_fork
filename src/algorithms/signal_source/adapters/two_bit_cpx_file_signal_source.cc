@@ -82,7 +82,7 @@ TwoBitCpxFileSignalSource::TwoBitCpxFileSignalSource(ConfigurationInterface* con
     {
             file_source_ = gr::blocks::file_source::make(item_size_, filename_.c_str(), repeat_);
             unpack_byte_ = make_unpack_byte_2bit_cpx_samples();
-            inter_shorts_to_cpx_ =  gr::blocks::interleaved_short_to_complex::make(false,true); //I/Q swap enabled
+            //inter_shorts_to_cpx_ =  gr::blocks::interleaved_short_to_complex::make(false,true); //I/Q swap enabled
 
     }
     catch (const std::exception &e)

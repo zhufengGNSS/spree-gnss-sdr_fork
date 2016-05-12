@@ -188,6 +188,11 @@ gps_l2_m_dll_pll_tracking_cc::gps_l2_m_dll_pll_tracking_cc(
     LOG(INFO) << "d_vector_length" << d_vector_length;
 }
 
+void gps_l2_m_dll_pll_tracking_cc::stop_tracking()
+{
+    d_enable_tracking = false; 
+}
+
 
 void gps_l2_m_dll_pll_tracking_cc::start_tracking()
 {

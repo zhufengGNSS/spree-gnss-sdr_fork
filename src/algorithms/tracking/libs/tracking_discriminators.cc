@@ -120,7 +120,7 @@ float dll_c_e_minus_l_normalized(gr_complex early_s1, gr_complex late_s1, gr_com
 //float all(gr_complex prompt_s1, float lambda)
 float all(gr_complex early_s1, gr_complex late_s1, gr_complex prompt_s1, float lambda)
 {
-    float tmp = (2*prompt_s1.real())/ (early_s1.real() + late_s1.real());
+    //float tmp = (2*prompt_s1.real())/ (early_s1.real() + late_s1.real());
     return prompt_s1.real()/ lambda;
 }
 

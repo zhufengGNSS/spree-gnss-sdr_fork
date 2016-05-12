@@ -95,6 +95,7 @@ public:
 
     void stop_tracking();
     void start_tracking();
+    void stop_tracking();
 
 private:
     galileo_e1_dll_pll_veml_tracking_cc_sptr tracking_;
