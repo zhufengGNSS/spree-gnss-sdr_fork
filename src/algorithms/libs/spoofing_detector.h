@@ -222,7 +222,7 @@ private:
     bool compare_ephemeris_dTOW(Gps_Ephemeris a, Gps_Ephemeris b);
     bool compare_utc(Gps_Utc_Model a, Gps_Utc_Model b);
     bool compare_iono(Gps_Iono a, Gps_Iono b);
-    bool compare_subframes(Subframe subframeA, Subframe subframeB, int idA, int idB);
+    bool compare_subframes(Subframe subframeA, Subframe subframeB);
     bool compare_almanac(Gps_Almanac a, Gps_Almanac b);
     void lookup_external_nav_data(int source, int type);
     void set_supl_client();
@@ -231,7 +231,7 @@ private:
     void check_GPS_time();
     void check_inter_satellite_subframe(unsigned int uid, unsigned int subframe_id);
     void check_APT_subframe(unsigned int uid, unsigned int subframe_id);
-    void check_RX_time(unsigned int PRN, unsigned int subframe_id);
+    void check_RX_time(unsigned int PRN);
     void check_external_almanac(std::map<int,Gps_Almanac> internal, double timestamp);
     void check_external_gps_time(int internal_week, int internal_TOW, double timestamp);
     void check_external_ephemeris(Gps_Ephemeris internal, unsigned int PRN, double timestamp);

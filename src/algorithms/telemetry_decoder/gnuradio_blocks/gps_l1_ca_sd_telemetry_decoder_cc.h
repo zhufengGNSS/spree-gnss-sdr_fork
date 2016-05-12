@@ -46,6 +46,17 @@ class gps_l1_ca_sd_telemetry_decoder_cc;
 
 typedef boost::shared_ptr<gps_l1_ca_sd_telemetry_decoder_cc> gps_l1_ca_sd_telemetry_decoder_cc_sptr;
 
+extern concurrent_map<Subframe> global_subframe_map;
+extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
+struct GPS_time_t{
+    int week;
+    double TOW;
+    double timestamp;
+    int subframe_id;
+};
+extern concurrent_map<GPS_time_t> global_gps_time;
+
+
 gps_l1_ca_sd_telemetry_decoder_cc_sptr
 gps_l1_ca_make_sd_telemetry_decoder_cc(Gnss_Satellite satellite, long if_freq, long fs_in, unsigned
     int vector_length, boost::shared_ptr<gr::msg_queue> queue, bool dump, Spoofing_Detector spoofing_detector);

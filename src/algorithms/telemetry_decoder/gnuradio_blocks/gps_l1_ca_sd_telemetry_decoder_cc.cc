@@ -45,15 +45,6 @@
 #include <fstream>
 #include <cmath>
 
-extern concurrent_map<Subframe> global_subframe_map;
-extern concurrent_map<std::map<unsigned int, unsigned int>> global_subframe_check;
-struct GPS_time_t{
-    int week;
-    double TOW;
-    double timestamp;
-    int subframe_id;
-};
-extern concurrent_map<GPS_time_t> global_gps_time;
 
 #ifndef _rotl
 #define _rotl(X,N)  ((X << N) ^ (X >> (32-N)))  // Used in the parity check algorithm

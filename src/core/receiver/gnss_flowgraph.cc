@@ -169,7 +169,6 @@ void GNSSFlowgraph::connect()
             try
             {
                     channels_.at(i)->connect(top_block_);
-                    chan->set_peak(0);
                     acquired_state[i] = 0;
             }
             catch (std::exception& e)
@@ -684,6 +683,8 @@ void GNSSFlowgraph::init()
         {
             std::shared_ptr<GNSSBlockInterface> chan_ = std::move(channels->at(i));
             channels_.push_back(std::dynamic_pointer_cast<ChannelInterface>(chan_));
+            std::shared_ptr<ChannelInterface> chan = std::dynamic_pointer_cast<ChannelInterface>(chan_);
+            chan->set_peak(0); 
         }
 
     top_block_ = gr::make_top_block("GNSSFlowgraph");

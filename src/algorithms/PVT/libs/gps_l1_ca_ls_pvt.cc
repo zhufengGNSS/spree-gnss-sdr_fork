@@ -197,13 +197,13 @@ bool gps_l1_ca_ls_pvt::get_PVT(std::map<int,Gnss_Synchro> gnss_pseudoranges_map,
                 }
             // Compute UTC time and print PVT solution
             double secondsperweek = 604800.0; // number of seconds in one week (7*24*60*60)
-            double milli, micro, nano;
+            double intpart, milli, micro, nano;
 
             milli = modf(utc, &intpart)*1e3;
             micro  = modf(milli, &intpart)*1e3;
             nano = modf(micro, &intpart)*1e3;
 
-            boost::posix_time::time_duration t = boost::posix_time::seconds(utc + secondsperweek * static_cast<double>(GPS_week));
+            boost::posix_time::time_duration t = boost::posix_time::seconds(utc + secondsperweek * static_cast<double>(GPS_week))
                                                 + boost::posix_time::millisec(milli)
                                                 + boost::posix_time::microsec(micro)
                                                 + boost::posix_time::nanosec(nano);

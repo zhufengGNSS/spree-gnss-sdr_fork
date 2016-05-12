@@ -320,7 +320,7 @@ void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemer
         
         double TWO_HOURS_MS = 2*60*60*1000; //2 hours in ms 
         double TEN_MIN_MS= 10*60*1000; //10 min in ms 
-        double 24_HOURS_MS= 24*60*60*1000; //24 hours in ms 
+        double TWENTYFOUR_HOURS_MS= 24*60*60*1000; //24 hours in ms 
         if(old_ephemeris.changed && time > old_ephemeris.time &&  abs( (old_ephemeris.time - time) -TWO_HOURS_MS) < TEN_MIN_MS)
             {
                 std::string s = "The Ephemeris has changed, though less than two hours have passed since the last change";
@@ -332,7 +332,7 @@ void Spoofing_Detector::check_and_update_ephemeris(unsigned int PRN, Gps_Ephemer
                 spoofing_detected(msg);
             }
 
-        if ( time - old_ephemeris.time < 24_HOURS_MS) 
+        if ( (time - old_ephemeris.time) < TWENTYFOUR_HOURS_MS) 
             {
                 if(abs(eph.d_A_f0-old_ephemeris.ephemeris.d_A_f0) > d_A_f0) 
                     {
@@ -1068,7 +1068,7 @@ bool Spoofing_Detector::RX_time_checked(unsigned int PRN)
  *  Check whether the reception time of two different peaks of the same satellite
  *  are within the configurable value d_maximum_deviation
  */
-void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id)
+void Spoofing_Detector::check_RX_time(unsigned int PRN)
 {
     DLOG(INFO) << "check rx time";
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
@@ -1158,7 +1158,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, unsigned int subframe_id
  *  Check if two subframes contain the same values, if not raise a spoofing alarm.
  *  Return true if the subframes were compared but false if they were not.
  */
-bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB, int idA, int idB)
+bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB)
 {
         DLOG(INFO) << "check subframe "<< subframeA.subframe_id << std::endl
         << subframeA.subframe << std::endl
@@ -1254,7 +1254,7 @@ void Spoofing_Detector::check_APT_subframe(unsigned int uid, unsigned int subfra
         if(subframeB.subframe_id != subframe_id || idB == idA)
             continue;
         
-        compare_subframes(subframeA, subframeB, idA, idB);
+        compare_subframes(subframeA, subframeB);
     }
 }
 
@@ -1289,7 +1289,7 @@ void Spoofing_Detector::check_inter_satellite_subframe(unsigned int uid, unsigne
         if(subframeB.subframe_id != subframe_id || idB == idA)
             continue;
         
-        compare_subframes(subframeA, subframeB, idA, idB);
+        compare_subframes(subframeA, subframeB);
     }
 /*
     std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();                                                                                                          
@@ -2333,7 +2333,7 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, int channel, int 
     if( d_APT )
         {
             DLOG(INFO) << "check APT";
-            check_RX_time(PRN, subframe_ID);
+            check_RX_time(PRN);
             check_APT_subframe(uid, subframe_ID);
         }
 
