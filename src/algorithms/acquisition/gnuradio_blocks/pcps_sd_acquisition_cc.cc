@@ -317,7 +317,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                     << d_threshold << ", doppler_max: " << d_doppler_max
                     << ", doppler_step: " << d_doppler_step;
 
-
+            //TODO: If we are doing APT and this flag is false 
             if (d_use_CFAR_algorithm_flag == true)
                 {
                     // 1- (optional) Compute the input signal power estimation
