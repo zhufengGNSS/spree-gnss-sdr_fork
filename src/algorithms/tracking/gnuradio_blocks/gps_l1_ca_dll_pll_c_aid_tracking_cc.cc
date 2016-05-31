@@ -214,6 +214,9 @@ gps_l1_ca_dll_pll_c_aid_tracking_cc::gps_l1_ca_dll_pll_c_aid_tracking_cc(
     //set_min_output_buffer((long int)300);
 }
 
+void gps_l1_ca_dll_pll_c_aid_tracking_cc::stop_tracking()
+{
+}
 
 void gps_l1_ca_dll_pll_c_aid_tracking_cc::start_tracking()
 {

@@ -94,6 +94,11 @@ void GalileoE1BTelemetryDecoder::disconnect(gr::top_block_sptr top_block)
     // Nothing to disconnect
 }
 
+void GalileoE1BTelemetryDecoder::set_state(unsigned int state)
+{
+    telemetry_decoder_->set_state(state);
+}
+
 
 gr::basic_block_sptr GalileoE1BTelemetryDecoder::get_left_block()
 {

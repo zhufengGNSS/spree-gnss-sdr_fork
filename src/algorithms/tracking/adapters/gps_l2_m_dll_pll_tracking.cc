@@ -109,12 +109,6 @@ void GpsL2MDllPllTracking::start_tracking()
     tracking_->start_tracking();
 }
 
-void GpsL2MDllPllTracking::stop_tracking()
-{
-    tracking_->stop_tracking();
-}
-
-
 /*
  * Set tracking channel unique ID
  */

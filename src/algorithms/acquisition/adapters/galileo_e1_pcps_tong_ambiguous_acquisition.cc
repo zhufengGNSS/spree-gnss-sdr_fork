@@ -186,15 +186,6 @@ void GalileoE1PcpsTongAmbiguousAcquisition::set_gnss_synchro(
         }
 }
 
-void GalileoE1PcpsTongAmbiguousAcquisition::set_peak(unsigned int peak)
-{
-    peak_ = peak;
-    if (item_type_.compare("gr_complex") == 0)
-        {
-            acquisition_cc_->set_peak(peak_);
-        }
-}
-
 signed int GalileoE1PcpsTongAmbiguousAcquisition::mag()
 {
     if (item_type_.compare("gr_complex") == 0)

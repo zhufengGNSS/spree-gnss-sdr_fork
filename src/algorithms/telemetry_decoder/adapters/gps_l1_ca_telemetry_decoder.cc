@@ -86,13 +86,16 @@ void GpsL1CaTelemetryDecoder::connect(gr::top_block_sptr top_block)
     DLOG(INFO) << "nothing to connect internally";
 }
 
-
 void GpsL1CaTelemetryDecoder::disconnect(gr::top_block_sptr top_block)
 {
     if(top_block) { /* top_block is not null */};
     // Nothing to disconnect
 }
 
+void GpsL1CaTelemetryDecoder::set_state(unsigned int state)
+{
+    telemetry_decoder_->set_state(state);
+}
 
 gr::basic_block_sptr GpsL1CaTelemetryDecoder::get_left_block()
 {
@@ -104,4 +107,5 @@ gr::basic_block_sptr GpsL1CaTelemetryDecoder::get_right_block()
 {
     return telemetry_decoder_;
 }
+    
 

@@ -54,6 +54,7 @@ public:
     virtual void reset() = 0;
     virtual void set_satellite(Gnss_Satellite sat) = 0;
     virtual void set_channel(int channel) = 0;
+    virtual void set_state(unsigned int state) = 0;
 };
 
 #endif /* GNSS_SDR_TELEMETRY_DECODER_INTERFACE_H_ */

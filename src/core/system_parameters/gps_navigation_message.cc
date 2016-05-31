@@ -3,7 +3,10 @@ m * \file gps_navigation_message.cc
  * \brief  Implementation of a GPS NAV Data message decoder as described in IS-GPS-200E
  *
  * See http://www.gps.gov/technical/icwg/IS-GPS-200E.pdf Appendix II
- * \author Javier Arribas, 2011. jarribas(at)cttc.es
+ * \authors <ul> 
+ *         <li> Javier Arribas, 2011. jarribas(at)cttc.es
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * -------------------------------------------------------------------------
  *
@@ -34,6 +37,7 @@ m * \file gps_navigation_message.cc
 #include <cmath>
 #include <iostream>
 #include <gnss_satellite.h>
+#include <sstream>
 
 void Gps_Navigation_Message::reset()
 {
@@ -94,7 +98,7 @@ void Gps_Navigation_Message::reset()
     // info
     i_channel_ID = 0;
     i_satellite_PRN = 0;
-    unique_id = 0;
+    uid = 0;
 
     // time synchro
     d_subframe_timestamp_ms = 0;
@@ -406,6 +410,12 @@ double Gps_Navigation_Message::get_sqrtA()
     return d_sqrt_A ;
 }
 
+
+unsigned int Gps_Navigation_Message::get_uid()
+{
+    return uid;
+}
+
 std::string Gps_Navigation_Message::get_subframe(int subframe_ID)
 {
     switch (subframe_ID)
@@ -426,7 +436,7 @@ std::string Gps_Navigation_Message::get_subframe(int subframe_ID)
         return subframe5;
         break;
     }
-    
+    return 0;
 }
 
 int Gps_Navigation_Message::subframe_decoder(char *subframe)
@@ -455,7 +465,7 @@ int Gps_Navigation_Message::subframe_decoder(char *subframe)
 
     subframe_ID = static_cast<int>(read_navigation_unsigned(subframe_bits, SUBFRAME_ID));
 
-    std::ostringstream os;
+    std::stringstream os;
     os.precision(15);
 
     // Decode all 5 sub-frames
@@ -947,7 +957,7 @@ double Gps_Navigation_Message::utc_time(const double gpstime_corrected) const
 Gps_Ephemeris Gps_Navigation_Message::get_ephemeris()
 {
     Gps_Ephemeris ephemeris;
-    ephemeris.unique_id = unique_id;
+    ephemeris.uid = uid;
     ephemeris.i_satellite_PRN = i_satellite_PRN;
     ephemeris.i_peak = i_peak;
     ephemeris.d_TOW = d_TOW;

@@ -1,10 +1,14 @@
 /*!
  * \file gnss_block_factory.h
  * \brief Interface of a factory that returns smart pointers to GNSS blocks.
- * \author Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
- *         Luis Esteve, 2011. luis(at)epsilon-formacion.com
- *         Javier Arribas, 2011. jarribas(at)cttc.es
- *         Carles Fernandez-Prades, 2014. cfernandez(at)cttc.es
+ *         
+ * \authors <ul> 
+ *         <li> Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
+ *         <li> Luis Esteve, 2011. luis(at)epsilon-formacion.com
+ *         <li> Javier Arribas, 2011. jarribas(at)cttc.es
+ *         <li> Carles Fernandez-Prades, 2014. cfernandez(at)cttc.es
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * This class encapsulates the complexity behind the instantiation
  * of GNSS blocks.
@@ -47,6 +51,7 @@ class GNSSBlockInterface;
 class AcquisitionInterface;
 class TrackingInterface;
 class TelemetryDecoderInterface;
+class PvtInterface;
 
 /*!
  * \brief Class that produces all kinds of GNSS blocks
@@ -61,7 +66,8 @@ public:
 
     std::unique_ptr<GNSSBlockInterface> GetSignalConditioner(std::shared_ptr<ConfigurationInterface> configuration, int ID = -1);
 
-    std::unique_ptr<GNSSBlockInterface> GetPVT(std::shared_ptr<ConfigurationInterface> configuration);
+    //std::unique_ptr<GNSSBlockInterface> GetPVT(std::shared_ptr<ConfigurationInterface> configuration);
+    std::unique_ptr<PvtInterface> GetPVT(std::shared_ptr<ConfigurationInterface> configuration);
 
     std::unique_ptr<GNSSBlockInterface> GetObservables(std::shared_ptr<ConfigurationInterface> configuration);
 
@@ -108,6 +114,12 @@ private:
             unsigned int out_streams);
 
     std::unique_ptr<TelemetryDecoderInterface> GetTlmBlock(
+            std::shared_ptr<ConfigurationInterface> configuration,
+            std::string role,
+            std::string implementation, unsigned int in_streams,
+            unsigned int out_streams);
+
+    std::unique_ptr<PvtInterface> GetPVTBlock(
             std::shared_ptr<ConfigurationInterface> configuration,
             std::string role,
             std::string implementation, unsigned int in_streams,

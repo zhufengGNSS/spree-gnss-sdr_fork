@@ -232,6 +232,9 @@ void GpsL1CaPvt::disconnect(gr::top_block_sptr top_block)
     // Nothing to disconnect
 }
 
+void GpsL1CaPvt::set_channels(std::vector<std::shared_ptr<ChannelInterface>> channels_)
+{
+}
 
 gr::basic_block_sptr GpsL1CaPvt::get_left_block()
 {

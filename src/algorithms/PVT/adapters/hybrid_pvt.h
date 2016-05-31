@@ -80,6 +80,8 @@ public:
     {
         return sizeof(gr_complex);
     }
+    
+    void set_channels(std::vector<std::shared_ptr<ChannelInterface>> channels_);
 
 private:
     hybrid_pvt_cc_sptr pvt_;

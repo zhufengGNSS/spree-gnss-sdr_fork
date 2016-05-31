@@ -1,9 +1,12 @@
 /*!
  * \file gnss_flowgraph.h
  * \brief Interface of a GNSS receiver flowgraph.
- * \author Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
- *         Luis Esteve, 2011. luis(at)epsilon-formacion.com
- *         Carles Fernandez-Prades, 2014. cfernandez(at)cttc.es
+ * \authors <ul> 
+ *         <li> Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
+ *         <li> Luis Esteve, 2011. luis(at)epsilon-formacion.com
+ *         <li> Carles Fernandez-Prades, 2014. cfernandez(at)cttc.es
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * It contains a signal source,
  * a signal conditioner, a set of channels, a pvt and an output filter.
@@ -45,11 +48,13 @@
 #include <gnuradio/msg_queue.h>
 #include "GPS_L1_CA.h"
 #include "gnss_signal.h"
+#include "pvt_interface.h"
 
 class GNSSBlockInterface;
 class ChannelInterface;
 class ConfigurationInterface;
 class GNSSBlockFactory;
+//class PvtInterface;
 
 /*! \brief This class represents a GNSS flowgraph.
  *
@@ -140,7 +145,8 @@ private:
     std::vector<std::shared_ptr<GNSSBlockInterface>> sig_conditioner_;
 
     std::shared_ptr<GNSSBlockInterface> observables_;
-    std::shared_ptr<GNSSBlockInterface> pvt_;
+    //std::shared_ptr<GNSSBlockInterface> pvt_;
+    std::shared_ptr<PvtInterface> pvt_;
 
     std::vector<std::shared_ptr<ChannelInterface>> channels_;
     gr::top_block_sptr top_block_;

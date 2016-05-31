@@ -1,7 +1,10 @@
 /*!
  * \file tracking_interface.h
  * \brief This class represents an interface to a tracking block.
- * \author Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
+ * \authors <ul> 
+ *         <li> Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * Abstract class for tracking interfaces. Since all its methods are virtual,
  * this class cannot be instantiated directly, and a subclass can only be

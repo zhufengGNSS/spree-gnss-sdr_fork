@@ -92,8 +92,6 @@ public:
      */
     void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro);
 
-
-    void stop_tracking();
     void start_tracking();
     void stop_tracking();
 

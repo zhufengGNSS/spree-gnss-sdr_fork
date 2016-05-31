@@ -126,6 +126,17 @@ GpsL1CaDllPllCAidTracking::GpsL1CaDllPllCAidTracking(
 GpsL1CaDllPllCAidTracking::~GpsL1CaDllPllCAidTracking()
 {}
 
+void GpsL1CaDllPllCAidTracking::stop_tracking()
+{
+    if (item_type_.compare("gr_complex") == 0)
+        {
+            tracking_cc->stop_tracking();
+        }
+    else if (item_type_.compare("cshort") == 0)
+        {
+            tracking_sc->stop_tracking();
+        }
+}
 
 void GpsL1CaDllPllCAidTracking::start_tracking()
 {

@@ -76,6 +76,7 @@ public:
     {
         return 0;
     }
+    void set_state(unsigned int state);
 
 private:
     gps_l2_m_telemetry_decoder_cc_sptr telemetry_decoder_;

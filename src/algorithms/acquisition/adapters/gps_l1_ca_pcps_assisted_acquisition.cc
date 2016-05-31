@@ -127,13 +127,6 @@ void GpsL1CaPcpsAssistedAcquisition::set_gnss_synchro(Gnss_Synchro* gnss_synchro
     acquisition_cc_->set_gnss_synchro(gnss_synchro_);
 }
 
-void GpsL1CaPcpsAssistedAcquisition::set_peak(unsigned int peak)
-{
-    //peak_ = peak;
-    //acquisition_cc_->set_peak(peak_);
-}
-
-
 
 signed int GpsL1CaPcpsAssistedAcquisition::mag()
 {

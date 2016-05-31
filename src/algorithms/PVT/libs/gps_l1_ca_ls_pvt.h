@@ -76,6 +76,8 @@ public:
 
     std::string d_dump_filename;
     std::ofstream d_dump_file;
+
+    std::string d_pseudoranges;
 };
 
 #endif

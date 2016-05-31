@@ -1,7 +1,10 @@
 /*!
  * \file concurrent_map.h
  * \brief Interface of a thread-safe std::map
- * \author Javier Arribas, 2011. jarribas(at)cttc.es
+ * \authors <ul> 
+ *         <li> Javier Arribas, 2011. jarribas(at)cttc.es
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * -------------------------------------------------------------------------
  *

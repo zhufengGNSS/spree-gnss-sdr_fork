@@ -57,7 +57,7 @@ private:
      */
     double check_t(double time);
 public:
-    unsigned int unique_id;  // unique id since we are acq/trk more than one instance of the same sat
+    unsigned int uid;  // unique id since we are acq/trk more than one instance of the same sat
     double timestamp;        // when was the ephemeris last updated 
     unsigned int i_satellite_PRN; // SV PRN NUMBER
     unsigned int i_peak; 

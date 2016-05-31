@@ -94,6 +94,10 @@ void GpsL2MTelemetryDecoder::disconnect(gr::top_block_sptr top_block)
     // Nothing to disconnect
 }
 
+void GpsL2MTelemetryDecoder::set_state(unsigned int state)
+{
+    telemetry_decoder_->set_state(state);
+}
 
 gr::basic_block_sptr GpsL2MTelemetryDecoder::get_left_block()
 {

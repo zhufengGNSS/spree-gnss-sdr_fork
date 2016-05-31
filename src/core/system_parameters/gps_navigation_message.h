@@ -1,7 +1,10 @@
 /*!
  * \file gps_navigation_message.h
  * \brief  Interface of a GPS NAV Data message decoder
- * \author Javier Arribas, 2011. jarribas(at)cttc.es
+ * \authors <ul> 
+ *         <li> Javier Arribas, 2011. jarribas(at)cttc.es
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * -------------------------------------------------------------------------
  *
@@ -159,8 +162,8 @@ public:
     // satellite identification info
     int i_channel_ID;
     unsigned int i_satellite_PRN;
-    unsigned int unique_id;
     unsigned int i_peak;
+    unsigned int uid;
 
     // time synchro
     double d_subframe_timestamp_ms; //[ms]
@@ -232,6 +235,7 @@ public:
     std::string get_subframe(int subframe_ID);
     double get_TOW();
     int get_week();
+    unsigned int get_uid();
     double get_sqrtA();
 
     /*!

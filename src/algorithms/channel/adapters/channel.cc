@@ -92,7 +92,6 @@ Channel::Channel(ConfigurationInterface *configuration, unsigned int channel,
     gnss_signal_ = Gnss_Signal(implementation_);
 
     channel_msg_rx = channel_msg_receiver_make_cc(&channel_fsm_, repeat_);
-
 }
 
 // Destructor
@@ -128,6 +127,7 @@ void Channel::connect(gr::top_block_sptr top_block)
     //std::cout<<"has port: "<<trk_->get_right_block()->has_msg_port(pmt::mp("events"))<<std::endl;
     top_block->msg_connect(acq_->get_right_block(), pmt::mp("events"), channel_msg_rx, pmt::mp("events"));
     top_block->msg_connect(trk_->get_right_block(), pmt::mp("events"), channel_msg_rx, pmt::mp("events"));
+    top_block->msg_connect(nav_->get_right_block(), pmt::mp("events"), channel_msg_rx, pmt::mp("events"));
 
     connected_ = true;
 }
@@ -173,6 +173,8 @@ void Channel::set_signal(const Gnss_Signal& gnss_signal)
     gnss_synchro_.Signal[2] = 0; // make sure that string length is only two characters
     gnss_synchro_.PRN = gnss_signal_.get_satellite().get_PRN();
     gnss_synchro_.System = gnss_signal_.get_satellite().get_system_short().c_str()[0];
+    gnss_synchro_.uid = uid;
+    gnss_synchro_.peak = peak;
     acq_->set_local_code();
     DLOG(INFO) << "set_satellite " << gnss_signal_.get_satellite();
     nav_->set_satellite(gnss_signal_.get_satellite());
@@ -192,5 +194,23 @@ void Channel::stop_tracking()
 
 void Channel::set_peak(unsigned int peak_)
 {
-    acq_->set_peak(peak_);
+    peak = peak_;
+    unsigned int PRN = gnss_signal_.get_satellite().get_PRN();
+    uid = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak_)+"0"+std::to_string(channel_));
+}
+
+unsigned int Channel::get_uid()
+{
+    return uid;
+}
+
+void Channel::set_state(unsigned int state_)
+{
+    nav_->set_state(state_);
+    state = state_;
+}
+
+unsigned int Channel::get_state()
+{
+    return state;
 }

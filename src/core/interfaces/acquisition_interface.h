@@ -1,8 +1,11 @@
 /*!
  * \file acquisition_interface.h
  * \brief Header file of the interface to an acquisition GNSS block.
- * \author Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
- *         Luis Esteve, 2011. luis(at)epsilon-formacion.com
+ * \authors <ul> 
+ *         <li> Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
+ *         <li> Luis Esteve, 2011. luis(at)epsilon-formacion.com
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * This header file contains the interface to an abstract class
  * for acquisition algorithms. Since all its methods are virtual,
@@ -63,7 +66,6 @@ public:
     virtual void set_local_code() = 0;
     virtual signed int mag() = 0;
     virtual void reset() = 0;
-    virtual void set_peak(unsigned int peak) = 0;
 };
 
 #endif /* GNSS_SDR_ACQUISITION_INTERFACE */

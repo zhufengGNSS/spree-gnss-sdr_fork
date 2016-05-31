@@ -72,6 +72,7 @@ public:
      *        are required to produce noutput_items output items.
      */
     void forecast (int noutput_items, gr_vector_int &ninput_items_required);
+    void set_state(unsigned int state);
 
 private:
     friend sbas_l1_telemetry_decoder_cc_sptr
@@ -97,6 +98,7 @@ private:
 
     typedef std::pair<int,std::vector<int>> msg_candiate_int_t;
     typedef std::pair<int,std::vector<unsigned char>> msg_candiate_char_t;
+    unsigned int channel_state;
 
     // helper class for sample alignment
     class sample_aligner

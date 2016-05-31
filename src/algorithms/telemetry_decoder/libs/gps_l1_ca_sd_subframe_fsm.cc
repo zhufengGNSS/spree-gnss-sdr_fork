@@ -1,11 +1,14 @@
 /*!
  * \file gps_l1_ca_sd_subframe_fsm.cc
  * \brief  Implementation of a GPS NAV message word-to-subframe decoder state machine
- * \author Javier Arribas, 2011. jarribas(at)cttc.es
+ * \authors <ul>
+ *          <li> Javier Arribas, 2011. jarribas(at)cttc.es
+ *          <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com 
+ *          </ul>
  *
  * -------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2014  (see AUTHORS file for a list of contributors)
+ * Copyright (C) 2010-2015  (see AUTHORS file for a list of contributors)
  *
  * GNSS-SDR is a software defined Global Navigation
  *          Satellite Systems receiver
@@ -15,7 +18,7 @@
  * GNSS-SDR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * at your option) any later version.
+ * (at your option) any later version.
  *
  * GNSS-SDR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,13 +32,13 @@
  */
 
 #include "gps_l1_ca_sd_subframe_fsm.h"
-#include <list>
 #include <string>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-
-
+#include <boost/statechart/simple_state.hpp>
+#include <boost/statechart/state.hpp>
+#include <boost/statechart/transition.hpp>
+#include <boost/statechart/custom_reaction.hpp>
+#include <boost/mpl/list.hpp>
+#include "gnss_satellite.h"
 
 //************ GPS WORD TO SUBFRAME DECODER STATE MACHINE **********
 
@@ -223,7 +226,7 @@ public:
     {
         //std::cout<<"Completed GPS Subframe!"<<std::endl;
         context< GpsL1CaSdSubframeFsm >().gps_word_to_subframe(9);
-        context< GpsL1CaSdSubframeFsm >().gps_subframe_to_nav_msg(); //decode the subframe
+        context< GpsL1CaSdSubframeFsm >().gps_sd_subframe_to_nav_msg(); //decode the subframe
         // DECODE SUBFRAME
         //std::cout<<"Enter S11"<<std::endl;
     }
@@ -235,6 +238,11 @@ public:
 GpsL1CaSdSubframeFsm::GpsL1CaSdSubframeFsm()
 {
     d_nav.reset();
+    i_channel_ID = 0;
+    i_satellite_PRN = 0;
+    d_preamble_time_ms = 0;
+    d_subframe_ID=0;
+    d_flag_new_subframe=false;
     initiate(); //start the FSM
 }
 
@@ -246,94 +254,63 @@ void GpsL1CaSdSubframeFsm::gps_word_to_subframe(int position)
     std::memcpy(&d_subframe[position*GPS_WORD_LENGTH], &d_GPS_frame_4bytes, sizeof(char)*GPS_WORD_LENGTH);
 }
 
-
-
-void GpsL1CaSdSubframeFsm::gps_subframe_to_nav_msg()
+void GpsL1CaSdSubframeFsm::clear_flag_new_subframe()
 {
-    int subframe_ID;
+    d_flag_new_subframe=false;
+}
+
+void GpsL1CaSdSubframeFsm::gps_sd_subframe_to_nav_msg()
+{
+    //int subframe_ID;
     // NEW GPS SUBFRAME HAS ARRIVED!
-    subframe_ID = d_nav.subframe_decoder(this->d_subframe); //decode the subframe
-   
-    std::string tmp = std::to_string(i_satellite_PRN)+ "0" + std::to_string(i_peak)+"0"+std::to_string(i_channel_ID);
-    d_nav.unique_id = std::stoi(tmp);
-    if( subframe_ID < 1 || subframe_ID > 5)
+    d_subframe_ID = d_nav.subframe_decoder(this->d_subframe); //decode the subframe
+    d_nav.i_satellite_PRN = i_satellite_PRN;
+    d_nav.i_channel_ID = i_channel_ID;
+    d_nav.d_subframe_timestamp_ms = this->d_preamble_time_ms;
+
+    
+    if( d_subframe_ID < 1 || d_subframe_ID > 5)
         return;
 
-    d_nav.i_satellite_PRN = i_satellite_PRN;
-
+    d_nav.i_peak = i_peak; 
+    d_nav.uid = uid; 
     std::cout << "NAV Message: received subframe "
-        << subframe_ID << " from satellite "
+        << d_subframe_ID << " from satellite "
         << Gnss_Satellite(std::string("GPS"), i_satellite_PRN) 
         << " tow: " << d_nav.get_TOW() 
         << " at time: " << this->d_preamble_time_ms
         << " in channel: " << i_channel_ID 
-        << " id: "  << i_satellite_PRN << "0" << i_peak<< "0" << i_channel_ID<< std::endl << std::endl;
-        //<<  "subframe: " << d_nav.get_subframe(subframe_ID) << std::endl << std::endl;
-/*
-        std::cout << "TOW: " 
-            << subframe_ID << " " 
-            << Gnss_Satellite(std::string("GPS"), i_satellite_PRN) 
-            << " at time: " << this->d_preamble_time_ms
-            << " tow: " << d_nav.get_TOW() << std::endl;
-*/
-    spoofing_detector.New_subframe(subframe_ID, i_satellite_PRN, i_channel_ID, d_nav.unique_id, d_nav, this->d_preamble_time_ms);
-    d_nav.i_peak = i_peak; 
-    d_nav.i_satellite_PRN = i_satellite_PRN;
-    d_nav.i_channel_ID = i_channel_ID;
+        << " id: "  << d_nav.uid << std::endl << std::endl; 
+        //<<  "subframe: " << d_nav.get_subframe(d_subframe_ID) << std::endl << std::endl;
+    spoofing_detector.New_subframe(d_subframe_ID, i_satellite_PRN, d_nav, this->d_preamble_time_ms);
 
-    switch (subframe_ID)
+    if(  d_subframe_ID == 4 )
     {
-    case 3: //we have a new set of ephemeris data for the current SV
-        if (d_nav.satellite_validation() == true)
-            {
-                // get ephemeris object for this SV (mandatory)
-                Gps_Ephemeris ephemeris = d_nav.get_ephemeris();
-
-                ephemeris.timestamp = this->d_preamble_time_ms;
-                d_ephemeris_queue->push(ephemeris);
-            }
-        break;
-    case 4: // Possible IONOSPHERE and UTC model update (page 18)
         if (d_nav.flag_iono_valid == true)
             {
                 Gps_Iono iono = d_nav.get_iono(); //notice that the read operation will clear the valid flag
-                d_iono_queue->push(iono);
                 spoofing_detector.check_external_iono(iono, this->d_preamble_time_ms); 
             }
         if (d_nav.flag_utc_model_valid == true)
             {
                 Gps_Utc_Model utc_model = d_nav.get_utc_model(); //notice that the read operation will clear the valid flag
-                d_utc_model_queue->push(utc_model);
-
                 spoofing_detector.check_external_utc(utc_model, this->d_preamble_time_ms); 
             }
-        break;
-    case 5:
-        // get almanac (if available)
-        break;
-    default:
-        break;
     }
+    d_flag_new_subframe=true;
+
 }
-
-
 
 void GpsL1CaSdSubframeFsm::Event_gps_word_valid()
 {
     this->process_event(Ev_gps_word_valid());
-    //std::cout << "word received " 
-    //          << " from satellite "
-    //          << Gnss_Satellite(std::string("GPS"), i_satellite_PRN) 
-    //          << " at time: " << this->d_preamble_time_ms<< std::endl;
 }
-
 
 
 void GpsL1CaSdSubframeFsm::Event_gps_word_invalid()
 {
     this->process_event(Ev_gps_word_invalid());
 }
-
 
 
 void GpsL1CaSdSubframeFsm::Event_gps_word_preamble()

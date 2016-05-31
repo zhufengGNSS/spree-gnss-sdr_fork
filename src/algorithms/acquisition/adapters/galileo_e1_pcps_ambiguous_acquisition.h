@@ -88,12 +88,6 @@ public:
     void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro);
 
     /*!
-     * \brief Set which peak the channel is acquiring
-     * 
-     */
-    void set_peak(unsigned int peak);
-
-    /*!
      * \brief Set acquisition channel unique ID
      */
     void set_channel(unsigned int channel);

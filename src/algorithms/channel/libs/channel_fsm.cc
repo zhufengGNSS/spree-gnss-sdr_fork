@@ -54,6 +54,9 @@ struct Ev_channel_failed_acquisition_no_repeat: sc::event<Ev_channel_failed_acqu
 struct Ev_channel_failed_tracking_standby: sc::event<Ev_channel_failed_tracking_standby>
 {};
 
+struct Ev_channel_stop_tracking: sc::event<Ev_channel_stop_tracking>
+{};
+
 //struct Ev_channel_failed_tracking_reacq: sc::event<Ev_channel_failed_tracking_reacq>
 //{};
 
@@ -92,6 +95,7 @@ struct channel_tracking_fsm_S2: public sc::state<channel_tracking_fsm_S2, Channe
 {
 public:
     typedef mpl::list<sc::transition<Ev_channel_failed_tracking_standby, channel_idle_fsm_S0>,
+                      sc::transition<Ev_channel_stop_tracking, channel_stop_tracking_fsm_S4>,
                       sc::transition<Ev_channel_start_acquisition, channel_acquiring_fsm_S1>> reactions;
 
     channel_tracking_fsm_S2(my_context ctx) : my_base(ctx)
@@ -124,6 +128,24 @@ public:
    // ~channel_waiting_fsm_S3(){}
 };
 
+struct channel_stop_tracking_fsm_S4: public sc::state<channel_stop_tracking_fsm_S4, ChannelFsm>
+{
+public:
+    typedef sc::transition<Ev_channel_start_acquisition,
+            channel_acquiring_fsm_S1> reactions;
+
+    channel_stop_tracking_fsm_S4(my_context ctx) : my_base(ctx)
+    {
+       //std::cout << "Enter Channel_stop_tracking_S4 " << std::endl;
+        context<ChannelFsm> ().stop_tracking();
+    }
+
+    ~channel_stop_tracking_fsm_S4()
+    {
+       //std::cout << "Exit Channel_stop_tracking_S4 " << std::endl;
+    }
+
+};
 
 
 ChannelFsm::ChannelFsm()
@@ -174,6 +196,11 @@ void ChannelFsm::Event_failed_acquisition_no_repeat()
 void ChannelFsm::Event_failed_tracking_standby()
 {
     this->process_event(Ev_channel_failed_tracking_standby());
+}
+
+void ChannelFsm::Event_stop_tracking()
+{
+    this->process_event(Ev_channel_stop_tracking());
 }
 
 //void ChannelFsm::Event_failed_tracking_reacq() {
@@ -231,4 +258,9 @@ void ChannelFsm::notify_stop_tracking()
         {
             queue_->handle(cmf->GetQueueMessage(channel_, 2));
         }
+}
+
+void ChannelFsm::stop_tracking()
+{
+    trk_->stop_tracking();
 }
