@@ -1,9 +1,12 @@
 /*!
  * \file gnss_flowgraph.cc
  * \brief Implementation of a GNSS receiver flowgraph
- * \author Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
- *         Luis Esteve, 2012. luis(at)epsilon-formacion.com
- *         Carles Fernandez-Prades, 2014. cfernandez(at)cttc.es
+ * \authors <ul> 
+ *         <li> Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
+ *         <li> Luis Esteve, 2012. luis(at)epsilon-formacion.com
+ *         <li> Carles Fernandez-Prades, 2014. cfernandez(at)cttc.es
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * Detailed description of the file here if needed.
  *
@@ -52,7 +55,6 @@
 #define GNSS_SDR_ARRAY_SIGNAL_CONDITIONER_CHANNELS 8
 
 using google::LogMessage;
-extern concurrent_map<int> global_channel_status;
 struct Subframe{
     std::string subframe;
     int id;
@@ -322,7 +324,6 @@ void GNSSFlowgraph::connect()
             LOG(INFO) << "Channel " << i << " assigned to " << available_GNSS_signals_.front();
             AssignACQState(available_GNSS_signals_.front().get_satellite().get_PRN(), i);
             available_GNSS_signals_.pop_front();
-            channels_.at(i)->start();
 
             if (channels_state_[i] == 1)
                 {
@@ -421,7 +422,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
     int inactive;
     bool acquire_sat_again = false;
     PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
-    int unique_id;
+    unsigned int uid;
     
     if(spoofing_detection)
     {
@@ -434,6 +435,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
     case 0:
         LOG(INFO) << "Channel " << who << " ACQ FAILED satellite " << channels_.at(who)->get_signal().get_satellite() << ", Signal " << channels_.at(who)->get_signal().get_signal_str();
         lost_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
+        channels_.at(who)->set_state(2);
       
         if(spoofing_detection)
             {
@@ -442,10 +444,10 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                 channels_.at(who)->set_peak(0);
 
                 //remove cannel from spoofing detection queues
-                unique_id = std::stoi(std::to_string(lost_PRN)+"0"+std::to_string(peak)+"0"+std::to_string(who));
-                global_subframe_map.remove(unique_id);
-                global_subframe_check.remove(unique_id);
-                global_gps_time.remove(unique_id);
+                uid = channels_.at(who)->get_uid();
+                global_subframe_map.remove(uid);
+                global_subframe_check.remove(uid);
+                global_gps_time.remove(uid);
             }
 
         available_GNSS_signals_.push_back(channels_.at(who)->get_signal());
@@ -471,6 +473,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         LOG(INFO) << "Channel " << who << " ACQ SUCCESS satellite " << channels_.at(who)->get_signal().get_satellite();
         acq_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
 
+        channels_.at(who)->set_state(0);
         channels_state_[who] = 2;
         acq_channels_count_--;
 
@@ -482,115 +485,116 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             acquire_sat_again = false;
             inactive = std::count(available_GNSS_signals_.begin(), available_GNSS_signals_.end(), channels_.at(who)->get_signal());  //number of availble instances of the sat
             if(nr_acq_peaks+inactive < nr_acq )
-                {
-                    DLOG(INFO) << "pushing back sat " << acq_PRN << " ch " << who << " nr acq peaks " << nr_acq_peaks;  
-                    available_GNSS_signals_.push_back(channels_.at(who)->get_signal());
-                    acquire_sat_again = true;
-                }   
+            {
+                DLOG(INFO) << "pushing back sat " << acq_PRN << " ch " << who << " nr acq peaks " << nr_acq_peaks;  
+                available_GNSS_signals_.push_back(channels_.at(who)->get_signal());
+                acquire_sat_again = true;
+            }   
         }
-        
+
 
 
         if (!available_GNSS_signals_.empty() && acq_channels_count_ < max_acq_channels_)
+        {
+            for (unsigned int i = 0; i < channels_count_; i++)
             {
-                for (unsigned int i = 0; i < channels_count_; i++)
+                if (channels_state_[i] == 0)
+                {
+                    channels_state_[i] = 1;
+                    while (channels_.at(i)->get_signal().get_signal_str().compare(available_GNSS_signals_.front().get_signal_str()) != 0 )
                     {
-                        if (channels_state_[i] == 0)
-                            {
-                                channels_state_[i] = 1;
-                                while (channels_.at(i)->get_signal().get_signal_str().compare(available_GNSS_signals_.front().get_signal_str()) != 0 )
-                                    {
-                                        available_GNSS_signals_.push_back(available_GNSS_signals_.front());
-                                        available_GNSS_signals_.pop_front();
-                                    }
-                                channels_.at(i)->set_signal(available_GNSS_signals_.front());
-                                available_GNSS_signals_.pop_front();
-                                acq_channels_count_++;
-                                
-                                if(spoofing_detection){
-                                 //unnecessary just so acq of lower peaks happens faster
-                                    DLOG(INFO) << "assign same satellite again? " << acquire_sat_again << " " << i;
-/*
-                                    if(acquire_sat_again)
-                                        {
-                                            acquire_sat_again = false;
-                                            DLOG(INFO) << "assign same satellite again?";
-                                            PRN = channels_.at(i)->get_signal().get_satellite().get_PRN(); 
-                                            nr_acquired_peaks.at(PRN) -= 1;
-                                            acquired_peaks.at(PRN).push_front(channel_to_peak.at(i));
-                                            channels_.at(i)->set_signal(channels_.at(who)->get_signal());
-                                            DLOG(INFO) << "PRN " << PRN << " channel: " << channels_.at(i);
-                                            AssignACQState(PRN, i);
-                                        }
-        */
-                                }
-                                channels_.at(i)->start_acquisition();
-                                break;
-                            }
-                        DLOG(INFO) << "Channel " << i << " in state " << channels_state_[i];
+                        available_GNSS_signals_.push_back(available_GNSS_signals_.front());
+                        available_GNSS_signals_.pop_front();
                     }
+                    channels_.at(i)->set_signal(available_GNSS_signals_.front());
+                    available_GNSS_signals_.pop_front();
+                    acq_channels_count_++;
+
+                    if(spoofing_detection){
+                        //unnecessary just so acq of lower peaks happens faster
+                        DLOG(INFO) << "assign same satellite again? " << acquire_sat_again << " " << i;
+                        /*
+                           if(acquire_sat_again)
+                           {
+                           acquire_sat_again = false;
+                           DLOG(INFO) << "assign same satellite again?";
+                           PRN = channels_.at(i)->get_signal().get_satellite().get_PRN(); 
+                           nr_acquired_peaks.at(PRN) -= 1;
+                           acquired_peaks.at(PRN).push_front(channel_to_peak.at(i));
+                           channels_.at(i)->set_signal(channels_.at(who)->get_signal());
+                           DLOG(INFO) << "PRN " << PRN << " channel: " << channels_.at(i);
+                           AssignACQState(PRN, i);
+                           }
+                         */
+                    }
+                    channels_.at(i)->start_acquisition();
+                    break;
+                }
+                DLOG(INFO) << "Channel " << i << " in state " << channels_state_[i];
             }
+        }
 
         for (unsigned int i = 0; i < channels_count_; i++)
-            {
-                DLOG(INFO) << "Channel " << i << " in state " << channels_state_[i] << std::endl;
-            }
+        {
+            DLOG(INFO) << "Channel " << i << " in state " << channels_state_[i] << std::endl;
+        }
         break;
 
     case 2:
         LOG(INFO) << "Channel " << who << " TRK FAILED satellite " << channels_.at(who)->get_signal().get_satellite();
         //channel should not be used for spoofing or pvt calculation
-        global_channel_status.add(who, 2);
+        channels_.at(who)->set_state(2);
         PRN = channels_.at(who)->get_signal().get_satellite().get_PRN(); 
 
         //remove cannel from spoofing detection queues
         if(spoofing_detection)
-            {
-                unique_id = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak)+"0"+std::to_string(who));
-                global_subframe_map.remove(unique_id);
-                global_gps_time.remove(unique_id);
-                global_subframe_check.remove(unique_id);
+        {
+            uid = channels_.at(who)->get_uid();
+            global_subframe_map.remove(uid);
+            global_gps_time.remove(uid);
+            global_subframe_check.remove(uid);
 
-                nr_acquired_peaks.at(PRN) -= 1;
-                channels_.at(who)->set_peak(0);
+            nr_acquired_peaks.at(PRN) -= 1;
+            channels_.at(who)->set_peak(0);
 
-                //remove cannel from spoofing detection queues
-                unique_id = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak)+"0"+std::to_string(who));
-                global_subframe_map.remove(unique_id);
-                global_gps_time.remove(unique_id);
-            }
+            //remove cannel from spoofing detection queues
+            uid = channels_.at(who)->get_uid();
+            global_subframe_map.remove(uid);
+            global_gps_time.remove(uid);
+        }
 
         DLOG(INFO) << "pushing back " << PRN << " acq_nr " << nr_acquired_peaks.at(PRN);
         available_GNSS_signals_.push_back(channels_.at(who)->get_signal());
 
         while (channels_.at(who)->get_signal().get_satellite().get_system() != available_GNSS_signals_.front().get_satellite().get_system())
-            {
-                available_GNSS_signals_.push_back(available_GNSS_signals_.front());
-                available_GNSS_signals_.pop_front();
-            }
+        {
+            available_GNSS_signals_.push_back(available_GNSS_signals_.front());
+            available_GNSS_signals_.pop_front();
+        }
 
         PRN = available_GNSS_signals_.front().get_satellite().get_PRN();
         if(spoofing_detection)
-            {
-                AssignACQState(PRN, who);
-            }
+        {
+            AssignACQState(PRN, who);
+        }
 
         channels_.at(who)->set_signal(available_GNSS_signals_.front());
         available_GNSS_signals_.pop_front();
+        usleep(100);
         channels_.at(who)->start_acquisition();
 
         break;
     case 4:
-            LOG(INFO) << "No spoofing detected, restart acqusition on auxiliary channel: " << who << "  sat " << channels_.at(who)->get_signal().get_satellite().get_PRN(); 
-            //only do it for channels that have received ephemeris
-            if(channels_state_[who] != 2)
-                break;       
+        LOG(INFO) << "No spoofing detected, restart acqusition on auxiliary channel: " << who << "  sat " << channels_.at(who)->get_signal().get_satellite().get_PRN(); 
+        //only do it for channels that have received ephemeris
+        if(channels_state_[who] != 2)
+            break;       
         /*    std::cout << "No spoofing detected, restart acqusition on auxiliary channel: " << who << "  sat " << channels_.at(who)->get_signal().get_satellite().get_PRN()
-                    << " acquired peak " << peak << std::endl; 
-    */
-            PRN = channels_.at(who)->get_signal().get_satellite().get_PRN(); 
-            AssignACQState(PRN, who);
-            channels_.at(who)->stop_tracking();        
+              << " acquired peak " << peak << std::endl; 
+         */
+        PRN = channels_.at(who)->get_signal().get_satellite().get_PRN(); 
+        AssignACQState(PRN, who);
+        channels_.at(who)->stop_tracking();        
 
         break;
     default:
@@ -604,15 +608,15 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 void GNSSFlowgraph::set_configuration(std::shared_ptr<ConfigurationInterface> configuration)
 {
     if (running_)
-        {
-            LOG(WARNING) << "Unable to update configuration while flowgraph running";
-            return;
-        }
+    {
+        LOG(WARNING) << "Unable to update configuration while flowgraph running";
+        return;
+    }
 
     if (connected_)
-        {
-            LOG(WARNING) << "Unable to update configuration while flowgraph connected";
-        }
+    {
+        LOG(WARNING) << "Unable to update configuration while flowgraph connected";
+    }
     configuration_ = configuration;
 }
 
@@ -632,45 +636,45 @@ void GNSSFlowgraph::init()
     int signal_conditioner_ID = 0;
 
     if (sources_count_ > 1)
+    {
+        for (int i = 0; i < sources_count_; i++)
         {
-            for (int i = 0; i < sources_count_; i++)
-                {
-                    std::cout << "Creating source " << i << std::endl;
-                    sig_source_.push_back(block_factory_->GetSignalSource(configuration_, queue_, i));
-                    //TODO: Create a class interface for SignalSources, derived from GNSSBlockInterface.
-                    //Include GetRFChannels in the interface to avoid read config parameters here
-                    //read the number of RF channels for each front-end
-                    RF_Channels = configuration_->property(sig_source_.at(i)->role() + ".RF_channels", 1);
-                    std::cout << "RF Channels " << RF_Channels << std::endl;
-                    for (int j = 0; j < RF_Channels; j++)
-                        {
-                            sig_conditioner_.push_back(block_factory_->GetSignalConditioner(configuration_, signal_conditioner_ID));
-                            signal_conditioner_ID++;
-                        }
-                }
-        }
-    else
-        {
-            //backwards compatibility for old config files
-            sig_source_.push_back(block_factory_->GetSignalSource(configuration_, queue_, -1));
+            std::cout << "Creating source " << i << std::endl;
+            sig_source_.push_back(block_factory_->GetSignalSource(configuration_, queue_, i));
             //TODO: Create a class interface for SignalSources, derived from GNSSBlockInterface.
             //Include GetRFChannels in the interface to avoid read config parameters here
             //read the number of RF channels for each front-end
-            RF_Channels = configuration_->property(sig_source_.at(0)->role() + ".RF_channels", 0);
-            if (RF_Channels != 0)
-                {
-                    for (int j = 0; j < RF_Channels; j++)
-                        {
-                            sig_conditioner_.push_back(block_factory_->GetSignalConditioner(configuration_, signal_conditioner_ID));
-                            signal_conditioner_ID++;
-                        }
-                }
-            else
-                {
-                    //old config file, single signal source and single channel, not specified
-                    sig_conditioner_.push_back(block_factory_->GetSignalConditioner(configuration_, -1));
-                }
+            RF_Channels = configuration_->property(sig_source_.at(i)->role() + ".RF_channels", 1);
+            std::cout << "RF Channels " << RF_Channels << std::endl;
+            for (int j = 0; j < RF_Channels; j++)
+            {
+                sig_conditioner_.push_back(block_factory_->GetSignalConditioner(configuration_, signal_conditioner_ID));
+                signal_conditioner_ID++;
+            }
         }
+    }
+    else
+    {
+        //backwards compatibility for old config files
+        sig_source_.push_back(block_factory_->GetSignalSource(configuration_, queue_, -1));
+        //TODO: Create a class interface for SignalSources, derived from GNSSBlockInterface.
+        //Include GetRFChannels in the interface to avoid read config parameters here
+        //read the number of RF channels for each front-end
+        RF_Channels = configuration_->property(sig_source_.at(0)->role() + ".RF_channels", 0);
+        if (RF_Channels != 0)
+        {
+            for (int j = 0; j < RF_Channels; j++)
+            {
+                sig_conditioner_.push_back(block_factory_->GetSignalConditioner(configuration_, signal_conditioner_ID));
+                signal_conditioner_ID++;
+            }
+        }
+        else
+        {
+            //old config file, single signal source and single channel, not specified
+            sig_conditioner_.push_back(block_factory_->GetSignalConditioner(configuration_, -1));
+        }
+    }
 
     observables_ = block_factory_->GetObservables(configuration_);
     pvt_ = block_factory_->GetPVT(configuration_);
@@ -689,6 +693,7 @@ void GNSSFlowgraph::init()
 
     top_block_ = gr::make_top_block("GNSSFlowgraph");
 
+    pvt_->set_channels(channels_);
 
     spoofing_detection = configuration_->property("Spoofing.APT", false);
     nr_acq = configuration_->property("Spoofing.APT_ch_per_sat", 2);
@@ -731,7 +736,8 @@ void GNSSFlowgraph::set_signals_list()
     std::set<unsigned int> available_gps_prn = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
                     11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
                     29, 30, 31, 32 };
-            //std::set<unsigned int> available_gps_prn = { 13 };
+    
+//    std::set<unsigned int> available_gps_prn = { 7,7,7,7,7,  7,7,7,7,7,  7,7,7,7,7, 7,7,7,7,7,  7,7,7,7,7,  7,7,7,7,7, 7, 7 };
 
     std::set<unsigned int> available_sbas_prn = {120, 124, 126};
 
@@ -937,7 +943,7 @@ void GNSSFlowgraph::set_channels_state()
                     channels_state_.push_back(0);
                 }
             DLOG(INFO) << "Channel " << i << " in state " << channels_state_[i];
-            global_channel_status.add(i, 0);
+            channels_.at(i)->set_state(0);
         }
     acq_channels_count_ = max_acq_channels_;
     DLOG(INFO) << acq_channels_count_ << " channels in acquisition state";

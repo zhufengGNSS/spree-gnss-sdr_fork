@@ -77,6 +77,7 @@ public:
      *        are required to produce noutput_items output items.
      */
     void forecast (int noutput_items, gr_vector_int &ninput_items_required);
+    void set_state(unsigned int state);
 
 private:
     friend gps_l2_m_telemetry_decoder_cc_sptr
@@ -148,6 +149,7 @@ private:
     } d_crc_verifier;
 
     Gps_CNAV_Navigation_Message d_CNAV_Message;
+    unsigned int channel_state;
 };
 
 

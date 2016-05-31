@@ -192,6 +192,7 @@ galileo_e5a_telemetry_decoder_cc::galileo_e5a_telemetry_decoder_cc(
                    gr::block("galileo_e5a_telemetry_decoder_cc", gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
                            gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
 {
+    this->message_port_register_out(pmt::mp("events"));
     // Telemetry Bit transition synchronization port out
     this->message_port_register_out(pmt::mp("preamble_timestamp_s"));
     // Ephemeris data port out
@@ -602,3 +603,8 @@ void galileo_e5a_telemetry_decoder_cc::set_channel(int channel)
                 }
         }
 }
+
+void galileo_e5a_telemetry_decoder_cc::set_state(unsigned int state)
+ {
+    channel_state = state;
+ }

@@ -110,6 +110,7 @@ private:
 
     long d_if_freq;
     long d_fs_in;
+    int d_last_seg;
 
     double d_early_late_spc_chips;
 

@@ -125,8 +125,6 @@ Gps_L1_Ca_Dll_Pll_Tracking_cc::Gps_L1_Ca_Dll_Pll_Tracking_cc(
     // Get space for a vector with the C/A code replica sampled 1x/chip
     d_ca_code = static_cast<gr_complex*>(volk_malloc(static_cast<int>(GPS_L1_CA_CODE_LENGTH_CHIPS) * sizeof(gr_complex), volk_get_alignment()));
 
-    d_carr_wo = (gr_complex*)volk_malloc(2*d_vector_length * sizeof(gr_complex),volk_get_alignment());
-
     // correlator outputs (scalar)
     d_n_correlator_taps = 3; // Early, Prompt, and Late
     d_correlator_outs = static_cast<gr_complex*>(volk_malloc(d_n_correlator_taps*sizeof(gr_complex), volk_get_alignment()));
@@ -158,6 +156,8 @@ Gps_L1_Ca_Dll_Pll_Tracking_cc::Gps_L1_Ca_Dll_Pll_Tracking_cc(
     d_enable_tracking = false;
     d_pull_in = false;
 
+    d_last_seg = 0;
+
     // CN0 estimation and lock detector buffers
     d_cn0_estimation_counter = 0;
     d_Prompt_buffer = new gr_complex[CN0_ESTIMATION_SAMPLES];
@@ -188,13 +188,10 @@ void Gps_L1_Ca_Dll_Pll_Tracking_cc::stop_tracking()
     {
         DLOG(INFO) << "stopped tracking";
         //std::cout << "stopped tracking" << std::endl;
-        ControlMessageFactory* cmf = new ControlMessageFactory();
-        if (d_queue != gr::msg_queue::sptr())
-        {
-            d_queue->handle(cmf->GetQueueMessage(d_channel, 2));
-        }
-        delete cmf;
+        //d_carrier_lock_fail_counter = 0;
         d_enable_tracking = false; 
+        //this->message_port_pub(pmt::mp("events"), pmt::from_long(3));//3 -> loss of lock
+        d_carrier_lock_fail_counter = MAXIMUM_LOCK_FAIL_COUNTER+1;
     }
 
 
@@ -444,19 +441,22 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
             current_synchro_data.correlation_length_ms = 1;
 
             //Vestigial - flog
-            float delta_ = delta(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
-            float RT_ = RT(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
-            float ELP_ = ELP(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
-            float MD_ = MD(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            float delta_ = delta(d_correlator_outs[0], d_correlator_outs[1], d_correlator_outs[2]);
+            float RT_ = RT(d_correlator_outs[0], d_correlator_outs[1], d_correlator_outs[2]);
+            float ELP_ = ELP(d_correlator_outs[0], d_correlator_outs[1], d_correlator_outs[2]);
+            float MD_ = MD(d_correlator_outs[0], d_correlator_outs[1], d_correlator_outs[2]);
             current_synchro_data.delta = delta_;
             current_synchro_data.RT = RT_;
             current_synchro_data.ELP = ELP_;
             current_synchro_data.MD = MD_;
-            current_synchro_data.Early_I = (double)(*d_correlator_outs[0]).real();
-            current_synchro_data.Early_Q = (double)(*d_correlator_outs[0]).imag();
-            current_synchro_data.Late_I = (double)(*d_correlator_outs[2]).real();
-            current_synchro_data.Late_Q = (double)(*d_correlator_outs[2]).imag();
+            current_synchro_data.Early_I = (double)(d_correlator_outs[0]).real();
+            current_synchro_data.Early_Q = (double)(d_correlator_outs[0]).imag();
+            current_synchro_data.Late_I = (double)(d_correlator_outs[2]).real();
+            current_synchro_data.Late_Q = (double)(d_correlator_outs[2]).imag();
             current_synchro_data.sample_counter = d_sample_counter;
+            current_synchro_data.Early = &d_correlator_outs[0];
+            current_synchro_data.Prompt = &d_correlator_outs[1];
+            current_synchro_data.Late = &d_correlator_outs[2];
 
             if (floor(d_sample_counter / d_fs_in) != d_last_seg)
             {
@@ -491,10 +491,10 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
             tmp_E = std::abs<float>(d_correlator_outs[0]);
             tmp_P = std::abs<float>(d_correlator_outs[1]);
             tmp_L = std::abs<float>(d_correlator_outs[2]);
-            float delta_ = delta(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
-            float RT_ = RT(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
-            float ELP_ = ELP(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
-            float MD_ = MD(*d_correlator_outs[0], *d_correlator_outs[1], *d_correlator_outs[2]);
+            float delta_ = delta(d_correlator_outs[0], d_correlator_outs[1], d_correlator_outs[2]);
+            float RT_ = RT(d_correlator_outs[0], d_correlator_outs[1], d_correlator_outs[2]);
+            float ELP_ = ELP(d_correlator_outs[0], d_correlator_outs[1], d_correlator_outs[2]);
+            float MD_ = MD(d_correlator_outs[0], d_correlator_outs[1], d_correlator_outs[2]);
             try
             {
                 // EPR

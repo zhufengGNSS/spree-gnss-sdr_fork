@@ -81,6 +81,8 @@ public:
         return sizeof(gr_complex);
     }
 
+    void set_channels(std::vector<std::shared_ptr<ChannelInterface>> channels_);
+
 private:
     galileo_e1_pvt_cc_sptr pvt_;
     bool dump_;

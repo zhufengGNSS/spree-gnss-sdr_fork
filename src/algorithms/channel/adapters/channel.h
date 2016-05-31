@@ -87,6 +87,9 @@ public:
 
     void stop_tracking();
     void set_peak(unsigned int peak_); //!< set whether the satellite of this channel is already acquired
+    void set_state(unsigned int state_); //!< set the state of the channel 
+    unsigned int get_state(); //!< get the state of the signal 
+    unsigned int get_uid();
 
 private:
     channel_msg_receiver_cc_sptr channel_msg_rx;
@@ -103,6 +106,9 @@ private:
     bool repeat_;
     ChannelFsm channel_fsm_;
     boost::shared_ptr<gr::msg_queue> queue_;
+    unsigned int state;
+    unsigned int uid;
+    unsigned int peak;
 };
 
 #endif /*GNSS_SDR_CHANNEL_H_*/

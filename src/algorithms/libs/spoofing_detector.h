@@ -4,7 +4,6 @@
  *
  * \author Hildur Ólafsdóttir, 2014, ohildur@gmail.com 
  *
- *
  * -------------------------------------------------------------------------
  *
  * Copyright (C) 2010-2014  (see AUTHORS file for a list of contributors)
@@ -68,12 +67,15 @@ struct Satpos{
     double z;
     double time;
 };
+
+
 struct Subframe{
     std::string subframe;
     unsigned int subframe_id;
     unsigned int PRN;
     double timestamp;
     unsigned int toa;
+    unsigned int uid;
 };
 
 struct SatBuff{
@@ -137,14 +139,29 @@ public:
     Spoofing_Detector();
     Spoofing_Detector(ConfigurationInterface* configuration);
 
-    void New_subframe(int subframe_ID, int PRN, int channel, int uid, Gps_Navigation_Message nav, double time);
+    void New_subframe(int subframe_ID, int PRN, Gps_Navigation_Message nav, double time);
     std::map<unsigned int, Satpos> Satpos_map;
     void check_position(double lat, double lng, double alt, double sample_counter);
     void check_satpos(unsigned int sat, double time, double x, double y, double z); 
     double check_SNR(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
     void check_external_utc(Gps_Utc_Model time_internal, double timestamp);
     void check_external_iono(Gps_Iono internal, double timestamp);
-    bool RX_time_checked(unsigned int PRN);
+    bool stop_tracking(unsigned int PRN, unsigned int uid);
+    void PPE_moving_var(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
+
+    // APT 
+    int get_APT();
+    
+
+    //PPE 
+    double get_PPE_sampling();
+
+    /*!
+     * \brief Default destructor.
+     */
+    ~Spoofing_Detector();
+
+private:
     // APT 
     bool d_APT;
     int d_APT_ch_per_sat;
@@ -155,10 +172,10 @@ public:
     int d_PPE_window_size;
     boost::circular_buffer<double> ppe_cb;
 
-    double d_PPE_sampling;
     double  d_CN0_threshold;
     double d_RT_threshold;
     double d_Delta_threshold;
+    double d_PPE_sampling;
 
     //NAVI configuration
     bool d_NAVI_TOW;
@@ -167,6 +184,8 @@ public:
     bool d_NAVI_external;
     bool d_NAVI_alt;
     double d_NAVI_max_alt;
+
+    bool d_NAVI_exp_eph;
 
     //Subframe 1
     double d_A_f0;
@@ -199,7 +218,6 @@ public:
     double get_corr(boost::circular_buffer<double> a, boost::circular_buffer<double> b);
 
     std::map<int, SatBuff> sat_buffs;
-    void PPE_moving_var(std::list<unsigned int> channels, Gnss_Synchro **in, int sample_counter);
     void calc_mean_var(int sample_counter);
     void calc_max_var(int sample_counter);
     int snr_sum = 0;
@@ -210,12 +228,6 @@ public:
     //supl
     gnss_sdr_supl_client supl_client_;
 
-    /*!
-     * \brief Default destructor.
-     */
-    ~Spoofing_Detector();
-
-private:
     void spoofing_detected(Spoofing_Message msg); 
     double StdDeviation(std::vector<double> v);
     bool compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b);

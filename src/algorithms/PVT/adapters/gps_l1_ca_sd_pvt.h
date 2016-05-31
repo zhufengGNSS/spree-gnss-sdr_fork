@@ -1,14 +1,17 @@
 /*!
- * \file gps_l1_ca_pvt.h
+ * \file gps_l1_ca_sd_pvt.h
  * \brief Interface of an adapter of a GPS L1 C/A PVT solver block to a
  * PvtInterface
  * Position Velocity and Time
- * \author Javier Arribas, 2011. jarribas(at)cttc.es
+ * \authors <ul>
+ *          <li> Javier Arribas, 2011. jarribas(at)cttc.es
+ *          <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  *
  * -------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2014  (see AUTHORS file for a list of contributors)
+ * Copyright (C) 2010-2015  (see AUTHORS file for a list of contributors)
  *
  * GNSS-SDR is a software defined Global Navigation
  *          Satellite Systems receiver
@@ -18,7 +21,7 @@
  * GNSS-SDR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * at your option) any later version.
+ * (at your option) any later version.
  *
  * GNSS-SDR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,7 +40,6 @@
 #define GNSS_SDR_GPS_L1_CA_SD_PVT_H_
 
 #include <string>
-#include <gnuradio/msg_queue.h>
 #include "pvt_interface.h"
 #include "gps_l1_ca_sd_pvt_cc.h"
 
@@ -53,8 +55,7 @@ public:
     GpsL1CaSdPvt(ConfigurationInterface* configuration,
             std::string role,
             unsigned int in_streams,
-            unsigned int out_streams,
-            boost::shared_ptr<gr::msg_queue> queue);
+            unsigned int out_streams);
 
     virtual ~GpsL1CaSdPvt();
 
@@ -63,10 +64,10 @@ public:
         return role_;
     }
 
-    //!  Returns "GPS_L1_CA_PVT"
+    //!  Returns "GPS_L1_CA_SD_PVT"
     std::string implementation()
     {
-        return "GPS_L1_CA_PVT";
+        return "GPS_L1_CA_SD_PVT";
     }
 
     void connect(gr::top_block_sptr top_block);
@@ -85,15 +86,18 @@ public:
         return sizeof(gr_complex);
     }
 
+    void set_channels(std::vector<std::shared_ptr<ChannelInterface>> channels_);
+
 private:
     gps_l1_ca_sd_pvt_cc_sptr pvt_;
     bool dump_;
-    unsigned int fs_in_;
     std::string dump_filename_;
     std::string role_;
     unsigned int in_streams_;
     unsigned int out_streams_;
-    boost::shared_ptr<gr::msg_queue> queue_;
+    
+    std::string eph_xml_filename_;
+    bool save_assistance_to_XML();
 };
 
 #endif

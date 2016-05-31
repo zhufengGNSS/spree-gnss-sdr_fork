@@ -1,5 +1,5 @@
 /*!
- * \file pcps_sd_acquisition.h
+ * \file pcps_sd_acquisition_cc.h
  * \brief This class implements a Parallel Code Phase Search Acquisition
  *
  *  Acquisition strategy (Kay Borre book + CFAR threshold).
@@ -20,12 +20,12 @@
  *          <li> Javier Arribas, 2011. jarribas(at)cttc.es
  *          <li> Luis Esteve, 2012. luis(at)epsilon-formacion.com
  *          <li> Marc Molina, 2013. marc.molina.pena@gmail.com
- *          <li> Hildur Ólafsdóttir, 2014. ohildur(at)gmail.com
+ *          <li> Hildur Olafsdottir, 2014. ohildur(at)gmail.com 
  *          </ul>
  *
  * -------------------------------------------------------------------------
  *
- * Copyright (C) 2010-2012  (see AUTHORS file for a list of contributors)
+ * Copyright (C) 2010-2015  (see AUTHORS file for a list of contributors)
  *
  * GNSS-SDR is a software defined Global Navigation
  *          Satellite Systems receiver
@@ -35,7 +35,7 @@
  * GNSS-SDR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- * at your option) any later version.
+ * (at your option) any later version.
  *
  * GNSS-SDR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -52,15 +52,10 @@
 #define GNSS_SDR_PCPS_SD_ACQUISITION_CC_H_
 
 #include <fstream>
-#include <queue>
 #include <string>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
 #include <gnuradio/block.h>
-#include <gnuradio/msg_queue.h>
 #include <gnuradio/gr_complex.h>
 #include <gnuradio/fft/fft.h>
-#include "concurrent_queue.h"
 #include "gnss_synchro.h"
 
 class pcps_sd_acquisition_cc;
@@ -71,8 +66,8 @@ pcps_sd_acquisition_cc_sptr
 pcps_make_sd_acquisition_cc(unsigned int sampled_ms, unsigned int max_dwells,
                          unsigned int doppler_max, long freq, long fs_in,
                          int samples_per_ms, int samples_per_code,
-                         bool bit_transition_flag,
-                         gr::msg_queue::sptr queue, bool dump,
+                         bool bit_transition_flag, bool use_CFAR_algorithm_flag,
+                         bool dump,
                          std::string dump_filename);
 
 /*!
@@ -88,25 +83,24 @@ private:
     pcps_make_sd_acquisition_cc(unsigned int sampled_ms, unsigned int max_dwells,
             unsigned int doppler_max, long freq, long fs_in,
             int samples_per_ms, int samples_per_code,
-            bool bit_transition_flag,
-            gr::msg_queue::sptr queue, bool dump,
+            bool bit_transition_flag, bool use_CFAR_algorithm_flag,
+            bool dump,
             std::string dump_filename);
 
     pcps_sd_acquisition_cc(unsigned int sampled_ms, unsigned int max_dwells,
             unsigned int doppler_max, long freq, long fs_in,
             int samples_per_ms, int samples_per_code,
-            bool bit_transition_flag,
-            gr::msg_queue::sptr queue, bool dump,
+            bool bit_transition_flag, bool use_CFAR_algorithm_flag,
+            bool dump,
             std::string dump_filename);
 
-    void calculate_magnitudes(gr_complex* fft_begin, int doppler_shift,
-            int doppler_offset);
+    void update_local_carrier(gr_complex* carrier_vector, int correlator_length_samples, float freq);
 
     long d_fs_in;
     long d_freq;
     int d_samples_per_ms;
     int d_samples_per_code;
-    unsigned int d_doppler_resolution;
+    //unsigned int d_doppler_resolution;
     float d_threshold;
     std::string d_satellite_str;
     unsigned int d_doppler_max;
@@ -125,13 +119,11 @@ private:
     unsigned int d_code_phase;
     float d_doppler_freq;
     float d_mag;
-    float d_mag_2nd_highest;
     float* d_magnitude;
     float d_input_power;
     float d_test_statistics;
     bool d_bit_transition_flag;
-    gr::msg_queue::sptr d_queue;
-    concurrent_queue<int> *d_channel_internal_queue;
+    bool d_use_CFAR_algorithm_flag;
     std::ofstream d_dump_file;
     bool d_active;
     int d_state;
@@ -154,15 +146,6 @@ public:
      void set_gnss_synchro(Gnss_Synchro* p_gnss_synchro)
      {
          d_gnss_synchro = p_gnss_synchro;
-     }
-
-    /*!
-     * \brief Set which peak the channel is acquiring 
-     */
-     void set_peak(unsigned int p_peak)
-     {
-        d_peak = p_peak;
-        d_gnss_synchro->peak = p_peak;
      }
 
      /*!
@@ -193,6 +176,13 @@ public:
      {
          d_active = active;
      }
+
+     /*!
+      * \brief If set to 1, ensures that acquisition starts at the
+      * first available sample.
+      * \param state - int=1 forces start of acquisition
+      */
+     void set_state(int state);
 
      /*!
       * \brief Set acquisition channel unique ID
@@ -229,16 +219,6 @@ public:
      void set_doppler_step(unsigned int doppler_step)
      {
          d_doppler_step = doppler_step;
-     }
-
-
-     /*!
-      * \brief Set tracking channel internal queue.
-      * \param channel_internal_queue - Channel's internal blocks information queue.
-      */
-     void set_channel_queue(concurrent_queue<int> *channel_internal_queue)
-     {
-         d_channel_internal_queue = channel_internal_queue;
      }
 
      /*!

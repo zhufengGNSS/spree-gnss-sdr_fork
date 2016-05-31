@@ -1,9 +1,11 @@
 /*!
  * \file gnss_synchro.h
  * \brief  Interface of the Gnss_Synchro class
- * \author
- *  Luis Esteve, 2012. luis(at)epsilon-formacion.com
- *  Javier Arribas, 2012. jarribas(at)cttc.es
+ * \authors <ul> 
+ *         <li> Luis Esteve, 2012. luis(at)epsilon-formacion.com
+ *         <li> Javier Arribas, 2012. jarribas(at)cttc.es
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  * -------------------------------------------------------------------------
  *
  * Copyright (C) 2010-2015  (see AUTHORS file for a list of contributors)
@@ -85,6 +87,7 @@ public:
 
     //spoofing detection
     unsigned int peak;
+    unsigned int uid;
     
     //vestigial
     float delta;

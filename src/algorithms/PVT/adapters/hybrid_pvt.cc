@@ -166,6 +166,9 @@ void HybridPvt::disconnect(gr::top_block_sptr top_block)
     // Nothing to disconnect
 }
 
+void HybridPvt::set_channels(std::vector<std::shared_ptr<ChannelInterface>> channels_)
+{
+}
 
 gr::basic_block_sptr HybridPvt::get_left_block()
 {

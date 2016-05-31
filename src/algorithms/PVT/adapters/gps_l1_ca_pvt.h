@@ -83,6 +83,8 @@ public:
         return sizeof(gr_complex);
     }
 
+    void set_channels(std::vector<std::shared_ptr<ChannelInterface>> channels_);
+
 private:
     gps_l1_ca_pvt_cc_sptr pvt_;
     bool dump_;

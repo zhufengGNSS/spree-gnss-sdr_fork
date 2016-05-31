@@ -37,7 +37,7 @@
 
 Gps_Ephemeris::Gps_Ephemeris()
 {
-    unique_id = 0;
+    uid = 0;
     timestamp = 0;
     i_satellite_PRN = 0;
     d_TOW = 0;

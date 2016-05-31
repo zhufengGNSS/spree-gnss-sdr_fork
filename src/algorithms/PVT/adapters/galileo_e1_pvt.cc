@@ -128,6 +128,10 @@ void GalileoE1Pvt::disconnect(gr::top_block_sptr top_block)
     // Nothing to disconnect
 }
 
+void GalileoE1Pvt::set_channels(std::vector<std::shared_ptr<ChannelInterface>> channels_)
+{
+}
+
 gr::basic_block_sptr GalileoE1Pvt::get_left_block()
 {
     return pvt_;

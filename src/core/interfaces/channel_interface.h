@@ -1,8 +1,11 @@
 /*!
  * \file channel_interface.h
  * \brief This class represents an interface to a channel GNSS block.
- * \author Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
- *         Luis Esteve, 2011. luis(at)epsilon-formacion.com
+ * \authors <ul> 
+ *         <li> Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
+ *         <li> Luis Esteve, 2011. luis(at)epsilon-formacion.com
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * Abstract class for channel blocks. Since all its methods are virtual,
  * this class cannot be instantiated directly, and a subclass can only be
@@ -56,6 +59,9 @@ public:
     virtual void set_signal(const Gnss_Signal&) = 0;
     virtual void stop_tracking() = 0;
     virtual void set_peak(unsigned int) = 0;
+    virtual void set_state(unsigned int) = 0;
+    virtual unsigned int get_state() = 0;
+    virtual unsigned int get_uid() = 0;
 };
 
 #endif /* GNSS_SDR_CHANNEL_INTERFACE_H_ */

@@ -89,6 +89,10 @@ void SbasL1TelemetryDecoder::disconnect(gr::top_block_sptr top_block)
     // Nothing to disconnect
 }
 
+void SbasL1TelemetryDecoder::set_state(unsigned int state)
+{
+    telemetry_decoder_->set_state(state);
+}
 
 gr::basic_block_sptr SbasL1TelemetryDecoder::get_left_block()
 {

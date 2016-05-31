@@ -136,15 +136,15 @@ struct sEph{
 concurrent_map<GPS_time_t> global_gps_time;
 concurrent_map<sEph> global_sEph_map;
 concurrent_map<double> global_last_gps_time;
-concurrent_map<std::map<std::string, int>> global_code_phase;
-//concurrent_map<bool> global_channel_status;
-concurrent_map<int> global_channel_status;  //status 0: newly acquired, status 1: received the first 3 subframes, 
-                                            //status 2: reset by PVT because no spoofing detected 
+concurrent_map<bool> global_spoofing_status;  //spoofing has been detected for the satellite
+
 struct Subframe{
     std::string subframe;
-    unsigned int id;
+    unsigned int subframe_id;
     unsigned int PRN;
-    double timestamp;    
+    double timestamp;
+    unsigned int toa;
+    unsigned int uid;
 };
 
 concurrent_map<Subframe> global_subframe_map;

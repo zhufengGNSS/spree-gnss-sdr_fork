@@ -47,6 +47,7 @@ struct channel_idle_fsm_S0;
 struct channel_acquiring_fsm_S1;
 struct channel_tracking_fsm_S2;
 struct channel_waiting_fsm_S3;
+struct channel_stop_tracking_fsm_S4;
 
 /*!
  * \brief This class implements a State Machine for channel using boost::statechart
@@ -65,6 +66,7 @@ public:
     void start_tracking();
     void request_satellite();
     void notify_stop_tracking();
+    void stop_tracking();
 
     //FSM EVENTS
     void Event_start_acquisition();
@@ -73,6 +75,7 @@ public:
     void Event_failed_acquisition_no_repeat();
     //void Event_gps_failed_tracking_reacq();
     void Event_failed_tracking_standby();
+    void Event_stop_tracking();
 
 private:
     std::shared_ptr<AcquisitionInterface> acq_;

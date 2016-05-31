@@ -47,6 +47,7 @@ void channel_msg_receiver_cc::msg_handler_events(pmt::pmt_t msg)
     try
     {
             long int message = pmt::to_long(msg);
+            DLOG(INFO) << "!!message: " << message;
             switch (message)
             {
             case 1: //positive acquisition
@@ -68,6 +69,10 @@ void channel_msg_receiver_cc::msg_handler_events(pmt::pmt_t msg)
                 break;
             case 3: // tracking loss of lock event
                 d_channel_fsm->Event_failed_tracking_standby();
+                break;
+            case 4: // stop tracking 
+                DLOG(INFO) << "Channel stop tracking ";
+                d_channel_fsm->Event_stop_tracking();
                 break;
             default:
                 LOG(WARNING) << "Default case, invalid message.";

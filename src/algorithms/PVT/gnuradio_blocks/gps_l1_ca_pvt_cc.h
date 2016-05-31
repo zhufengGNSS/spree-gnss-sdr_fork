@@ -40,7 +40,6 @@
 #include "rtcm_printer.h"
 #include "gps_l1_ca_ls_pvt.h"
 
-
 class gps_l1_ca_pvt_cc;
 
 typedef boost::shared_ptr<gps_l1_ca_pvt_cc> gps_l1_ca_pvt_cc_sptr;
@@ -150,6 +149,7 @@ public:
 
     int general_work (int noutput_items, gr_vector_int &ninput_items,
             gr_vector_const_void_star &input_items, gr_vector_void_star &output_items); //!< PVT Signal Processing
+
 };
 
 #endif

@@ -1,9 +1,13 @@
 /*!
  * \file gnss_block_factory.cc
  * \brief  This class implements a factory that returns instances of GNSS blocks.
- * \author Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
- *         Luis Esteve, 2012. luis(at)epsilon-formacion.com
- *         Javier Arribas, 2011. jarribas(at)cttc.es
+ *         
+ * \authors <ul> 
+ *         <li> Carlos Aviles, 2010. carlos.avilesr(at)googlemail.com
+ *         <li> Luis Esteve, 2012. luis(at)epsilon-formacion.com
+ *         <li> Javier Arribas, 2011. jarribas(at)cttc.es
+ *         <li> Hildur Olafsdottir, 2015. ohildur(at)gmail.com
+ *          </ul>
  *
  * This class encapsulates the complexity behind the instantiation
  * of GNSS blocks.
@@ -233,7 +237,8 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetObservables(std::shared
 
 
 
-std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetPVT(std::shared_ptr<ConfigurationInterface> configuration)
+//std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetPVT(std::shared_ptr<ConfigurationInterface> configuration)
+std::unique_ptr<PvtInterface> GNSSBlockFactory::GetPVT(std::shared_ptr<ConfigurationInterface> configuration)
 {
     std::string default_implementation = "Pass_Through";
     std::string implementation = configuration->property("PVT.implementation", default_implementation);
@@ -242,7 +247,8 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetPVT(std::shared_ptr<Con
     Galileo_channels += configuration->property("Channels_5X.count", 0);
     unsigned int GPS_channels =configuration->property("Channels_1C.count", 0);
     GPS_channels += configuration->property("Channels_2S.count", 0);
-    return GetBlock(configuration, "PVT", implementation, Galileo_channels + GPS_channels, 1);
+    //return GetBlock(configuration, "PVT", implementation, Galileo_channels + GPS_channels, 1);
+    return GetPVTBlock(configuration, "PVT", implementation, Galileo_channels + GPS_channels, 1);
 }
 
 
@@ -851,7 +857,7 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
     else if (implementation.compare("GPS_L1_CA_PCPS_SD_Acquisition") == 0)
         {
             std::unique_ptr<GNSSBlockInterface> block_(new GpsL1CaPcpsSdAcquisition(configuration.get(), role, in_streams,
-                    out_streams, queue));
+                    out_streams));
             block = std::move(block_);
         }
     else if (implementation.compare("GPS_L1_CA_PCPS_Assisted_Acquisition") == 0)
@@ -996,7 +1002,7 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
     else if (implementation.compare("GPS_L1_CA_SD_Telemetry_Decoder") == 0)
         {
             std::unique_ptr<GNSSBlockInterface> block_(new GpsL1CaSdTelemetryDecoder(configuration.get(), role, in_streams,
-                    out_streams, queue));
+                    out_streams));
             block = std::move(block_);
         }
     else if (implementation.compare("Galileo_E1B_Telemetry_Decoder") == 0)
@@ -1048,7 +1054,7 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
     else if (implementation.compare("GPS_L1_CA_SD_PVT") == 0)
         {
             std::unique_ptr<GNSSBlockInterface> block_(new GpsL1CaSdPvt(configuration.get(), role, in_streams,
-                    out_streams, queue));
+                    out_streams));
             block = std::move(block_);
         }
     else if (implementation.compare("GALILEO_E1_PVT") == 0)
@@ -1070,6 +1076,7 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
         }
     return std::move(block);
 }
+
 
 
 /*
@@ -1097,7 +1104,7 @@ std::unique_ptr<AcquisitionInterface> GNSSBlockFactory::GetAcqBlock(
     else if (implementation.compare("GPS_L1_CA_PCPS_SD_Acquisition") == 0)
         {
             std::unique_ptr<AcquisitionInterface> block_(new GpsL1CaPcpsSdAcquisition(configuration.get(), role, in_streams,
-                    out_streams, queue));
+                    out_streams));
             block = std::move(block_);
         }
     else if (implementation.compare("GPS_L1_CA_PCPS_Assisted_Acquisition") == 0)
@@ -1278,7 +1285,7 @@ std::unique_ptr<TelemetryDecoderInterface> GNSSBlockFactory::GetTlmBlock(
     else if (implementation.compare("GPS_L1_CA_SD_Telemetry_Decoder") == 0)
         {
             std::unique_ptr<TelemetryDecoderInterface> block_(new GpsL1CaSdTelemetryDecoder(configuration.get(), role, in_streams,
-                    out_streams, queue));
+                    out_streams));
             block = std::move(block_);
         }
     else if (implementation.compare("Galileo_E1B_Telemetry_Decoder") == 0)
@@ -1302,6 +1309,46 @@ std::unique_ptr<TelemetryDecoderInterface> GNSSBlockFactory::GetTlmBlock(
     else if (implementation.compare("GPS_L2_M_Telemetry_Decoder") == 0)
         {
             std::unique_ptr<TelemetryDecoderInterface> block_(new GpsL2MTelemetryDecoder(configuration.get(), role, in_streams,
+                    out_streams));
+            block = std::move(block_);
+        }
+    else
+        {
+            // Log fatal. This causes execution to stop.
+            LOG(ERROR) << role << "." << implementation << ": Undefined implementation for block";
+        }
+    return std::move(block);
+}
+
+std::unique_ptr<PvtInterface> GNSSBlockFactory::GetPVTBlock(
+        std::shared_ptr<ConfigurationInterface> configuration,
+        std::string role,
+        std::string implementation, unsigned int in_streams,
+        unsigned int out_streams)
+{
+    std::unique_ptr<PvtInterface> block;
+    // PVT -------------------------------------------------------------------------
+    if (implementation.compare("GPS_L1_CA_PVT") == 0)
+        {
+            std::unique_ptr<PvtInterface> block_(new GpsL1CaPvt(configuration.get(), role, in_streams,
+                    out_streams));
+            block = std::move(block_);
+        }
+    else if (implementation.compare("GPS_L1_CA_SD_PVT") == 0)
+        {
+            std::unique_ptr<PvtInterface> block_(new GpsL1CaSdPvt(configuration.get(), role, in_streams,
+                    out_streams));
+            block = std::move(block_);
+        }
+    else if (implementation.compare("GALILEO_E1_PVT") == 0)
+        {
+            std::unique_ptr<PvtInterface> block_(new GalileoE1Pvt(configuration.get(), role, in_streams,
+                    out_streams));
+            block = std::move(block_);
+        }
+    else if (implementation.compare("Hybrid_PVT") == 0)
+        {
+            std::unique_ptr<PvtInterface> block_(new HybridPvt(configuration.get(), role, in_streams,
                     out_streams));
             block = std::move(block_);
         }

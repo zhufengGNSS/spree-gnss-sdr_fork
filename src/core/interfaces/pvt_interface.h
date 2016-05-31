@@ -48,10 +48,13 @@
  * instantiated directly if all inherited pure virtual methods have been
  * implemented by that class or a parent class.
  */
+class ChannelInterface;
+
 class PvtInterface : public GNSSBlockInterface
 {
 public:
     virtual void reset() = 0;
+    virtual void set_channels(std::vector<std::shared_ptr<ChannelInterface>> channels_) = 0;
 };
 
 #endif /* GNSS_SDR_PVT_INTERFACE_H_ */

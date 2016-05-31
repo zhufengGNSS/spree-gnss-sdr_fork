@@ -78,6 +78,7 @@ public:
      *        are required to produce noutput_items output items.
      */
     void forecast (int noutput_items, gr_vector_int &ninput_items_required);
+    void set_state(unsigned int state);
 
 private:
     friend galileo_e5a_telemetry_decoder_cc_sptr
@@ -125,6 +126,7 @@ private:
 
     std::string d_dump_filename;
     std::ofstream d_dump_file;
+    unsigned int channel_state;
 };
 
 #endif /* GNSS_SDR_GALILEO_E5A_TELEMETRY_DECODER_CC_H_ */

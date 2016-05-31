@@ -189,16 +189,6 @@ void GalileoE5aNoncoherentIQAcquisitionCaf::set_gnss_synchro(
         }
 }
 
-void GalileoE5aNoncoherentIQAcquisitionCaf::set_peak(unsigned int peak)
-{
-    peak_ = peak;
-    if (item_type_.compare("gr_complex") == 0)
-        {
-            acquisition_cc_->set_peak(peak_);
-        }
-}
-
-
 signed int GalileoE5aNoncoherentIQAcquisitionCaf::mag()
 {
     if (item_type_.compare("gr_complex") == 0)
