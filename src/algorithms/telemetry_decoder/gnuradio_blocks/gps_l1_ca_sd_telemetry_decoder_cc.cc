@@ -176,9 +176,13 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items __attribu
     // ########### Output the tracking data to navigation and PVT ##########
     Gnss_Synchro **out = (Gnss_Synchro **) &output_items[0];
 
-    const Gnss_Synchro **in = (const Gnss_Synchro **)  &input_items[0]; //Get the input samples pointer
-    d_GPS_FSM.i_peak= in[0][0].peak;
+    const Gnss_Synchro **in = (const Gnss_Synchro **)  &input_items[0]; //Get the input samples pointercd in    
+    d_GPS_FSM.i_peak = 1; //in[0][0].peak;
     d_GPS_FSM.uid = in[0][0].uid;
+
+
+
+    LOG(INFO) << "Tracking: Channel "<< in[0][0].Channel_ID << ": Peak " << d_GPS_FSM.i_peak <<"; UID "<<in[0][0].uid<<"; PRN "<<in[0][0].PRN;
 
     if( channel_state == 2)
     {

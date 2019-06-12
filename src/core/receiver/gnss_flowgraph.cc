@@ -814,6 +814,7 @@ void GNSSFlowgraph::set_signals_list()
 
             if(spoofing_detection)
             {
+                int j = 0;
                 for(int i = 0; i < multiple; ++i)
                     { 
                         DLOG(INFO) << "add other round of signals"; 
@@ -823,9 +824,11 @@ void GNSSFlowgraph::set_signals_list()
                             {
                                 available_GNSS_signals_.push_back(Gnss_Signal(Gnss_Satellite(std::string("GPS"),
                                         *available_gnss_prn_iter), std::string("1C")));
+                                j++;
                             }
                     }
-             }
+                LOG(INFO) << "Executed "<<j;
+            }
         }
 
     if (configuration_->property("Channels_2S.count", 0) > 0)

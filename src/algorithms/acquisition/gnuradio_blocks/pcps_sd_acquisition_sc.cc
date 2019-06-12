@@ -358,7 +358,7 @@ int pcps_sd_acquisition_sc::general_work(int noutput_items,
                     // Search maximum
                     size_t offset = ( d_bit_transition_flag ? effective_fft_size : 0 );
                     volk_32fc_magnitude_squared_32f(d_magnitude, d_ifft->get_outbuf() + offset, effective_fft_size);
-                    volk_32f_index_max_16u(&indext, d_magnitude, effective_fft_size);
+                    volk_32f_index_max_16u((uint16_t *) &indext, d_magnitude, effective_fft_size);
                     magt = d_magnitude[indext];
 
                     if (d_use_CFAR_algorithm_flag == true)
