@@ -1,0 +1,112 @@
+# Copyright (C) 2012-2019  (see AUTHORS file for a list of contributors)
+#
+# This file is part of GNSS-SDR.
+#
+# GNSS-SDR is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# GNSS-SDR is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GNSS-SDR. If not, see <https://www.gnu.org/licenses/>.
+#
+
+set(TELEMETRY_DECODER_GR_BLOCKS_SOURCES
+    gps_l1_ca_telemetry_decoder_gs.cc
+    gps_l1_ca_sd_telemetry_decoder_gs.cc
+    gps_l2c_telemetry_decoder_gs.cc
+    gps_l5_telemetry_decoder_gs.cc
+    sbas_l1_telemetry_decoder_gs.cc
+    glonass_l1_ca_telemetry_decoder_gs.cc
+    glonass_l2_ca_telemetry_decoder_gs.cc
+    galileo_telemetry_decoder_gs.cc
+    beidou_b1i_telemetry_decoder_gs.cc
+    beidou_b3i_telemetry_decoder_gs.cc
+)
+
+set(TELEMETRY_DECODER_GR_BLOCKS_HEADERS
+    gps_l1_ca_telemetry_decoder_gs.h
+    gps_l1_ca_sd_telemetry_decoder_gs.h
+    gps_l2c_telemetry_decoder_gs.h
+    gps_l5_telemetry_decoder_gs.h
+    sbas_l1_telemetry_decoder_gs.h
+    glonass_l1_ca_telemetry_decoder_gs.h
+    glonass_l2_ca_telemetry_decoder_gs.h
+    galileo_telemetry_decoder_gs.h
+    beidou_b1i_telemetry_decoder_gs.h
+    beidou_b3i_telemetry_decoder_gs.h
+)
+
+list(SORT TELEMETRY_DECODER_GR_BLOCKS_HEADERS)
+list(SORT TELEMETRY_DECODER_GR_BLOCKS_SOURCES)
+
+source_group(Headers FILES ${TELEMETRY_DECODER_GR_BLOCKS_HEADERS})
+
+add_library(telemetry_decoder_gr_blocks
+    ${TELEMETRY_DECODER_GR_BLOCKS_SOURCES}
+    ${TELEMETRY_DECODER_GR_BLOCKS_HEADERS}
+)
+
+target_link_libraries(telemetry_decoder_gr_blocks
+    PUBLIC
+        telemetry_decoder_libswiftcnav
+        telemetry_decoder_libs
+        core_system_parameters
+        Gnuradio::runtime
+        Volkgnsssdr::volkgnsssdr
+        Boost::boost
+    PRIVATE
+        Gflags::gflags
+        Glog::glog
+)
+
+if(ENABLE_CLANG_TIDY)
+    if(CLANG_TIDY_EXE)
+        set_target_properties(telemetry_decoder_gr_blocks
+            PROPERTIES
+                CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
+        )
+    endif()
+endif()
+
+include_directories(
+     $(CMAKE_CURRENT_SOURCE_DIR)
+     ${CMAKE_SOURCE_DIR}/src/core/system_parameters
+     ${CMAKE_SOURCE_DIR}/src/core/receiver
+     ${CMAKE_SOURCE_DIR}/src/core/interfaces
+     ${CMAKE_SOURCE_DIR}/src/algorithms/libs
+     ${CMAKE_SOURCE_DIR}/src/algorithms/telemetry_decoder/libs
+     ${CMAKE_SOURCE_DIR}/src/core/libs
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn-rrlp
+     ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn-supl
+     ${Boost_INCLUDE_DIRS}
+     ${GLOG_INCLUDE_DIRS}
+     ${GFlags_INCLUDE_DIRS}
+     ${Boost_INCLUDE_DIRS}
+     ${GNURADIO_RUNTIME_INCLUDE_DIRS}
+)
+
+#target_include_directories(telemetry_decoder_adapters
+#    PUBLIC
+#        ${CMAKE_SOURCE_DIR}/src/core/interfaces
+#        ${CMAKE_SOURCE_DIR}/src/algorithms/libs
+#        ${CMAKE_SOURCE_DIR}/src/core/receiver
+#        ${CMAKE_SOURCE_DIR}/src/core/libs
+#        ${CMAKE_SOURCE_DIR}/src/core/libs/supl
+#        ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn
+#        ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn-rrlp
+#        ${CMAKE_SOURCE_DIR}/src/core/libs/supl/asn-supl
+#        ${CMAKE_SOURCE_DIR}/src/algorithms/telemetry_decoder/gnuradio_blocks
+#        ${CMAKE_SOURCE_DIR}/src/algorithms/telemetry_decoder/libs
+#)
+
+set_property(TARGET telemetry_decoder_gr_blocks
+    APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
