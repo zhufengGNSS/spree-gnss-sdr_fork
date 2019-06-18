@@ -444,15 +444,18 @@ void pcps_sd_acquisition::send_positive_acquisition()
 {
     // Declare positive acquisition using a message port
     // 0=STOP_CHANNEL 1=ACQ_SUCCEES 2=ACQ_FAIL
-    DLOG(INFO) << "positive acquisition"
-               << ", satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN
-               << ", sample_stamp " << d_sample_counter
-               << ", test statistics value " << d_test_statistics
-               << ", test statistics threshold " << d_threshold
-               << ", code phase " << d_gnss_synchro->Acq_delay_samples
-               << ", doppler " << d_gnss_synchro->Acq_doppler_hz
-               << ", magnitude " << d_mag
-               << ", input signal power " << d_input_power;
+    LOG(WARNING)<< "=============================== ACQ ===============================";
+    LOG(WARNING) << "positive acquisition";
+    LOG(WARNING) << ", satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
+    LOG(WARNING) << ", Channel " << d_gnss_synchro->Channel_ID;
+    LOG(WARNING) << ", sample_stamp " << d_sample_counter;
+    LOG(WARNING) << ", test statistics value " << d_test_statistics;
+    LOG(WARNING) << ", test statistics threshold " << d_threshold;
+    LOG(WARNING) << ", code phase " << d_gnss_synchro->Acq_delay_samples;
+    LOG(WARNING) << ", doppler " << d_gnss_synchro->Acq_doppler_hz;
+    LOG(WARNING) << ", magnitude " << d_mag;
+    LOG(WARNING) << ", input signal power " << d_input_power;
+    LOG(WARNING)<< "===================================================================";
     d_positive_acq = 1;
 
     if (!d_channel_fsm.expired())
@@ -833,6 +836,7 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                     uint32_t index_time = 0U;
                     float fft_normalization_factor = static_cast<float>(d_fft_size) * static_cast<float>(d_fft_size);
                     float threshold_spoofing = d_threshold * d_input_power * (fft_normalization_factor * fft_normalization_factor);
+                    
                     float magt = 0.0;
                     float d_mag = 0.0;
 
@@ -915,6 +919,21 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                     d_gnss_synchro->Acq_doppler_hz = static_cast<double>(doppler);
                     d_gnss_synchro->Acq_samplestamp_samples = samp_count;
                 }
+            
+            std::map<float, Peak>::iterator it;
+
+            LOG(WARNING) << "============== ALL PEAKS ==============";
+
+            for(it = d_highest_peaks.begin(); it != d_highest_peaks.end(); ++it)
+            {
+                LOG(WARNING) << "Peak " << it->first;
+                LOG(WARNING) << "Code_phase " << it->second.code_phase;
+                LOG(WARNING) << "Doppler " << it->second.doppler;
+                LOG(WARNING) << "Channel " << d_gnss_synchro->Channel_ID;
+                LOG(WARNING) << "Satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
+            }
+
+            LOG(WARNING) << "=======================================";
         }
     else
         {
