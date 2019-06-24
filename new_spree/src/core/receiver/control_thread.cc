@@ -826,6 +826,7 @@ void ControlThread::process_control_messages()
                             apply_action(i->what);
                         }
                     flowgraph_->apply_action(i->who, i->what);
+                    DLOG(INFO) << "Channel " << i->who << ": Action " << i->what;
                 }
             processed_control_messages_++;
         }

@@ -46,6 +46,7 @@
 #include "gnss_block_interface.h"
 #include "gnss_satellite.h"
 #include "gnss_synchro_monitor.h"
+#include "gnss_synchro.h"
 #include <boost/lexical_cast.hpp>    // for boost::lexical_cast
 #include <boost/shared_ptr.hpp>      // for boost::shared_ptr
 #include <boost/tokenizer.hpp>       // for boost::tokenizer
@@ -612,7 +613,7 @@ void GNSSFlowgraph::connect()
                 }
             if (sat == 0)
                 {
-                    channels_.at(i)->set_signal(search_next_signal(gnss_signal, false));
+                    channels_.at(i)->set_signal(search_next_signal(gnss_signal, i, false));
                 }
             else
                 {
@@ -727,7 +728,7 @@ void GNSSFlowgraph::connect()
     for (unsigned int i = 0; i < channels_count_; i++)
         {
             LOG(INFO) << "Channel " << i << " assigned to " << channels_.at(i)->get_signal();
-            AssignACQState(channels_.at(i)->get_signal().get_satellite().get_PRN(), i);
+            
             if (channels_state_[i] == 1)
                 {
                     channels_.at(i)->start_acquisition();
@@ -1101,7 +1102,6 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
     bool acquire_sat_again = false;
     PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
     unsigned int uid;
-    
     if(spoofing_detection)
     {
         peak = channel_to_peak.find(who)->second;
@@ -1124,6 +1124,23 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         {
         case 0:
             DLOG(INFO) << "Channel " << who << " ACQ FAILED satellite " << channels_[who]->get_signal().get_satellite() << ", Signal " << channels_[who]->get_signal().get_signal_str();
+            
+            lost_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
+            channels_.at(who)->set_state(2);
+
+            if(spoofing_detection)
+            {
+                next_peak.at(PRN) = 1; 
+                nr_acquired_peaks.at(lost_PRN) -= 1;
+                channels_.at(who)->set_peak(0);
+
+                //remove cannel from spoofing detection queues
+                uid = channels_.at(who)->get_uid();
+                global_subframe_map.remove(uid);
+                global_subframe_check.remove(uid);
+                global_gps_time.remove(uid);
+            }
+
             if (sat == 0)
                 {
                     Gnss_Signal gs = channels_[who]->get_signal();
@@ -1198,21 +1215,17 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                             channels_state_[ch_index] = 1;
                             if (sat_ == 0)
                                 {
-                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), true));
+                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), ch_index, true));
                                 }
                             acq_channels_count_++;
                             DLOG(INFO) << "Channel " << ch_index << " Starting acquisition " << channels_[ch_index]->get_signal().get_satellite() << ", Signal " << channels_[ch_index]->get_signal().get_signal_str();
-#ifndef ENABLE_FPGA
-                            if(spoofing_detection)
-                            {
-                                AssignACQState(channels_[ch_index]->get_signal().get_satellite().get_PRN(),ch_index);
-                            }
-                            channels_[ch_index]->start_acquisition();
-#else
-                            // create a task for the FPGA such that it doesn't stop the flow
-                            std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[ch_index]);
-                            tmp_thread.detach();
-#endif
+                            #ifndef ENABLE_FPGA
+                                channels_[ch_index]->start_acquisition();
+                            #else
+                                // create a task for the FPGA such that it doesn't stop the flow
+                                std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[ch_index]);
+                                tmp_thread.detach();
+                            #endif
                         }
                     DLOG(INFO) << "Channel " << ch_index << " in state " << channels_state_[ch_index];
                 }
@@ -1221,11 +1234,30 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         case 1:
             LOG(INFO) << "Channel " << who << " ACQ SUCCESS satellite " << channels_[who]->get_signal().get_satellite();
 
+            DLOG(INFO) << "peak " << channel_to_peak.at(who);
+
+            channels_.at(who)->set_state(0);
+            channels_state_[who] = 2;
+            acq_channels_count_--;
+
             // If the satellite is in the list of available ones, remove it.
             switch (mapStringValues_[channels_[who]->get_signal().get_signal_str()])
                 {
                 case evGPS_1C:
-                    available_GPS_1C_signals_.remove(channels_[who]->get_signal());
+                    //available_GPS_1C_signals_.remove(channels_[who]->get_signal());
+                    if(spoofing_detection)
+                    {
+                        next_peak.at(PRN) = peak+1; 
+                        nr_acq_peaks = nr_acquired_peaks.at(acq_PRN);
+                        acquire_sat_again = false;
+                        inactive = std::count(available_GPS_1C_signals_.begin(), available_GPS_1C_signals_.end(), channels_.at(who)->get_signal());  //number of availble instances of the sat
+                        if(nr_acq_peaks+inactive < nr_acq )
+                        {
+                            DLOG(INFO) << "pushing back sat " << acq_PRN << " ch " << who << " nr acq peaks " << nr_acq_peaks;  
+                            available_GPS_1C_signals_.remove(channels_.at(who)->get_signal());
+                            acquire_sat_again = true;
+                        }   
+                    }
                     break;
 
                 case evGPS_2S:
@@ -1265,8 +1297,6 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                     break;
                 }
 
-            channels_state_[who] = 2;
-            acq_channels_count_--;
             for (unsigned int i = 0; i < channels_count_; i++)
                 {
                     unsigned int sat_ = 0;
@@ -1287,13 +1317,13 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                                 }
                             acq_channels_count_++;
                             DLOG(INFO) << "Channel " << i << " Starting acquisition " << channels_[i]->get_signal().get_satellite() << ", Signal " << channels_[i]->get_signal().get_signal_str();
-#ifndef ENABLE_FPGA
-                            channels_[i]->start_acquisition();
-#else
-                            // create a task for the FPGA such that it doesn't stop the flow
-                            std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[i]);
-                            tmp_thread.detach();
-#endif
+                            #ifndef ENABLE_FPGA
+                                channels_[i]->start_acquisition();
+                            #else
+                                // create a task for the FPGA such that it doesn't stop the flow
+                                std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[i]);
+                                tmp_thread.detach();
+                            #endif
                         }
                     DLOG(INFO) << "Channel " << i << " in state " << channels_state_[i];
                 }
@@ -1303,22 +1333,40 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             LOG(INFO) << "Channel " << who << " TRK FAILED satellite " << channels_[who]->get_signal().get_satellite();
             DLOG(INFO) << "Number of channels in acquisition = " << acq_channels_count_;
 
+            channels_.at(who)->set_state(2);
+            
+            if(spoofing_detection)
+            {
+                uid = channels_.at(who)->get_uid();
+                global_subframe_map.remove(uid);
+                global_gps_time.remove(uid);
+                global_subframe_check.remove(uid);
+
+                nr_acquired_peaks.at(PRN) -= 1;
+                channels_.at(who)->set_peak(0);
+
+                //remove cannel from spoofing detection queues
+                uid = channels_.at(who)->get_uid();
+                global_subframe_map.remove(uid);
+                global_gps_time.remove(uid);
+            }
+
             if (acq_channels_count_ < max_acq_channels_)
                 {
                     channels_state_[who] = 1;
                     acq_channels_count_++;
                     LOG(INFO) << "Channel " << who << " Starting acquisition " << channels_[who]->get_signal().get_satellite() << ", Signal " << channels_[who]->get_signal().get_signal_str();
-#ifndef ENABLE_FPGA
-                    if(spoofing_detection)
-                    {
-                        AssignACQState(channels_[who]->get_signal().get_satellite().get_PRN(), who);
-                    }
-                    channels_[who]->start_acquisition();
-#else
-                    // create a task for the FPGA such that it doesn't stop the flow
-                    std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[who]);
-                    tmp_thread.detach();
-#endif
+                    #ifndef ENABLE_FPGA
+                        if(spoofing_detection)
+                        {
+                            AssignACQState(channels_[who]->get_signal().get_satellite().get_PRN(), who);
+                        }
+                        channels_[who]->start_acquisition();
+                    #else
+                        // create a task for the FPGA such that it doesn't stop the flow
+                        std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[who]);
+                        tmp_thread.detach();
+                    #endif
                 }
             else
                 {
@@ -1369,6 +1417,10 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                                     break;
                                 }
                         }
+                    if(spoofing_detection)
+                    {
+                        channels_[who]->start_acquisition();
+                    }
                 }
             break;
         case 10:  // request standby mode
@@ -1456,7 +1508,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                             channels_state_[ch_index] = 1;
                             if (sat_ == 0)
                                 {
-                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), true));
+                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), ch_index, true));
                                 }
                             acq_channels_count_++;
                             DLOG(INFO) << "Channel " << ch_index << " Starting acquisition " << channels_[ch_index]->get_signal().get_satellite() << ", Signal " << channels_[ch_index]->get_signal().get_signal_str();
@@ -1490,7 +1542,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                             channels_state_[ch_index] = 1;
                             if (sat_ == 0)
                                 {
-                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), true));
+                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), ch_index, true));
                                 }
                             acq_channels_count_++;
                             DLOG(INFO) << "Channel " << ch_index << " Starting acquisition " << channels_[ch_index]->get_signal().get_satellite() << ", Signal " << channels_[ch_index]->get_signal().get_signal_str();
@@ -1525,7 +1577,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                             channels_state_[ch_index] = 1;
                             if (sat_ == 0)
                                 {
-                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), true));
+                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), ch_index, true));
                                 }
                             acq_channels_count_++;
                             DLOG(INFO) << "Channel " << ch_index << " Starting acquisition " << channels_[ch_index]->get_signal().get_satellite() << ", Signal " << channels_[ch_index]->get_signal().get_signal_str();
@@ -1752,11 +1804,17 @@ void GNSSFlowgraph::init()
     mapStringValues_["B3"] = evBDS_B3;
 
     spoofing_detection = configuration_->property("Spoofing.APT", false);
+    spoofing_detection = false;
+
     nr_acq = configuration_->property("Spoofing.APT_ch_per_sat", 2);
 
     if (spoofing_detection)
     {
         LOG(INFO) << "Spoofing detection is enabled";
+    }
+    else
+    {
+        LOG(INFO) << "Spoofing detection is disabled";
     }
     // fill the signals queue with the satellites ID's to be searched by the acquisition
     set_signals_list();
@@ -1920,6 +1978,8 @@ void GNSSFlowgraph::set_signals_list()
                     available_GPS_1C_signals_.push_back(Gnss_Signal(
                         Gnss_Satellite(std::string("GPS"), *available_gnss_prn_iter),
                         std::string("1C")));
+                    next_peak[*available_gnss_prn_iter] = 1;
+                    nr_acquired_peaks[*available_gnss_prn_iter] = 0;
                 }
 
             if(spoofing_detection)
@@ -2071,7 +2131,6 @@ void GNSSFlowgraph::set_signals_list()
 
 }
 
-
 void GNSSFlowgraph::set_channels_state()
 {
     std::lock_guard<std::mutex> lock(signal_list_mutex);
@@ -2093,19 +2152,24 @@ void GNSSFlowgraph::set_channels_state()
                     channels_state_.push_back(0);
                 }
             DLOG(INFO) << "Channel " << i << " in state " << channels_state_[i];
+            channels_.at(i)->set_state(0);
         }
     acq_channels_count_ = max_acq_channels_;
     DLOG(INFO) << acq_channels_count_ << " channels in acquisition state";
 }
 
 
-Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal, bool pop, bool tracked)
+Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal, unsigned int channel_id, bool pop, bool tracked)
 {
     Gnss_Signal result;
     bool untracked_satellite = true;
     switch (mapStringValues_[searched_signal])
         {
         case evGPS_1C:
+            if(spoofing_detection)
+            {
+                AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), channel_id);
+            }
             result = available_GPS_1C_signals_.front();
             available_GPS_1C_signals_.pop_front();
             if (!pop)
@@ -2137,6 +2201,8 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
                                 }
                         }
                 }
+            
+            
             break;
 
         case evGPS_2S:
@@ -2171,6 +2237,10 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
                                 }
                         }
                 }
+            if(spoofing_detection)
+            {
+                AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), channel_id);
+            }
             break;
 
         case evGPS_L5:

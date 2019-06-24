@@ -214,6 +214,9 @@ void Channel::set_signal(const Gnss_Signal& gnss_signal)
     gnss_synchro_.Signal[2] = 0;                                    // make sure that string length is only two characters
     gnss_synchro_.PRN = gnss_signal_.get_satellite().get_PRN();
     gnss_synchro_.System = gnss_signal_.get_satellite().get_system_short().c_str()[0];
+    gnss_synchro_.uid = uid;
+    gnss_synchro_.peak = peak;
+    LOG(WARNING) << "PEAK: " << peak;
     acq_->set_local_code();
     if (flag_enable_fpga)
         {

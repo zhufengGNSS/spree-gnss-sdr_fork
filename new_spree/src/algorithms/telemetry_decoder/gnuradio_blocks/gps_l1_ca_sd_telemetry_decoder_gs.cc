@@ -372,6 +372,8 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
                 }
         }
 
+    unsigned int uid = in[0][0].uid;
+
     // ******* frame sync ******************
     switch (d_stat)
         {
@@ -437,10 +439,17 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
                         else
                             {
                                 if (preamble_diff > d_preamble_period_symbols)
-                                    {
-                                        d_stat = 0;  // start again
-                                        flag_TOW_set = false;
-                                    }
+                                {
+                                    d_stat = 0;  // start again
+                                    flag_TOW_set = false;
+                                }
+                                else if (preamble_diff > GPS_SUBFRAME_MS+1000)
+                                {
+                                    DLOG(INFO) << "No frame sync SAT: " <<  this->d_satellite << " preamble_diff= " << preamble_diff << "\n"
+                                            << "Send stop tracking to tracking module for sat " << this->d_satellite << " ch: " << d_channel;
+                                    stop_tracking(uid);
+                                }
+
                             }
                     }
                 break;
@@ -548,7 +557,20 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
     return 0;
 }
 
- void gps_l1_ca_sd_telemetry_decoder_gs::set_state(unsigned int state)
- {
+void gps_l1_ca_sd_telemetry_decoder_gs::stop_tracking(unsigned int uid)
+{
+    if( channel_state != 2 )
+        {
+            global_subframe_map.remove(uid);
+            global_gps_time.remove(uid);
+            global_subframe_check.remove(uid);
+            channel_state = 2; 
+            DLOG(INFO) << "send stop tracking " << uid; 
+            this->message_port_pub(pmt::mp("events"), pmt::from_long(4));//4 -> stop tracking
+        }
+}
+
+void gps_l1_ca_sd_telemetry_decoder_gs::set_state(unsigned int state)
+{
     channel_state = state;
- }
+}

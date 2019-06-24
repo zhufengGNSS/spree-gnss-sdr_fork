@@ -83,6 +83,7 @@ public:
     //Spoofing detection
     unsigned int peak;
     unsigned int uid;
+    static bool spoofing_detection;
     
     gr_complex* Early;
     gr_complex* Prompt;

@@ -491,7 +491,7 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
                         DLOG(INFO) << rit->second.code_phase << " " << rit->second.doppler <<" "<< rit->second.mag;
                     }
                     DLOG(INFO) << "### ###";
-*/
+                    */
                     //If there is more than one peak present, acquire the highest
                     if(d_peak == 1 && d_highest_peaks_reduced.size() > 0)
                     {

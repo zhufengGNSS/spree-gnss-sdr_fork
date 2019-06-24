@@ -143,10 +143,10 @@ public:
      * \brief Priorize visible satellites in the specified vector
      */
     void priorize_satellites(std::vector<std::pair<int, Gnss_Satellite>> visible_satellites);
-    
+    //void set_gnss_synchro(Gnss_Synchro * gnss_synchro);
     void AssignACQState(int PRN, unsigned int who);
     bool spoofing_detection;
-    bool use_first_arriving_signal; 
+    bool use_first_arriving_signal;
     int nr_acq, nr_peaks;
 
 private:
@@ -154,7 +154,7 @@ private:
     void set_signals_list();
     void set_channels_state();  // Initializes the channels state (start acquisition or keep standby)
                                 // using the configuration parameters (number of channels and max channels in acquisition)
-    Gnss_Signal search_next_signal(const std::string& searched_signal, bool pop, bool tracked = false);
+    Gnss_Signal search_next_signal(const std::string& searched_signal, unsigned int channel_id, bool pop, bool tracked = false);
     bool connected_;
     bool running_;
     int sources_count_;

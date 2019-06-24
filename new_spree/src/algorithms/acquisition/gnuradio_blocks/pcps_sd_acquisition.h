@@ -70,6 +70,7 @@ class pcps_sd_acquisition;
 
 using pcps_sd_acquisition_sptr = boost::shared_ptr<pcps_sd_acquisition>;
 
+
 pcps_sd_acquisition_sptr
 pcps_make_sd_acquisition(const Acq_Conf& conf_);
 
@@ -87,6 +88,13 @@ private:
 
     pcps_sd_acquisition(const Acq_Conf& conf_);
 
+    struct Peak{
+        int code_phase;
+        int doppler;
+        float mag;
+        float test_stats;
+    };
+
     void update_local_carrier(gr_complex* carrier_vector, int32_t correlator_length_samples, float freq);
     void update_grid_doppler_wipeoffs();
     void update_grid_doppler_wipeoffs_step2();
@@ -101,7 +109,7 @@ private:
     void dump_results(int32_t effective_fft_size);
 
     float first_vs_second_peak_statistic(uint32_t& indext, int32_t& doppler, uint32_t num_doppler_bins, int32_t doppler_max, int32_t doppler_step);
-    //float max_to_input_power_statistic(uint32_t& indext, int32_t& doppler, uint32_t num_doppler_bins, int32_t doppler_max, int32_t doppler_step);
+    std::map<float, Peak> max_to_input_power_statistic(uint32_t& indext, int32_t& doppler, float input_power, float spoofing_threshold, bool acquire_auxiliary_peaks, uint32_t num_doppler_bins, int32_t doppler_max, int32_t doppler_step);
 
     bool start();
 

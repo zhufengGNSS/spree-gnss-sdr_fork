@@ -10,3 +10,5 @@ thirdparty/
 .cproject
 /install
 /.DS_Store
+
+new_spree/src/\.vscode/

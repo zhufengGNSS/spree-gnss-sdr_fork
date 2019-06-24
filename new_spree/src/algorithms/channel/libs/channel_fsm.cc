@@ -233,6 +233,7 @@ void ChannelFsm::notify_stop_tracking()
     std::unique_ptr<ControlMessageFactory> cmf(new ControlMessageFactory());
     if (queue_ != gr::msg_queue::make())
         {
+            DLOG(INFO) << "Notifying ACQ restart on " << channel_;
             queue_->handle(cmf->GetQueueMessage(channel_, 2));
         }
 }

@@ -782,6 +782,7 @@ void pcps_acquisition::acquisition_core(uint64_t samp_count)
                 }
             else
                 {
+                    LOG(WARNING) << "Indext " << indext << "; Per code " << acq_parameters.samples_per_code;
                     d_gnss_synchro->Acq_delay_samples = static_cast<double>(std::fmod(static_cast<float>(indext), acq_parameters.samples_per_code));
                     d_gnss_synchro->Acq_doppler_hz = static_cast<double>(doppler);
                     d_gnss_synchro->Acq_samplestamp_samples = samp_count;

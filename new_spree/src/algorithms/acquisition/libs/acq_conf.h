@@ -58,6 +58,7 @@ public:
     bool make_2_steps;
     bool use_automatic_resampler;
     float resampler_ratio;
+    bool spoofing_detection;
     int64_t resampled_fs;
     uint32_t resampler_latency_samples;
     std::string dump_filename;
