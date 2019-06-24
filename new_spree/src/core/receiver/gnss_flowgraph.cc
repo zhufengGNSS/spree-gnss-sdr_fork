@@ -728,10 +728,13 @@ void GNSSFlowgraph::connect()
     for (unsigned int i = 0; i < channels_count_; i++)
         {
             LOG(INFO) << "Channel " << i << " assigned to " << channels_.at(i)->get_signal();
-            
+            AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), i);
+            available_GPS_1C_signals_.pop_front();
             if (channels_state_[i] == 1)
                 {
                     channels_.at(i)->start_acquisition();
+                    available_GPS_1C_signals_.pop_front();
+                    LOG(INFO) << "Channel " << i << " assigned to " << available_GPS_1C_signals_.front();
                     LOG(INFO) << "Channel " << i << " connected to observables and ready for acquisition";
                 }
             else
@@ -1254,10 +1257,16 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                         if(nr_acq_peaks+inactive < nr_acq )
                         {
                             DLOG(INFO) << "pushing back sat " << acq_PRN << " ch " << who << " nr acq peaks " << nr_acq_peaks;  
-                            available_GPS_1C_signals_.remove(channels_.at(who)->get_signal());
+                            //available_GPS_1C_signals_.remove(channels_.at(who)->get_signal());
+                            available_GPS_1C_signals_.push_back(channels_.at(who)->get_signal());
                             acquire_sat_again = true;
                         }   
                     }
+                    else
+                    {
+                        available_GPS_1C_signals_.remove(channels_.at(who)->get_signal());
+                    }
+                    
                     break;
 
                 case evGPS_2S:
@@ -1313,7 +1322,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                             channels_state_[i] = 1;
                             if (sat_ == 0)
                                 {
-                                    channels_[i]->set_signal(search_next_signal(channels_[i]->get_signal().get_signal_str(), true, true));
+                                    channels_[i]->set_signal(search_next_signal(channels_[i]->get_signal().get_signal_str(), i, true, true));
                                 }
                             acq_channels_count_++;
                             DLOG(INFO) << "Channel " << i << " Starting acquisition " << channels_[i]->get_signal().get_satellite() << ", Signal " << channels_[i]->get_signal().get_signal_str();
@@ -1332,8 +1341,12 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         case 2:
             LOG(INFO) << "Channel " << who << " TRK FAILED satellite " << channels_[who]->get_signal().get_satellite();
             DLOG(INFO) << "Number of channels in acquisition = " << acq_channels_count_;
+            srand (time(NULL));
+            int iSecret;
 
+            iSecret = rand() % 100000 + 1;
             channels_.at(who)->set_state(2);
+            PRN = channels_[who]->get_signal().get_satellite().get_PRN();
             
             if(spoofing_detection)
             {
@@ -1359,9 +1372,18 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                     #ifndef ENABLE_FPGA
                         if(spoofing_detection)
                         {
-                            AssignACQState(channels_[who]->get_signal().get_satellite().get_PRN(), who);
+                            printf("\n[IF] %d: there a problem?\n", iSecret);
+                            while (channels_.at(who)->get_signal().get_satellite().get_system() != available_GPS_1C_signals_.front().get_satellite().get_system())
+                            {
+                                available_GPS_1C_signals_.push_back(available_GPS_1C_signals_.front());
+                                available_GPS_1C_signals_.pop_front();
+                            }
+                            channels_[who]->set_signal(search_next_signal(channels_[who]->get_signal().get_signal_str(), who, true));
+                            //available_GPS_1C_signals_.pop_front();
                         }
+                        
                         channels_[who]->start_acquisition();
+                        printf("\n[IF] %d: NOPE\n", iSecret);
                     #else
                         // create a task for the FPGA such that it doesn't stop the flow
                         std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[who]);
@@ -1419,7 +1441,17 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                         }
                     if(spoofing_detection)
                     {
+                        printf("\n[ELSE] %d: there a problem?\n", iSecret);
+                        // while (channels_.at(who)->get_signal().get_satellite().get_system() != available_GPS_1C_signals_.front().get_satellite().get_system())
+                        // {
+                        //     available_GPS_1C_signals_.push_back(available_GPS_1C_signals_.front());
+                        //     available_GPS_1C_signals_.pop_front();
+                        // }
+                        channels_[who]->set_signal(search_next_signal(channels_[who]->get_signal().get_signal_str(), who, true));
+                        available_GPS_1C_signals_.pop_front();
                         channels_[who]->start_acquisition();
+                        printf("\n[ELSE] %d: NOPE\n", iSecret);
+                        
                     }
                 }
             break;
@@ -1804,7 +1836,7 @@ void GNSSFlowgraph::init()
     mapStringValues_["B3"] = evBDS_B3;
 
     spoofing_detection = configuration_->property("Spoofing.APT", false);
-    spoofing_detection = false;
+    //  spoofing_detection = false;
 
     nr_acq = configuration_->property("Spoofing.APT_ch_per_sat", 2);
 
@@ -2001,6 +2033,9 @@ void GNSSFlowgraph::set_signals_list()
             // Assign peaks to channels
             for(int i = 0;i < configuration_->property("Channels_1C.count", 0); i++)
             {
+                // Gnss_Signal signal_value = Gnss_Signal(Gnss_Satellite("GPS", gnss_it->get_satellite().get_PRN()), "1C");
+                // available_GPS_1C_signals_.remove(signal_value);
+                // available_GPS_1C_signals_.insert(gnss_it, signal_value);
                 AssignACQState(gnss_it->get_satellite().get_PRN(), i);
                 gnss_it++;
             }
@@ -2228,6 +2263,10 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
                                     Gnss_Signal gs = Gnss_Signal(result.get_satellite(), "1C");
                                     available_GPS_1C_signals_.remove(gs);
                                     available_GPS_1C_signals_.push_front(gs);
+                                    if(spoofing_detection)
+                                    {
+                                        AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), channel_id);
+                                    }
                                 }
                             if (untracked_satellite and configuration_->property("Channels_L5.count", 0) > 0)
                                 {
@@ -2237,10 +2276,7 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
                                 }
                         }
                 }
-            if(spoofing_detection)
-            {
-                AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), channel_id);
-            }
+            
             break;
 
         case evGPS_L5:
@@ -2266,6 +2302,10 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
                                     Gnss_Signal gs = Gnss_Signal(result.get_satellite(), "1C");
                                     available_GPS_1C_signals_.remove(gs);
                                     available_GPS_1C_signals_.push_front(gs);
+                                    if(spoofing_detection)
+                                    {
+                                        AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), channel_id);
+                                    }
                                 }
                             if (untracked_satellite and configuration_->property("Channels_2S.count", 0) > 0)
                                 {
