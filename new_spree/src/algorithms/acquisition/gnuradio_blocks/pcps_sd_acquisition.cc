@@ -1175,7 +1175,7 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                         DLOG(INFO) << "### peaks: ###";
                         for (rit=d_highest_peaks_reduced.rbegin(); rit!=d_highest_peaks_reduced.rend(); ++rit)
                         {
-                            if(i == 1)
+                            if(i == d_peak)
                             {
                                 found_peak = true; 
                                 LOG(WARNING) << "!!! peak found !!!";
@@ -1186,18 +1186,6 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                                 d_gnss_synchro->Acq_delay_samples = rit->second.code_phase; 
                                 d_gnss_synchro->Acq_doppler_hz = rit->second.doppler; 
                             }
-                            // else if(i == d_peak - 1 && d_gnss_synchro->Channel_ID % 2 != 0)
-                            // {
-                            //     found_peak = true; 
-                            //     LOG(WARNING) << "!!! peak found !!!";
-                            //     LOG(WARNING) << "peak " << rit->first; 
-                            //     LOG(WARNING) << "d_peak " << d_peak-1; 
-                            //     LOG(WARNING) << "code phase " << rit->second.code_phase; 
-                            //     d_test_statistics = rit->first/ d_input_power; 
-                            //     d_gnss_synchro->Acq_delay_samples = rit->second.code_phase; 
-                            //     d_gnss_synchro->Acq_doppler_hz = rit->second.doppler; 
-                            // }
-                            
                             ++i;
                         }
                     }

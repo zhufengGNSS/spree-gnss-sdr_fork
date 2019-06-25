@@ -1366,13 +1366,13 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 
             if (acq_channels_count_ < max_acq_channels_)
                 {
-                    //channels_state_[who] = 1;
+                    channels_state_[who] = 1;
                     acq_channels_count_++;
                     LOG(INFO) << "Channel " << who << " Starting acquisition " << channels_[who]->get_signal().get_satellite() << ", Signal " << channels_[who]->get_signal().get_signal_str();
                     #ifndef ENABLE_FPGA
                         if(spoofing_detection)
                         {
-                            printf("\n[IF] %d: there a problem?\n", applied_actions_+1);
+                            //printf("\n[IF] %d: there a problem?\n", applied_actions_+1);
                             // while (channels_.at(who)->get_signal().get_satellite().get_system() != available_GPS_1C_signals_.front().get_satellite().get_system())
                             // {
                             //     available_GPS_1C_signals_.push_back(available_GPS_1C_signals_.front());
@@ -1383,7 +1383,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                         }
                         
                         //channels_[who]->start_acquisition();
-                        printf("\n[IF] %d: NOPE\n", applied_actions_+1);
+                        //printf("\n[IF] %d: NOPE\n", applied_actions_+1);
                     #else
                         // create a task for the FPGA such that it doesn't stop the flow
                         std::thread tmp_thread(&ChannelInterface::start_acquisition, channels_[who]);
@@ -1392,7 +1392,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                 }
             else
                 {
-                    //channels_state_[who] = 2;
+                    channels_state_[who] = 0;
                     LOG(INFO) << "Channel " << who << " Idle state";
                     if (sat == 0)
                         {
@@ -1442,7 +1442,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                         }
                     if(spoofing_detection)
                     {
-                        printf("\n[ELSE] %d: there a problem?\n", applied_actions_+1);
+                        //printf("\n[ELSE] %d: there a problem?\n", applied_actions_+1);
                         // while (channels_.at(who)->get_signal().get_satellite().get_system() != available_GPS_1C_signals_.front().get_satellite().get_system())
                         // {
                         //     available_GPS_1C_signals_.push_back(available_GPS_1C_signals_.front());
@@ -1451,7 +1451,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                         channels_[who]->set_signal(search_next_signal(channels_[who]->get_signal().get_signal_str(), who, false));
                         //available_GPS_1C_signals_.pop_front();
                         
-                        printf("\n[ELSE] %d: NOPE\n %d", applied_actions_+1, who);
+                        //printf("\n[ELSE] %d: NOPE\n %d", applied_actions_+1, who);
                         
                     }
                 }
@@ -2499,22 +2499,21 @@ void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
 {
     LOG(INFO) << "assign peak ";
     LOG(INFO) << "nr acq peak " << nr_acquired_peaks[PRN];
-    //if(nr_acquired_peaks[PRN] < nr_acq )
-    //{
+    if(nr_acquired_peaks[PRN] < nr_acq )
+    {
         //find highest peak that is not being tracked.
-    nr_acquired_peaks[PRN] += 1;
-    int peak = next_peak[PRN];
-    if(peak > 5)
-        peak = 1;
-    next_peak.at(PRN) = peak+1;
-    channels_.at(who)->set_peak(peak);
-    channel_to_peak[who] = peak;
-    //}
-    /* else
+        nr_acquired_peaks[PRN] += 1;
+        int peak = next_peak[PRN];
+        if(peak > 5)
+            peak = 1;
+        next_peak.at(PRN) = peak+1;
+        channels_.at(who)->set_peak(peak);
+        channel_to_peak[who] = peak;
+    }
+    else
     {
         LOG(INFO) <<  "Satellite "<< PRN << " should not be acquired again";
         LOG(INFO) << nr_acquired_peaks.at(PRN); 
 
     }
-    */
 }
