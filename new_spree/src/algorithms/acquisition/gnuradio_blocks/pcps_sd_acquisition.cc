@@ -614,8 +614,6 @@ std::map<float, pcps_sd_acquisition::Peak> pcps_sd_acquisition::max_to_input_pow
 
             if(acquire_auxiliary_peaks && acq_parameters.spoofing_detection)
             {
-               
-
                 for(int j = 0; j < d_fft_size; j++)
                 {
                     peaks.push_back(d_magnitude_grid[i][j]);
@@ -805,7 +803,7 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
         {
             DLOG(INFO) << "acquire aux";
             acquire_auxiliary_peaks = true;
-            //d_peak = 2;
+            //d_peak = d_peak + 1;
         }
     std::vector<float> peaks;
 
