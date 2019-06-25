@@ -523,14 +523,14 @@ int pcps_sd_acquisition_cc::general_work(int noutput_items,
             
                 }
 
-           std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-           auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>( t2 - t1 ).count();
-           DLOG(INFO) << "duration " << acquire_auxiliary_peaks << " " << duration;
+            std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>( t2 - t1 ).count();
+            DLOG(INFO) << "duration " << acquire_auxiliary_peaks << " " << duration;
 
-           if(acquire_auxiliary_peaks)
-           {
-               //found_peak = false; 
-               //d_test_statistics = 0;
+            if(acquire_auxiliary_peaks)
+            {
+                //found_peak = false; 
+                //d_test_statistics = 0;
            }
 
             DLOG(INFO) << "found peak: " << found_peak << " aux " << acquire_auxiliary_peaks ;

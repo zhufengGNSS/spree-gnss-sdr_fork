@@ -51,7 +51,7 @@ channel_msg_receiver_cc::channel_msg_receiver_cc(std::shared_ptr<ChannelFsm> cha
     this->set_msg_handler(pmt::mp("events"), boost::bind(&channel_msg_receiver_cc::msg_handler_events, this, _1));
 
     d_channel_fsm = std::move(channel_fsm);
-    d_repeat = repeat;
+    d_repeat = true;
 }
 
 

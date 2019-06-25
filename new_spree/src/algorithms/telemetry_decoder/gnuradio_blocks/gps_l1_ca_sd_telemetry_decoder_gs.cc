@@ -182,7 +182,8 @@ void gps_l1_ca_sd_telemetry_decoder_gs::set_channel(int32_t channel)
 {
     d_channel = channel;
     d_nav.i_channel_ID = channel;
-    DLOG(INFO) << "Navigation channel set to " << channel;
+    LOG(WARNING) << "Navigation channel set to " << channel << " PRN: " << d_satellite;
+       
     // ############# ENABLE DATA FILE LOG #################
     if (d_dump == true)
         {
@@ -437,20 +438,20 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
                                 d_stat = 2;
                             }
                         else
+                        {
+                            if (preamble_diff > d_preamble_period_symbols)
                             {
-                                if (preamble_diff > d_preamble_period_symbols)
-                                {
-                                    d_stat = 0;  // start again
-                                    flag_TOW_set = false;
-                                }
-                                else if (preamble_diff > GPS_SUBFRAME_MS+1000)
-                                {
-                                    DLOG(INFO) << "No frame sync SAT: " <<  this->d_satellite << " preamble_diff= " << preamble_diff << "\n"
-                                            << "Send stop tracking to tracking module for sat " << this->d_satellite << " ch: " << d_channel;
-                                    stop_tracking(uid);
-                                }
-
+                                d_stat = 0;  // start again
+                                flag_TOW_set = false;
                             }
+                            else if (preamble_diff > GPS_SUBFRAME_MS+1000)
+                            {
+                                DLOG(INFO) << "No frame sync SAT: " <<  this->d_satellite << " preamble_diff= " << preamble_diff << "\n"
+                                        << "Send stop tracking to tracking module for sat " << this->d_satellite << " ch: " << d_channel;
+                                stop_tracking(uid);
+                            }
+
+                        }
                     }
                 break;
             }
@@ -499,15 +500,15 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
     if (d_flag_preamble == true)
         {
             if (!(d_nav.d_TOW == 0))
-                {
-                    d_TOW_at_current_symbol_ms = static_cast<uint32_t>(d_nav.d_TOW * 1000.0);
-                    d_TOW_at_Preamble_ms = static_cast<uint32_t>(d_nav.d_TOW * 1000.0);
-                    flag_TOW_set = true;
-                }
+            {
+                d_TOW_at_current_symbol_ms = static_cast<uint32_t>(d_nav.d_TOW * 1000.0);
+                d_TOW_at_Preamble_ms = static_cast<uint32_t>(d_nav.d_TOW * 1000.0);
+                flag_TOW_set = true;
+            }
             else
-                {
-                    DLOG(INFO) << "Received GPS L1 TOW equal to zero at sat " << d_nav.i_satellite_PRN;
-                }
+            {
+                DLOG(INFO) << "Received GPS L1 TOW equal to zero at sat " << d_nav.i_satellite_PRN;
+            }
         }
     else
         {
@@ -532,20 +533,20 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
                 {
                     // MULTIPLEXED FILE RECORDING - Record results to file
                     try
-                        {
-                            double tmp_double;
-                            uint64_t tmp_ulong_int;
-                            tmp_double = static_cast<double>(d_TOW_at_current_symbol_ms) / 1000.0;
-                            d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
-                            tmp_ulong_int = current_symbol.Tracking_sample_counter;
-                            d_dump_file.write(reinterpret_cast<char *>(&tmp_ulong_int), sizeof(uint64_t));
-                            tmp_double = static_cast<double>(d_TOW_at_Preamble_ms) / 1000.0;
-                            d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
-                        }
+                    {
+                        double tmp_double;
+                        uint64_t tmp_ulong_int;
+                        tmp_double = static_cast<double>(d_TOW_at_current_symbol_ms) / 1000.0;
+                        d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
+                        tmp_ulong_int = current_symbol.Tracking_sample_counter;
+                        d_dump_file.write(reinterpret_cast<char *>(&tmp_ulong_int), sizeof(uint64_t));
+                        tmp_double = static_cast<double>(d_TOW_at_Preamble_ms) / 1000.0;
+                        d_dump_file.write(reinterpret_cast<char *>(&tmp_double), sizeof(double));
+                    }
                     catch (const std::ifstream::failure &e)
-                        {
-                            LOG(WARNING) << "Exception writing observables dump file " << e.what();
-                        }
+                    {
+                        LOG(WARNING) << "Exception writing observables dump file " << e.what();
+                    }
                 }
 
             // 3. Make the output (copy the object contents to the GNU Radio reserved memory)

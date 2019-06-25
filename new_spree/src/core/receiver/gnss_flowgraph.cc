@@ -1340,7 +1340,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 
         case 2:
             LOG(INFO) << "Channel " << who << " TRK FAILED satellite " << channels_[who]->get_signal().get_satellite();
-            DLOG(INFO) << "Number of channels in acquisition = " << acq_channels_count_;
+            LOG(INFO) << "Number of channels in acquisition = " << acq_channels_count_;
             //srand (time(NULL));
             //int iSecret;
 
@@ -1366,7 +1366,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 
             if (acq_channels_count_ < max_acq_channels_)
                 {
-                    channels_state_[who] = 2;
+                    //channels_state_[who] = 1;
                     acq_channels_count_++;
                     LOG(INFO) << "Channel " << who << " Starting acquisition " << channels_[who]->get_signal().get_satellite() << ", Signal " << channels_[who]->get_signal().get_signal_str();
                     #ifndef ENABLE_FPGA
@@ -1392,7 +1392,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                 }
             else
                 {
-                    channels_state_[who] = 2;
+                    //channels_state_[who] = 2;
                     LOG(INFO) << "Channel " << who << " Idle state";
                     if (sat == 0)
                         {
@@ -1438,7 +1438,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                                     LOG(ERROR) << "This should not happen :-(";
                                     break;
                                 }
-                            //acq_channels_count_--;
+                            acq_channels_count_--;
                         }
                     if(spoofing_detection)
                     {
@@ -1446,12 +1446,12 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                         // while (channels_.at(who)->get_signal().get_satellite().get_system() != available_GPS_1C_signals_.front().get_satellite().get_system())
                         // {
                         //     available_GPS_1C_signals_.push_back(available_GPS_1C_signals_.front());
-                        //     available_GPS_1C_signals_.pop_front();
+                        available_GPS_1C_signals_.pop_front();
                         // }
                         channels_[who]->set_signal(search_next_signal(channels_[who]->get_signal().get_signal_str(), who, false));
                         //available_GPS_1C_signals_.pop_front();
                         
-                        printf("\n[ELSE] %d: NOPE\n", applied_actions_+1);
+                        printf("\n[ELSE] %d: NOPE\n %d", applied_actions_+1, who);
                         
                     }
                 }
@@ -2499,21 +2499,22 @@ void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
 {
     LOG(INFO) << "assign peak ";
     LOG(INFO) << "nr acq peak " << nr_acquired_peaks[PRN];
-    if(nr_acquired_peaks[PRN] < nr_acq )
-    {
+    //if(nr_acquired_peaks[PRN] < nr_acq )
+    //{
         //find highest peak that is not being tracked.
-        nr_acquired_peaks[PRN] += 1;
-        int peak = next_peak[PRN];
-        if(peak > 5)
-            peak = 1;
-        next_peak.at(PRN) = peak+1;
-        channels_.at(who)->set_peak(peak);
-        channel_to_peak[who] = peak;
-    }
-    else
+    nr_acquired_peaks[PRN] += 1;
+    int peak = next_peak[PRN];
+    if(peak > 5)
+        peak = 1;
+    next_peak.at(PRN) = peak+1;
+    channels_.at(who)->set_peak(peak);
+    channel_to_peak[who] = peak;
+    //}
+    /* else
     {
         LOG(INFO) <<  "Satellite "<< PRN << " should not be acquired again";
         LOG(INFO) << nr_acquired_peaks.at(PRN); 
 
     }
+    */
 }
