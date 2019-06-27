@@ -194,7 +194,7 @@ void Spoofing_Detector::spoofing_detected(Spoofing_Message msg)
     s << '+' << std::setw(width-2) << std::setfill('-') << "+\n\n"; 
 
     std::cout << s.str();
-    DLOG(INFO) << sp << " " << description;
+    LOG(INFO) << sp << " " << description;
 
     global_spoofing_queue.push(msg);
     for(std::set<unsigned int>::iterator it = msg.satellites.begin(); it != msg.satellites.end(); it++)
@@ -261,13 +261,13 @@ void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week,
 
     std::map<int, double> old_GPS_time;
     old_GPS_time = global_last_gps_time.get_map_copy();
-    //DLOG(INFO) << "TOW " << new_TOW << " " << new_week << " " << old_GPS_time.size();
+    //LOG(INFO) << "TOW " << new_TOW << " " << new_week << " " << old_GPS_time.size();
 
     int old_gps_time, new_gps_time;
     double duration;
     if(old_GPS_time.size() > 2)
     {
-        DLOG(INFO) << "TOW " << new_TOW << " " << new_week << "\n"
+        LOG(INFO) << "TOW " << new_TOW << " " << new_week << "\n"
                    << "old TOW " << old_GPS_time.at(0) << " " << old_GPS_time.at(1);
         if( old_GPS_time.at(0) == 0)
             old_GPS_time.at(0) = new_week;
@@ -280,7 +280,7 @@ void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week,
         new_gps_time = new_week*seconds_per_week+new_TOW;
         //duration = round((current_timestamp_ms-old_timestamp_ms)/1000.0);
         duration = (current_timestamp_ms-old_timestamp_ms)/1000.0;
-        //DLOG(INFO) << "check new TOW " << duration << " " << std::abs(new_gps_time-old_gps_time);
+        //LOG(INFO) << "check new TOW " << duration << " " << std::abs(new_gps_time-old_gps_time);
 
         if( std::abs(std::abs(new_gps_time-old_gps_time)-duration) > d_NAVI_TOW_max_discrepancy) 
             {
@@ -664,7 +664,7 @@ void Spoofing_Detector::check_GPS_time()
             TOW = GPS_week*604800+gps_time.TOW;
             GPS_TOW.insert(TOW);
             subframe_IDs.insert(gps_time.subframe_id);
-            DLOG(INFO) << "ts " << gps_time.timestamp << " TOW: " << TOW << " subframe: " << gps_time.subframe_id << " " << it->first;
+            LOG(INFO) << "ts " << gps_time.timestamp << " TOW: " << TOW << " subframe: " << gps_time.subframe_id << " " << it->first;
         }
 
 
@@ -684,11 +684,11 @@ void Spoofing_Detector::check_GPS_time()
 
         for(std::set<int>::iterator it = GPS_TOW.begin(); it != GPS_TOW.end(); ++it)
             {
-                DLOG(INFO) << "TOW " << *it; 
+                LOG(INFO) << "TOW " << *it; 
             }
         for(std::set<int>::iterator it = subframe_IDs.begin(); it != subframe_IDs.end(); ++it)
             {
-                DLOG(INFO) << "subframe " << *it; 
+                LOG(INFO) << "subframe " << *it; 
             }
     }
 }
@@ -778,7 +778,7 @@ double get_var(boost::circular_buffer<double> a)
     double sum = 0;
     if( a.size() == 0)
         {
-            DLOG(INFO) << "vectors are empty, can't calculate convariance";
+            LOG(INFO) << "vectors are empty, can't calculate convariance";
             return 0;
         }
 
@@ -868,7 +868,7 @@ double get_cov(boost::circular_buffer<double> a, boost::circular_buffer<double> 
         }
     if( a.size() == 0)
         {
-            DLOG(INFO) << "vectors are empty, can't calculate convariance";
+            LOG(INFO) << "vectors are empty, can't calculate convariance";
             return 0;
         }
 
@@ -981,7 +981,7 @@ double Spoofing_Detector::get_corr(boost::circular_buffer<double> a, boost::circ
     unsigned int window_size = 1e3;
     if(a.size() < window_size || b.size() < window_size)
         {
-            //DLOG(INFO) << "don't have enough SNR values to calculate correlation";
+            //LOG(INFO) << "don't have enough SNR values to calculate correlation";
             return 0; 
         }
     
@@ -1061,11 +1061,11 @@ bool Spoofing_Detector::stop_tracking(unsigned int PRN, unsigned int uid)
     unsigned int min_uid = uid; 
     int n = 0;     
 
-    //DLOG(INFO) << "checked?: ";
+    //LOG(INFO) << "checked?: ";
     for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
     {
         subframe = it->second;
-        //DLOG(INFO) << "uid: " << it->first << " sub: " << subframe.subframe_id ;
+        //LOG(INFO) << "uid: " << it->first << " sub: " << subframe.subframe_id ;
         
         if(subframe.PRN != PRN) 
             continue;
@@ -1081,7 +1081,7 @@ bool Spoofing_Detector::stop_tracking(unsigned int PRN, unsigned int uid)
 
     //stop tracking if the channel has been checked against all others and
     //it isn't tracking the lowest numbered peak and no spoofing has been detected 
-    DLOG(INFO) << "Stop tracking ? " << subframe_ids.size() << " " << n << " " << uid << " " << min_uid;
+    LOG(INFO) << "Stop tracking ? " << subframe_ids.size() << " " << n << " " << uid << " " << min_uid;
     if( subframe_ids.size() == 1 && n > 1 && uid > min_uid) 
         {
             std::map<int, bool> spoofing_status = global_spoofing_status.get_map_copy();
@@ -1101,7 +1101,7 @@ bool Spoofing_Detector::stop_tracking(unsigned int PRN, unsigned int uid)
  */
 void Spoofing_Detector::check_RX_time(unsigned int PRN)
 {
-    DLOG(INFO) << "check rx time";
+    LOG(INFO) << "check rx time";
 
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
      
@@ -1127,7 +1127,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
         if(subframe.PRN != PRN)
             continue;
 
-    //    DLOG(INFO) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
+        LOG(ERROR) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
     
         if(smallest.timestamp > subframe.timestamp) 
         {
@@ -1146,6 +1146,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
     bool spoofed = false;
     int diff = 0;
 
+    LOG(ERROR) << "Diff "  << std::abs(largest_t-smallest_t) << " : Time- " << d_APT_max_rx_discrepancy;
     if(std::abs(largest_t-smallest_t) >= d_APT_max_rx_discrepancy)
         {
             if(largest.subframe_id != smallest.subframe_id)
@@ -1168,7 +1169,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
             std::stringstream s;
             std::stringstream sr;
             s << "Auxiliary peak detected for satellite " << PRN << "\n";
-            s << "Peak seperation: " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns]\n"; 
+            s << "Peak seperation: " << std::setprecision(16) << std::abs(largest_t-smallest_t) << " [ns]\n"; 
             s << "Pseudorange change: " << std::setprecision(16) << distance <<" [m]\n"; 
             Spoofing_Message msg;
             msg.spoofing_case = 1;
@@ -1177,7 +1178,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
             msg.description = s.str();
 
             sr << "At " << largest_t/1e3 << " s an auxiliary peak was detected for satellite " << PRN
-               << " with peak seperation of " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns] which translates to a" 
+               << " with peak seperation of " << std::setprecision(16) << std::abs(largest_t-smallest_t) << " [ns] which translates to a" 
                << " pseudorange change of " << std::setprecision(16) << distance <<" [m]. "
                << "SPREE is configured to raise an alarm if a peak seperation of more than " << d_APT_max_rx_discrepancy*1e6 << " [ns] is detected.\n"; 
             
@@ -1193,20 +1194,20 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
  */
 bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB)
 {
-        DLOG(INFO) << "check subframe "<< subframeA.subframe_id << std::endl
+        LOG(INFO) << "check subframe "<< subframeA.subframe_id << std::endl
         << subframeA.subframe << std::endl
         << subframeB.subframe;
 
         //one of the ephemeris data has not been updated.
         if(subframeA.timestamp == 0 ||  subframeB.timestamp == 0)
             {
-                DLOG(INFO) << "Subframes timestamps are zero";
+                LOG(INFO) << "Subframes timestamps are zero";
                 return 0;
             }
 
         if( subframeA.toa != subframeB.toa && subframeA.PRN != subframeB.PRN)
             {
-                DLOG(INFO) << "Almanac data doesn't have the same toa";
+                LOG(INFO) << "Almanac data doesn't have the same toa";
                 //std::cout << "Almanac data doesn't have the same toa" << std::endl;
                 return 1;
             }
@@ -1215,7 +1216,7 @@ bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB
         //one of the ephemeris data has not been updated.
         if(std::abs(subframeA.timestamp -subframeB.timestamp) > 3000)
             {
-                DLOG(INFO) << "Subframes timestamps differ more than one" << std::endl
+                LOG(INFO) << "Subframes timestamps differ more than one" << std::endl
                 << subframeA.timestamp << " " << subframeB.timestamp << std::endl
                 << subframeA.subframe_id << " " << subframeB.subframe_id << std::endl
                 << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
@@ -1248,7 +1249,7 @@ bool Spoofing_Detector::compare_subframes(Subframe subframeA, Subframe subframeB
             }
         else
             {
-                DLOG(INFO) << " subframes: " << std::endl
+                LOG(INFO) << " subframes: " << std::endl
                 << subframeA.timestamp << " " << subframeB.timestamp << std::endl
                 << subframeA.subframe_id << " " << subframeB.subframe_id << std::endl
                 << subframeA.subframe << std::endl << subframeB.subframe << std::endl;
@@ -1271,7 +1272,7 @@ void Spoofing_Detector::check_APT_subframe(unsigned int uid, unsigned int subfra
         }
     else
         {
-            DLOG(INFO) << "check subframe - but subframe for sat " << uid << " subframe: " << subframe_id << " not in subframe map"; 
+            LOG(INFO) << "check subframe - but subframe for sat " << uid << " subframe: " << subframe_id << " not in subframe map"; 
             return;
         }
 
@@ -1282,8 +1283,8 @@ void Spoofing_Detector::check_APT_subframe(unsigned int uid, unsigned int subfra
         if( subframeB.PRN != subframeA.PRN)
             continue;
 
-        DLOG(INFO) << "subframeB " << subframeB.subframe_id << " " << idB << " " << subframeB.PRN;
-        DLOG(INFO) <<  (subframeB.subframe_id != subframe_id) << " " << (idB == idA);
+        LOG(INFO) << "subframeB " << subframeB.subframe_id << " " << idB << " " << subframeB.PRN;
+        LOG(INFO) <<  (subframeB.subframe_id != subframe_id) << " " << (idB == idA);
         if(subframeB.subframe_id != subframe_id || idB == idA)
             continue;
         
@@ -1297,7 +1298,7 @@ void Spoofing_Detector::check_APT_subframe(unsigned int uid, unsigned int subfra
 void Spoofing_Detector::check_inter_satellite_subframe(unsigned int uid, unsigned int subframe_id)
 {
  //   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();                                                                                                          
-//    DLOG(INFO) << "check subframe " << subframe_id << " for " << uid;
+//    LOG(INFO) << "check subframe " << subframe_id << " for " << uid;
 
     Subframe subframeA, subframeB;
     unsigned int idA, idB;
@@ -1309,7 +1310,7 @@ void Spoofing_Detector::check_inter_satellite_subframe(unsigned int uid, unsigne
         }
     else
         {
-            DLOG(INFO) << "check subframe - but subframe for sat " << uid << " subframe: " << subframe_id << " not in subframe map"; 
+            LOG(INFO) << "check subframe - but subframe for sat " << uid << " subframe: " << subframe_id << " not in subframe map"; 
             return;
         }
 
@@ -1317,8 +1318,8 @@ void Spoofing_Detector::check_inter_satellite_subframe(unsigned int uid, unsigne
     {
         subframeB = it->second;
         idB = it->first;
-        DLOG(INFO) << "subframeB " << subframeB.subframe_id << " " << idB << " " << subframeB.PRN;
-        DLOG(INFO) <<  (subframeB.subframe_id != subframe_id) << " " << (idB == idA);
+        LOG(INFO) << "subframeB " << subframeB.subframe_id << " " << idB << " " << subframeB.PRN;
+        LOG(INFO) <<  (subframeB.subframe_id != subframe_id) << " " << (idB == idA);
         if(subframeB.subframe_id != subframe_id || idB == idA)
             continue;
         
@@ -1327,7 +1328,7 @@ void Spoofing_Detector::check_inter_satellite_subframe(unsigned int uid, unsigne
 /*
     std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();                                                                                                          
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>( t2 - t1 ).count(); 
-    DLOG(INFO) << "dur_sf: " << duration;
+    LOG(INFO) << "dur_sf: " << duration;
 */
 }
 
@@ -1697,7 +1698,7 @@ bool Spoofing_Detector::compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b)
 {
     if( a.i_satellite_PRN != b.i_satellite_PRN)
         {
-            DLOG(INFO) << "Comparing ephemeris of two different satellites";
+            LOG(INFO) << "Comparing ephemeris of two different satellites";
             return true;
         }
     bool the_same = true; 
@@ -1705,222 +1706,222 @@ bool Spoofing_Detector::compare_ephemeris(Gps_Ephemeris a, Gps_Ephemeris b)
     if( a.i_peak != b.i_peak )
         {
             the_same = false;
-            DLOG(INFO) << "i_peak not the same: " << a.i_peak << " " << b.i_peak;
+            LOG(INFO) << "i_peak not the same: " << a.i_peak << " " << b.i_peak;
         }
     if( a.d_TOW != b.d_TOW )
         {
             the_same = false;
-            DLOG(INFO) << "d_TOW not the same: " << a.d_TOW << " " << b.d_TOW;
+            LOG(INFO) << "d_TOW not the same: " << a.d_TOW << " " << b.d_TOW;
         }
     if( a.d_Crs != b.d_Crs )
         {
             the_same = false;
-            DLOG(INFO) << "d_Crs not the same: " << a.d_Crs << " " << b.d_Crs;
+            LOG(INFO) << "d_Crs not the same: " << a.d_Crs << " " << b.d_Crs;
         }
     if( a.d_Delta_n != b.d_Delta_n )
         {
             the_same = false;
-            DLOG(INFO) << "d_Delta_n not the same: " << a.d_Delta_n << " " << b.d_Delta_n;
+            LOG(INFO) << "d_Delta_n not the same: " << a.d_Delta_n << " " << b.d_Delta_n;
         }
     if( a.d_M_0 != b.d_M_0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_M_0 not the same: " << a.d_M_0 << " " << b.d_M_0;
+            LOG(INFO) << "d_M_0 not the same: " << a.d_M_0 << " " << b.d_M_0;
         }
     if( a.d_Cuc != b.d_Cuc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cuc not the same: " << a.d_Cuc << " " << b.d_Cuc;
+            LOG(INFO) << "d_Cuc not the same: " << a.d_Cuc << " " << b.d_Cuc;
         }
     if( a.d_e_eccentricity != b.d_e_eccentricity )
         {
             the_same = false;
-            DLOG(INFO) << "d_e_eccentricity not the same: " << a.d_e_eccentricity << " " << b.d_e_eccentricity;
+            LOG(INFO) << "d_e_eccentricity not the same: " << a.d_e_eccentricity << " " << b.d_e_eccentricity;
         }
     if( a.d_Cus != b.d_Cus )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cus not the same: " << a.d_Cus << " " << b.d_Cus;
+            LOG(INFO) << "d_Cus not the same: " << a.d_Cus << " " << b.d_Cus;
         }
     if( a.d_sqrt_A != b.d_sqrt_A )
         {
             the_same = false;
-            DLOG(INFO) << "d_sqrt_A not the same: " << a.d_sqrt_A << " " << b.d_sqrt_A;
+            LOG(INFO) << "d_sqrt_A not the same: " << a.d_sqrt_A << " " << b.d_sqrt_A;
         }
     if( a.d_Toe != b.d_Toe )
         {
             the_same = false;
-            DLOG(INFO) << "d_Toe not the same: " << a.d_Toe << " " << b.d_Toe;
+            LOG(INFO) << "d_Toe not the same: " << a.d_Toe << " " << b.d_Toe;
         }
     if( a.d_Toc != b.d_Toc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Toc not the same: " << a.d_Toc << " " << b.d_Toc;
+            LOG(INFO) << "d_Toc not the same: " << a.d_Toc << " " << b.d_Toc;
         }
     if( a.d_Cic != b.d_Cic )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cic not the same: " << a.d_Cic << " " << b.d_Cic;
+            LOG(INFO) << "d_Cic not the same: " << a.d_Cic << " " << b.d_Cic;
         }
     if( a.d_OMEGA0 != b.d_OMEGA0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA0 not the same: " << a.d_OMEGA0 << " " << b.d_OMEGA0;
+            LOG(INFO) << "d_OMEGA0 not the same: " << a.d_OMEGA0 << " " << b.d_OMEGA0;
         }
     if( a.d_Cis != b.d_Cis )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cis not the same: " << a.d_Cis << " " << b.d_Cis;
+            LOG(INFO) << "d_Cis not the same: " << a.d_Cis << " " << b.d_Cis;
         }
     if( a.d_i_0 != b.d_i_0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_i_0 not the same: " << a.d_i_0 << " " << b.d_i_0;
+            LOG(INFO) << "d_i_0 not the same: " << a.d_i_0 << " " << b.d_i_0;
         }
     if( a.d_Crc != b.d_Crc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Crc not the same: " << a.d_Crc << " " << b.d_Crc;
+            LOG(INFO) << "d_Crc not the same: " << a.d_Crc << " " << b.d_Crc;
         }
     if( a.d_OMEGA != b.d_OMEGA )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA not the same: " << a.d_OMEGA << " " << b.d_OMEGA;
+            LOG(INFO) << "d_OMEGA not the same: " << a.d_OMEGA << " " << b.d_OMEGA;
         }
     if( a.d_OMEGA_DOT != b.d_OMEGA_DOT )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA_DOT not the same: " << a.d_OMEGA_DOT << " " << b.d_OMEGA_DOT;
+            LOG(INFO) << "d_OMEGA_DOT not the same: " << a.d_OMEGA_DOT << " " << b.d_OMEGA_DOT;
         }
     if( a.d_IDOT != b.d_IDOT )
         {
             the_same = false;
-            DLOG(INFO) << "d_IDOT not the same: " << a.d_IDOT << " " << b.d_IDOT;
+            LOG(INFO) << "d_IDOT not the same: " << a.d_IDOT << " " << b.d_IDOT;
         }
     if( a.i_code_on_L2 != b.i_code_on_L2 )
         {
             the_same = false;
-            DLOG(INFO) << "i_code_on_L2 not the same: " << a.i_code_on_L2 << " " << b.i_code_on_L2;
+            LOG(INFO) << "i_code_on_L2 not the same: " << a.i_code_on_L2 << " " << b.i_code_on_L2;
         }
     if( a.i_GPS_week != b.i_GPS_week )
         {
             the_same = false;
-            DLOG(INFO) << "i_GPS_week not the same: " << a.i_GPS_week << " " << b.i_GPS_week;
+            LOG(INFO) << "i_GPS_week not the same: " << a.i_GPS_week << " " << b.i_GPS_week;
         }
     if( a.b_L2_P_data_flag != b.b_L2_P_data_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_L2_P_data_flag not the same: " << a.b_L2_P_data_flag << " " << b.b_L2_P_data_flag;
+            LOG(INFO) << "b_L2_P_data_flag not the same: " << a.b_L2_P_data_flag << " " << b.b_L2_P_data_flag;
         }
     if( a.i_SV_accuracy != b.i_SV_accuracy )
         {
             the_same = false;
-            DLOG(INFO) << "i_SV_accuracy not the same: " << a.i_SV_accuracy << " " << b.i_SV_accuracy;
+            LOG(INFO) << "i_SV_accuracy not the same: " << a.i_SV_accuracy << " " << b.i_SV_accuracy;
         }
     if( a.i_SV_health != b.i_SV_health )
         {
             the_same = false;
-            DLOG(INFO) << "i_SV_health not the same: " << a.i_SV_health << " " << b.i_SV_health;
+            LOG(INFO) << "i_SV_health not the same: " << a.i_SV_health << " " << b.i_SV_health;
         }
     if( a.d_TGD != b.d_TGD )
         {
             the_same = false;
-            DLOG(INFO) << "d_TGD not the same: " << a.d_TGD << " " << b.d_TGD;
+            LOG(INFO) << "d_TGD not the same: " << a.d_TGD << " " << b.d_TGD;
         }
     if( a.d_IODC != b.d_IODC )
         {
             the_same = false;
-            DLOG(INFO) << "d_IODC not the same: " << a.d_IODC << " " << b.d_IODC;
+            LOG(INFO) << "d_IODC not the same: " << a.d_IODC << " " << b.d_IODC;
         }
     if( a.i_AODO != b.i_AODO )
         {
             the_same = false;
-            DLOG(INFO) << "i_AODO not the same: " << a.i_AODO << " " << b.i_AODO;
+            LOG(INFO) << "i_AODO not the same: " << a.i_AODO << " " << b.i_AODO;
         }
     if( a.b_fit_interval_flag != b.b_fit_interval_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_fit_interval_flag not the same: " << a.b_fit_interval_flag << " " << b.b_fit_interval_flag;
+            LOG(INFO) << "b_fit_interval_flag not the same: " << a.b_fit_interval_flag << " " << b.b_fit_interval_flag;
         }
     if( a.d_spare1 != b.d_spare1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
+            LOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
         }
     if( a.d_spare2 != b.d_spare2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
+            LOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
         }
     if( a.d_A_f0 != b.d_A_f0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
+            LOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
         }
     if( a.d_A_f1 != b.d_A_f1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
+            LOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
         }
     if( a.d_A_f2 != b.d_A_f2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
+            LOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
         }
     if( a.b_integrity_status_flag != b.b_integrity_status_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
+            LOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
         }
     if( a.b_alert_flag != b.b_alert_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
+            LOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
         }
     if( a.b_antispoofing_flag != b.b_antispoofing_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
+            LOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
         }
     if( a.d_spare1 != b.d_spare1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
+            LOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
         }
     if( a.d_spare2 != b.d_spare2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
+            LOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
         }
     if( a.d_A_f0 != b.d_A_f0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
+            LOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
         }
     if( a.d_A_f1 != b.d_A_f1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
+            LOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
         }
     if( a.d_A_f2 != b.d_A_f2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
+            LOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
         }
     if( a.b_integrity_status_flag != b.b_integrity_status_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
+            LOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
         }
     if( a.b_alert_flag != b.b_alert_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
+            LOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
         }
     if( a.b_antispoofing_flag != b.b_antispoofing_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
+            LOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
         }
 
     return the_same;
@@ -1933,7 +1934,7 @@ bool Spoofing_Detector::compare_ephemeris_dTOW(Gps_Ephemeris a, Gps_Ephemeris b)
 {
     if( a.i_satellite_PRN != b.i_satellite_PRN)
         {
-            DLOG(INFO) << "Comparing ephemeris of two different satellites";
+            LOG(INFO) << "Comparing ephemeris of two different satellites";
             return true;
         }
     bool the_same = true; 
@@ -1941,217 +1942,217 @@ bool Spoofing_Detector::compare_ephemeris_dTOW(Gps_Ephemeris a, Gps_Ephemeris b)
     if( a.i_peak != b.i_peak )
         {
             the_same = false;
-            DLOG(INFO) << "i_peak not the same: " << a.i_peak << " " << b.i_peak;
+            LOG(INFO) << "i_peak not the same: " << a.i_peak << " " << b.i_peak;
         }
     if( a.d_Crs != b.d_Crs )
         {
             the_same = false;
-            DLOG(INFO) << "d_Crs not the same: " << a.d_Crs << " " << b.d_Crs;
+            LOG(INFO) << "d_Crs not the same: " << a.d_Crs << " " << b.d_Crs;
         }
     if( a.d_Delta_n != b.d_Delta_n )
         {
             the_same = false;
-            DLOG(INFO) << "d_Delta_n not the same: " << a.d_Delta_n << " " << b.d_Delta_n;
+            LOG(INFO) << "d_Delta_n not the same: " << a.d_Delta_n << " " << b.d_Delta_n;
         }
     if( a.d_M_0 != b.d_M_0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_M_0 not the same: " << a.d_M_0 << " " << b.d_M_0;
+            LOG(INFO) << "d_M_0 not the same: " << a.d_M_0 << " " << b.d_M_0;
         }
     if( a.d_Cuc != b.d_Cuc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cuc not the same: " << a.d_Cuc << " " << b.d_Cuc;
+            LOG(INFO) << "d_Cuc not the same: " << a.d_Cuc << " " << b.d_Cuc;
         }
     if( a.d_e_eccentricity != b.d_e_eccentricity )
         {
             the_same = false;
-            DLOG(INFO) << "d_e_eccentricity not the same: " << a.d_e_eccentricity << " " << b.d_e_eccentricity;
+            LOG(INFO) << "d_e_eccentricity not the same: " << a.d_e_eccentricity << " " << b.d_e_eccentricity;
         }
     if( a.d_Cus != b.d_Cus )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cus not the same: " << a.d_Cus << " " << b.d_Cus;
+            LOG(INFO) << "d_Cus not the same: " << a.d_Cus << " " << b.d_Cus;
         }
     if( a.d_sqrt_A != b.d_sqrt_A )
         {
             the_same = false;
-            DLOG(INFO) << "d_sqrt_A not the same: " << a.d_sqrt_A << " " << b.d_sqrt_A;
+            LOG(INFO) << "d_sqrt_A not the same: " << a.d_sqrt_A << " " << b.d_sqrt_A;
         }
     if( a.d_Toe != b.d_Toe )
         {
             the_same = false;
-            DLOG(INFO) << "d_Toe not the same: " << a.d_Toe << " " << b.d_Toe;
+            LOG(INFO) << "d_Toe not the same: " << a.d_Toe << " " << b.d_Toe;
         }
     if( a.d_Toc != b.d_Toc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Toc not the same: " << a.d_Toc << " " << b.d_Toc;
+            LOG(INFO) << "d_Toc not the same: " << a.d_Toc << " " << b.d_Toc;
         }
     if( a.d_Cic != b.d_Cic )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cic not the same: " << a.d_Cic << " " << b.d_Cic;
+            LOG(INFO) << "d_Cic not the same: " << a.d_Cic << " " << b.d_Cic;
         }
     if( a.d_OMEGA0 != b.d_OMEGA0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA0 not the same: " << a.d_OMEGA0 << " " << b.d_OMEGA0;
+            LOG(INFO) << "d_OMEGA0 not the same: " << a.d_OMEGA0 << " " << b.d_OMEGA0;
         }
     if( a.d_Cis != b.d_Cis )
         {
             the_same = false;
-            DLOG(INFO) << "d_Cis not the same: " << a.d_Cis << " " << b.d_Cis;
+            LOG(INFO) << "d_Cis not the same: " << a.d_Cis << " " << b.d_Cis;
         }
     if( a.d_i_0 != b.d_i_0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_i_0 not the same: " << a.d_i_0 << " " << b.d_i_0;
+            LOG(INFO) << "d_i_0 not the same: " << a.d_i_0 << " " << b.d_i_0;
         }
     if( a.d_Crc != b.d_Crc )
         {
             the_same = false;
-            DLOG(INFO) << "d_Crc not the same: " << a.d_Crc << " " << b.d_Crc;
+            LOG(INFO) << "d_Crc not the same: " << a.d_Crc << " " << b.d_Crc;
         }
     if( a.d_OMEGA != b.d_OMEGA )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA not the same: " << a.d_OMEGA << " " << b.d_OMEGA;
+            LOG(INFO) << "d_OMEGA not the same: " << a.d_OMEGA << " " << b.d_OMEGA;
         }
     if( a.d_OMEGA_DOT != b.d_OMEGA_DOT )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA_DOT not the same: " << a.d_OMEGA_DOT << " " << b.d_OMEGA_DOT;
+            LOG(INFO) << "d_OMEGA_DOT not the same: " << a.d_OMEGA_DOT << " " << b.d_OMEGA_DOT;
         }
     if( a.d_IDOT != b.d_IDOT )
         {
             the_same = false;
-            DLOG(INFO) << "d_IDOT not the same: " << a.d_IDOT << " " << b.d_IDOT;
+            LOG(INFO) << "d_IDOT not the same: " << a.d_IDOT << " " << b.d_IDOT;
         }
     if( a.i_code_on_L2 != b.i_code_on_L2 )
         {
             the_same = false;
-            DLOG(INFO) << "i_code_on_L2 not the same: " << a.i_code_on_L2 << " " << b.i_code_on_L2;
+            LOG(INFO) << "i_code_on_L2 not the same: " << a.i_code_on_L2 << " " << b.i_code_on_L2;
         }
     if( a.i_GPS_week != b.i_GPS_week )
         {
             the_same = false;
-            DLOG(INFO) << "i_GPS_week not the same: " << a.i_GPS_week << " " << b.i_GPS_week;
+            LOG(INFO) << "i_GPS_week not the same: " << a.i_GPS_week << " " << b.i_GPS_week;
         }
     if( a.b_L2_P_data_flag != b.b_L2_P_data_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_L2_P_data_flag not the same: " << a.b_L2_P_data_flag << " " << b.b_L2_P_data_flag;
+            LOG(INFO) << "b_L2_P_data_flag not the same: " << a.b_L2_P_data_flag << " " << b.b_L2_P_data_flag;
         }
     if( a.i_SV_accuracy != b.i_SV_accuracy )
         {
             the_same = false;
-            DLOG(INFO) << "i_SV_accuracy not the same: " << a.i_SV_accuracy << " " << b.i_SV_accuracy;
+            LOG(INFO) << "i_SV_accuracy not the same: " << a.i_SV_accuracy << " " << b.i_SV_accuracy;
         }
     if( a.i_SV_health != b.i_SV_health )
         {
             the_same = false;
-            DLOG(INFO) << "i_SV_health not the same: " << a.i_SV_health << " " << b.i_SV_health;
+            LOG(INFO) << "i_SV_health not the same: " << a.i_SV_health << " " << b.i_SV_health;
         }
     if( a.d_TGD != b.d_TGD )
         {
             the_same = false;
-            DLOG(INFO) << "d_TGD not the same: " << a.d_TGD << " " << b.d_TGD;
+            LOG(INFO) << "d_TGD not the same: " << a.d_TGD << " " << b.d_TGD;
         }
     if( a.d_IODC != b.d_IODC )
         {
             the_same = false;
-            DLOG(INFO) << "d_IODC not the same: " << a.d_IODC << " " << b.d_IODC;
+            LOG(INFO) << "d_IODC not the same: " << a.d_IODC << " " << b.d_IODC;
         }
     if( a.i_AODO != b.i_AODO )
         {
             the_same = false;
-            DLOG(INFO) << "i_AODO not the same: " << a.i_AODO << " " << b.i_AODO;
+            LOG(INFO) << "i_AODO not the same: " << a.i_AODO << " " << b.i_AODO;
         }
     if( a.b_fit_interval_flag != b.b_fit_interval_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_fit_interval_flag not the same: " << a.b_fit_interval_flag << " " << b.b_fit_interval_flag;
+            LOG(INFO) << "b_fit_interval_flag not the same: " << a.b_fit_interval_flag << " " << b.b_fit_interval_flag;
         }
     if( a.d_spare1 != b.d_spare1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
+            LOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
         }
     if( a.d_spare2 != b.d_spare2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
+            LOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
         }
     if( a.d_A_f0 != b.d_A_f0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
+            LOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
         }
     if( a.d_A_f1 != b.d_A_f1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
+            LOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
         }
     if( a.d_A_f2 != b.d_A_f2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
+            LOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
         }
     if( a.b_integrity_status_flag != b.b_integrity_status_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
+            LOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
         }
     if( a.b_alert_flag != b.b_alert_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
+            LOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
         }
     if( a.b_antispoofing_flag != b.b_antispoofing_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
+            LOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
         }
     if( a.d_spare1 != b.d_spare1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
+            LOG(INFO) << "d_spare1 not the same: " << a.d_spare1 << " " << b.d_spare1;
         }
     if( a.d_spare2 != b.d_spare2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
+            LOG(INFO) << "d_spare2 not the same: " << a.d_spare2 << " " << b.d_spare2;
         }
     if( a.d_A_f0 != b.d_A_f0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
+            LOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
         }
     if( a.d_A_f1 != b.d_A_f1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
+            LOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
         }
     if( a.d_A_f2 != b.d_A_f2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
+            LOG(INFO) << "d_A_f2 not the same: " << a.d_A_f2 << " " << b.d_A_f2;
         }
     if( a.b_integrity_status_flag != b.b_integrity_status_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
+            LOG(INFO) << "b_integrity_status_flag not the same: " << a.b_integrity_status_flag << " " << b.b_integrity_status_flag;
         }
     if( a.b_alert_flag != b.b_alert_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
+            LOG(INFO) << "b_alert_flag not the same: " << a.b_alert_flag << " " << b.b_alert_flag;
         }
     if( a.b_antispoofing_flag != b.b_antispoofing_flag )
         {
             the_same = false;
-            DLOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
+            LOG(INFO) << "b_antispoofing_flag not the same: " << a.b_antispoofing_flag << " " << b.b_antispoofing_flag;
         }
 
     return the_same;
@@ -2165,7 +2166,7 @@ bool Spoofing_Detector::compare_almanac(Gps_Almanac a, Gps_Almanac b)
 {
     if( a.i_satellite_PRN != b.i_satellite_PRN)
         {
-            DLOG(INFO) << "Comparing almanac data of two different satellites";
+            LOG(INFO) << "Comparing almanac data of two different satellites";
             return true;
         }
 
@@ -2173,59 +2174,59 @@ bool Spoofing_Detector::compare_almanac(Gps_Almanac a, Gps_Almanac b)
     if( a.d_Delta_i != b.d_Delta_i )
         {
             the_same = false;
-            DLOG(INFO) << "d_Delta_i not the same: " << a.d_Delta_i << " " << b.d_Delta_i;
+            LOG(INFO) << "d_Delta_i not the same: " << a.d_Delta_i << " " << b.d_Delta_i;
         }
     if( a.i_Toa != b.i_Toa )
         {
             the_same = false;
-            DLOG(INFO) << "i_Toa not the same: " << a.i_Toa << " " << b.i_Toa;
+            LOG(INFO) << "i_Toa not the same: " << a.i_Toa << " " << b.i_Toa;
         }
     if( a.d_M_0 != b.d_M_0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_M_0 not the same: " << a.d_M_0 << " " << b.d_M_0;
+            LOG(INFO) << "d_M_0 not the same: " << a.d_M_0 << " " << b.d_M_0;
         }
     if( a.d_e_eccentricity != b.d_e_eccentricity )
         {
             the_same = false;
-            DLOG(INFO) << "d_e_eccentricity not the same: " << a.d_e_eccentricity << " " << b.d_e_eccentricity;
+            LOG(INFO) << "d_e_eccentricity not the same: " << a.d_e_eccentricity << " " << b.d_e_eccentricity;
         }
     if( a.d_sqrt_A != b.d_sqrt_A )
         {
             the_same = false;
-            DLOG(INFO) << "d_sqrt_A not the same: " << a.d_sqrt_A << " " << b.d_sqrt_A;
+            LOG(INFO) << "d_sqrt_A not the same: " << a.d_sqrt_A << " " << b.d_sqrt_A;
         }
     if( a.d_OMEGA0 != b.d_OMEGA0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA0 not the same: " << a.d_OMEGA0 << " " << b.d_OMEGA0;
+            LOG(INFO) << "d_OMEGA0 not the same: " << a.d_OMEGA0 << " " << b.d_OMEGA0;
         }
     if( a.d_OMEGA != b.d_OMEGA )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA not the same: " << a.d_OMEGA << " " << b.d_OMEGA;
+            LOG(INFO) << "d_OMEGA not the same: " << a.d_OMEGA << " " << b.d_OMEGA;
         }
     if( a.d_OMEGA_DOT != b.d_OMEGA_DOT )
         {
             the_same = false;
-            DLOG(INFO) << "d_OMEGA_DOT not the same: " << a.d_OMEGA_DOT << " " << b.d_OMEGA_DOT;
+            LOG(INFO) << "d_OMEGA_DOT not the same: " << a.d_OMEGA_DOT << " " << b.d_OMEGA_DOT;
         }
     /*
     if( a.i_SV_health != b.i_SV_health )
         {
             the_same = false;
-            DLOG(INFO) << "i_SV_health not the same: " << a.i_SV_health << " " << b.i_SV_health;
+            LOG(INFO) << "i_SV_health not the same: " << a.i_SV_health << " " << b.i_SV_health;
         }
     */
     if( a.d_A_f0 != b.d_A_f0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
+            LOG(INFO) << "d_A_f0 not the same: " << a.d_A_f0 << " " << b.d_A_f0;
         }
     if( a.d_A_f1 != b.d_A_f1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
+            LOG(INFO) << "d_A_f1 not the same: " << a.d_A_f1 << " " << b.d_A_f1;
         }
 
     return the_same;
@@ -2240,47 +2241,47 @@ bool Spoofing_Detector::compare_iono(Gps_Iono a, Gps_Iono b)
     if( a.d_alpha0 != b.d_alpha0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_alpha0 not the same: " << a.d_alpha0 << " " << b.d_alpha0;
+            LOG(INFO) << "d_alpha0 not the same: " << a.d_alpha0 << " " << b.d_alpha0;
         }
     if( a.d_alpha1 != b.d_alpha1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_alpha1 not the same: " << a.d_alpha1 << " " << b.d_alpha1;
+            LOG(INFO) << "d_alpha1 not the same: " << a.d_alpha1 << " " << b.d_alpha1;
         }
     if( a.d_alpha2 != b.d_alpha2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_alpha2 not the same: " << a.d_alpha2 << " " << b.d_alpha2;
+            LOG(INFO) << "d_alpha2 not the same: " << a.d_alpha2 << " " << b.d_alpha2;
         }
     if( a.d_alpha3 != b.d_alpha3 )
         {
             the_same = false;
-            DLOG(INFO) << "d_alpha3 not the same: " << a.d_alpha3 << " " << b.d_alpha3;
+            LOG(INFO) << "d_alpha3 not the same: " << a.d_alpha3 << " " << b.d_alpha3;
         }
     if( a.d_beta0 != b.d_beta0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_beta0 not the same: " << a.d_beta0 << " " << b.d_beta0;
+            LOG(INFO) << "d_beta0 not the same: " << a.d_beta0 << " " << b.d_beta0;
         }
     if( a.d_beta1 != b.d_beta1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_beta1 not the same: " << a.d_beta1 << " " << b.d_beta1;
+            LOG(INFO) << "d_beta1 not the same: " << a.d_beta1 << " " << b.d_beta1;
         }
     if( a.d_beta2 != b.d_beta2 )
         {
             the_same = false;
-            DLOG(INFO) << "d_beta2 not the same: " << a.d_beta2 << " " << b.d_beta2;
+            LOG(INFO) << "d_beta2 not the same: " << a.d_beta2 << " " << b.d_beta2;
         }
     if( a.d_beta3 != b.d_beta3 )
         {
             the_same = false;
-            DLOG(INFO) << "d_beta3 not the same: " << a.d_beta3 << " " << b.d_beta3;
+            LOG(INFO) << "d_beta3 not the same: " << a.d_beta3 << " " << b.d_beta3;
         }
     if( a.valid != b.valid )
         {
             the_same = false;
-            DLOG(INFO) << "valid not the same: " << a.valid << " " << b.valid;
+            LOG(INFO) << "valid not the same: " << a.valid << " " << b.valid;
         }
     return the_same;
 }
@@ -2294,47 +2295,47 @@ bool Spoofing_Detector::compare_utc(Gps_Utc_Model a, Gps_Utc_Model b)
     if( a.valid != b.valid )
         {
             the_same = false;
-            DLOG(INFO) << "valid not the same: " << a.valid << " " << b.valid;
+            LOG(INFO) << "valid not the same: " << a.valid << " " << b.valid;
         }
     if( a.d_A1 != b.d_A1 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A1 not the same: " << a.d_A1 << " " << b.d_A1;
+            LOG(INFO) << "d_A1 not the same: " << a.d_A1 << " " << b.d_A1;
         }
     if( a.d_A0 != b.d_A0 )
         {
             the_same = false;
-            DLOG(INFO) << "d_A0 not the same: " << a.d_A0 << " " << b.d_A0;
+            LOG(INFO) << "d_A0 not the same: " << a.d_A0 << " " << b.d_A0;
         }
     if( a.d_t_OT != b.d_t_OT )
         {
             the_same = false;
-            DLOG(INFO) << "d_t_OT not the same: " << a.d_t_OT << " " << b.d_t_OT;
+            LOG(INFO) << "d_t_OT not the same: " << a.d_t_OT << " " << b.d_t_OT;
         }
     if( a.i_WN_T != b.i_WN_T )
         {
             the_same = false;
-            DLOG(INFO) << "i_WN_T not the same: " << a.i_WN_T << " " << b.i_WN_T;
+            LOG(INFO) << "i_WN_T not the same: " << a.i_WN_T << " " << b.i_WN_T;
         }
     if( a.d_DeltaT_LS != b.d_DeltaT_LS )
         {
             the_same = false;
-            DLOG(INFO) << "d_DeltaT_LS not the same: " << a.d_DeltaT_LS << " " << b.d_DeltaT_LS;
+            LOG(INFO) << "d_DeltaT_LS not the same: " << a.d_DeltaT_LS << " " << b.d_DeltaT_LS;
         }
     if( a.i_WN_LSF != b.i_WN_LSF )
         {
             the_same = false;
-            DLOG(INFO) << "i_WN_LSF not the same: " << a.i_WN_LSF << " " << b.i_WN_LSF;
+            LOG(INFO) << "i_WN_LSF not the same: " << a.i_WN_LSF << " " << b.i_WN_LSF;
         }
     if( a.i_DN != b.i_DN )
         {
             the_same = false;
-            DLOG(INFO) << "i_DN not the same: " << a.i_DN << " " << b.i_DN;
+            LOG(INFO) << "i_DN not the same: " << a.i_DN << " " << b.i_DN;
         }
     if( a.d_DeltaT_LSF != b.d_DeltaT_LSF )
         {
             the_same = false;
-            DLOG(INFO) << "d_DeltaT_LSF not the same: " << a.d_DeltaT_LSF << " " << b.d_DeltaT_LSF;
+            LOG(INFO) << "d_DeltaT_LSF not the same: " << a.d_DeltaT_LSF << " " << b.d_DeltaT_LSF;
         } 
     return the_same;
 }
@@ -2355,16 +2356,16 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, Gps_Navigation_Me
     global_subframe_map.add((int)uid, subframe);
 
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
-    DLOG(INFO) << "New subframe: " << uid;
+    LOG(ERROR) << "New subframe: " << uid;
     for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
     {
         subframe = it->second;
-        DLOG(INFO) << "uid: " << it->first << " sub: " << subframe.subframe_id ;
+        LOG(ERROR) << "uid: " << it->first << " sub: " << subframe.subframe_id ;
     }
 
     if( d_APT )
         {
-            DLOG(INFO) << "check APT";
+            LOG(ERROR) << "check APT";
             check_RX_time(PRN);
             check_APT_subframe(uid, subframe_ID);
         }
@@ -2392,7 +2393,7 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, Gps_Navigation_Me
 
     if( d_NAVI_TOW )
         {
-            DLOG(INFO) << "Check new TOW";
+            LOG(INFO) << "Check new TOW";
             check_new_TOW(time, GPS_week, TOW);
         }
 

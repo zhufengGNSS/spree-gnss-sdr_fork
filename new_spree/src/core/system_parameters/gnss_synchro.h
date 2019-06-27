@@ -69,6 +69,7 @@ public:
     uint64_t Tracking_sample_counter;  //!< Set by Tracking processing block
     bool Flag_valid_symbol_output;     //!< Set by Tracking processing block
     int32_t correlation_length_ms;     //!< Set by Tracking processing block
+    double Tracking_timestamp_secs;    //!< Set by Tracking processing block
 
     // Telemetry Decoder
     bool Flag_valid_word;               //!< Set by Telemetry Decoder processing block

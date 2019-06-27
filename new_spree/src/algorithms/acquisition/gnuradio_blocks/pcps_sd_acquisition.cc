@@ -440,18 +440,18 @@ void pcps_sd_acquisition::send_positive_acquisition()
 {
     // Declare positive acquisition using a message port
     // 0=STOP_CHANNEL 1=ACQ_SUCCEES 2=ACQ_FAIL
-    LOG(WARNING) << "================= POSITIVE ACQ =================";
-    LOG(WARNING) <<"Positive acquisition";
-    LOG(WARNING) <<"Satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
-    LOG(WARNING) <<"Sample_stamp " << d_sample_counter;
-    LOG(WARNING) <<"Test statistics value " << d_test_statistics;
-    LOG(WARNING) <<"Test statistics threshold " << d_threshold;
-    LOG(WARNING) <<"Code phase " << d_gnss_synchro->Acq_delay_samples;
-    LOG(WARNING) <<"Doppler " << d_gnss_synchro->Acq_doppler_hz;
-    LOG(WARNING) <<"Magnitude " << d_mag;
-    LOG(WARNING) <<"Input signal power " << d_input_power;
+    LOG(INFO) << "================= POSITIVE ACQ =================";
+    LOG(INFO) <<"Positive acquisition";
+    LOG(INFO) <<"Satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
+    LOG(INFO) <<"Sample_stamp " << d_sample_counter;
+    LOG(INFO) <<"Test statistics value " << d_test_statistics;
+    LOG(INFO) <<"Test statistics threshold " << d_threshold;
+    LOG(INFO) <<"Code phase " << d_gnss_synchro->Acq_delay_samples;
+    LOG(INFO) <<"Doppler " << d_gnss_synchro->Acq_doppler_hz;
+    LOG(INFO) <<"Magnitude " << d_mag;
+    LOG(INFO) <<"Input signal power " << d_input_power;
     d_positive_acq = 1;
-    LOG(WARNING) << "=================================================";
+    LOG(INFO) << "=================================================";
 
     if (!d_channel_fsm.expired())
         {
@@ -469,18 +469,18 @@ void pcps_sd_acquisition::send_negative_acquisition()
 {
     // Declare negative acquisition using a message port
     // 0=STOP_CHANNEL 1=ACQ_SUCCEES 2=ACQ_FAIL
-    LOG(WARNING) << "================= NEGATIVE ACQ =================";
-    LOG(WARNING) <<"Negative acquisition";
-    LOG(WARNING) <<"Satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
-    LOG(WARNING) <<"Sample_stamp " << d_sample_counter;
-    LOG(WARNING) <<"Test statistics value " << d_test_statistics;
-    LOG(WARNING) <<"Test statistics threshold " << d_threshold;
-    LOG(WARNING) <<"Code phase " << d_gnss_synchro->Acq_delay_samples;
-    LOG(WARNING) <<"Doppler " << d_gnss_synchro->Acq_doppler_hz;
-    LOG(WARNING) <<"Magnitude " << d_mag;
-    LOG(WARNING) <<"Input signal power " << d_input_power;
+    LOG(INFO) << "================= NEGATIVE ACQ =================";
+    LOG(INFO) <<"Negative acquisition";
+    LOG(INFO) <<"Satellite " << d_gnss_synchro->System << " " << d_gnss_synchro->PRN;
+    LOG(INFO) <<"Sample_stamp " << d_sample_counter;
+    LOG(INFO) <<"Test statistics value " << d_test_statistics;
+    LOG(INFO) <<"Test statistics threshold " << d_threshold;
+    LOG(INFO) <<"Code phase " << d_gnss_synchro->Acq_delay_samples;
+    LOG(INFO) <<"Doppler " << d_gnss_synchro->Acq_doppler_hz;
+    LOG(INFO) <<"Magnitude " << d_mag;
+    LOG(INFO) <<"Input signal power " << d_input_power;
     d_positive_acq = 1;
-    LOG(WARNING) << "=================================================";
+    LOG(INFO) << "=================================================";
     this->message_port_pub(pmt::mp("events"), pmt::from_long(2));
 }
 
@@ -604,7 +604,7 @@ std::map<float, pcps_sd_acquisition::Peak> pcps_sd_acquisition::max_to_input_pow
     // Find the correlation peak and the carrier frequency
     if(acquire_auxiliary_peaks && acq_parameters.spoofing_detection)
     {
-        LOG(WARNING) << "================= ALL QUALIFYING PEAKS ================= " << spoofing_threshold;
+        LOG(INFO) << "================= ALL QUALIFYING PEAKS ================= " << spoofing_threshold;
     }
 
     for (uint32_t i = 0; i < num_doppler_bins; i++)
@@ -657,7 +657,7 @@ std::map<float, pcps_sd_acquisition::Peak> pcps_sd_acquisition::max_to_input_pow
                     }   
                 }
                 peaks.clear();
-                //LOG(WARNING) << "Peak: " << peak.mag << "; Code phase " << peak.code_phase << "; Doppler " << peak.doppler << "; Test statistics " << peak.test_stats;
+                //LOG(INFO) << "Peak: " << peak.mag << "; Code phase " << peak.code_phase << "; Doppler " << peak.doppler << "; Test statistics " << peak.test_stats;
             }
             else if (d_magnitude_grid[i][tmp_intex_t] > grid_maximum && !acq_parameters.spoofing_detection)
             {
@@ -683,7 +683,7 @@ std::map<float, pcps_sd_acquisition::Peak> pcps_sd_acquisition::max_to_input_pow
         peak.code_phase = static_cast<double>(std::fmod(static_cast<float>(indext), acq_parameters.samples_per_code));
         peak.test_stats = peak.mag / input_power;
         peaks_map[peak.mag] = peak;
-        LOG(WARNING) << "Highest peak: " << peak.mag << "; Code phase " << peak.code_phase << "; Doppler " << peak.doppler << "; Test statistics " << peak.test_stats;
+        LOG(INFO) << "Highest peak: " << peak.mag << "; Code phase " << peak.code_phase << "; Doppler " << peak.doppler << "; Test statistics " << peak.test_stats;
     }
     else
     {
@@ -881,11 +881,11 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                 //     std::map<float, pcps_sd_acquisition::Peak>::reverse_iterator rit2;
                 //     std::map<float, pcps_sd_acquisition::Peak> d_highest_peaks_reduced;
                 //     bool use_peak;
-                //     LOG(WARNING) << "### all peaks: ### " << d_highest_peaks.size();
+                //     LOG(INFO) << "### all peaks: ### " << d_highest_peaks.size();
                 //     for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)
                 //     {
                 //         use_peak = true;
-                //         LOG(WARNING) << rit->second.code_phase << " " << rit->second.doppler <<" "<< rit->second.mag;
+                //         LOG(INFO) << rit->second.code_phase << " " << rit->second.doppler <<" "<< rit->second.mag;
                 //         for (rit2=d_highest_peaks_reduced.rbegin(); rit2!=d_highest_peaks_reduced.rend(); ++rit2)
                 //         {
                 //             if(abs(rit->second.code_phase - rit2->second.code_phase) <= 1 && abs(rit->second.doppler - rit2->second.doppler) <= (int)d_doppler_step)
@@ -896,7 +896,7 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
 
                 //         if(use_peak)
                 //         {
-                //             LOG(WARNING) << "Peak: " << rit->second.mag << "; Code phase " << rit->second.code_phase << "; Doppler " << rit->second.doppler << "; Test statistics " << rit->second.test_stats;
+                //             LOG(INFO) << "Peak: " << rit->second.mag << "; Code phase " << rit->second.code_phase << "; Doppler " << rit->second.doppler << "; Test statistics " << rit->second.test_stats;
                 //             d_highest_peaks_reduced[rit->first] = rit->second;
                 //         }
                 //     }
@@ -910,16 +910,16 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                 //     //     std::map<float, pcps_sd_acquisition::Peak>::reverse_iterator rit;
 
                 //     //     unsigned int i = 1;
-                //     //     LOG(WARNING) << "### peaks: ###";
+                //     //     LOG(INFO) << "### peaks: ###";
                 //     //     for (rit=d_highest_peaks.rbegin(); rit!=d_highest_peaks.rend(); ++rit)
                 //     //     {
                 //     //         if(i == d_peak)
                 //     //         {
                 //     //                 found_peak = true; 
-                //     //                 LOG(WARNING) << "!!! peak found !!!";
-                //     //                 LOG(WARNING) << "peak " << rit->first; 
-                //     //                 LOG(WARNING) << "d_peak " << d_peak; 
-                //     //                 LOG(WARNING) << "code phase " << rit->second.code_phase; 
+                //     //                 LOG(INFO) << "!!! peak found !!!";
+                //     //                 LOG(INFO) << "peak " << rit->first; 
+                //     //                 LOG(INFO) << "d_peak " << d_peak; 
+                //     //                 LOG(INFO) << "code phase " << rit->second.code_phase; 
                 //     //                 d_test_statistics = rit->second.test_stats; 
                 //     //                 d_gnss_synchro->Acq_delay_samples = rit->second.code_phase; 
                 //     //                 d_gnss_synchro->Acq_doppler_hz = rit->second.doppler; 
@@ -934,18 +934,18 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                 //         std::map<float, pcps_sd_acquisition::Peak>::reverse_iterator it;
 
                 //         unsigned int i = 1;
-                //         LOG(WARNING) << "### peaks: ###";
+                //         LOG(INFO) << "### peaks: ###";
                 //         for (it=d_highest_peaks_reduced.rbegin(); it!=d_highest_peaks_reduced.rend(); ++it)
                 //         {
                 //             if(i == d_peak)
                 //             {
                 //                     found_peak = true; 
-                //                     LOG(WARNING) << "!!! peak found !!!";
-                //                     LOG(WARNING) << "peak " << it->first; 
-                //                     LOG(WARNING) << "d_peak " << d_peak; 
-                //                     LOG(WARNING) << "code phase " << it->second.code_phase; 
-                //                     LOG(WARNING) << "Doppler: " << it->second.doppler;
-                //                     LOG(WARNING) << "Test statistics " << it->second.test_stats; 
+                //                     LOG(INFO) << "!!! peak found !!!";
+                //                     LOG(INFO) << "peak " << it->first; 
+                //                     LOG(INFO) << "d_peak " << d_peak; 
+                //                     LOG(INFO) << "code phase " << it->second.code_phase; 
+                //                     LOG(INFO) << "Doppler: " << it->second.doppler;
+                //                     LOG(INFO) << "Test statistics " << it->second.test_stats; 
                 //                     d_test_statistics = it->second.test_stats; 
                 //                     d_gnss_synchro->Acq_delay_samples = it->second.code_phase; 
                 //                     d_gnss_synchro->Acq_doppler_hz = it->second.doppler; 
@@ -1002,7 +1002,7 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
 
             if(acquire_auxiliary_peaks && acq_parameters.spoofing_detection)
             {
-                LOG(WARNING) << "================= ALL QUALIFYING PEAKS ================= " << threshold_spoofing;
+                LOG(INFO) << "================= ALL QUALIFYING PEAKS ================= " << threshold_spoofing;
             }
 
             // 2- Doppler frequency search loop
@@ -1155,12 +1155,12 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                             }
                     }
                     
-                    LOG(WARNING) << "### ### Size " << d_highest_peaks_reduced.size() << "; d_peak: " << d_peak;
+                    LOG(INFO) << "### ### Size " << d_highest_peaks_reduced.size() << "; d_peak: " << d_peak;
                     for (rit=d_highest_peaks_reduced.rbegin(); rit!=d_highest_peaks_reduced.rend(); ++rit)
                     {
-                        LOG(WARNING) << "Channel: " << d_gnss_synchro->Channel_ID << " PRN: " << d_gnss_synchro->PRN << " Peak: " << rit->second.mag << "; Code phase " << rit->second.code_phase << "; Doppler " << rit->second.doppler << "; Test statistics " << rit->second.test_stats;
+                        LOG(INFO) << "Channel: " << d_gnss_synchro->Channel_ID << " PRN: " << d_gnss_synchro->PRN << " Peak: " << rit->second.mag << "; Code phase " << rit->second.code_phase << "; Doppler " << rit->second.doppler << "; Test statistics " << rit->second.test_stats;
                     }
-                    LOG(WARNING) << "### ###";
+                    LOG(INFO) << "### ###";
 
                     //If there is more than one peak present, acquire the highest
                     if(d_peak == 1 && d_highest_peaks_reduced.size() > 0)
@@ -1178,10 +1178,10 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                             if(i == d_peak)
                             {
                                 found_peak = true; 
-                                LOG(WARNING) << "!!! peak found !!!";
-                                LOG(WARNING) << "peak " << rit->first; 
-                                LOG(WARNING) << "d_peak " << d_peak; 
-                                LOG(WARNING) << "code phase " << rit->second.code_phase; 
+                                LOG(INFO) << "!!! peak found !!!";
+                                LOG(INFO) << "peak " << rit->first; 
+                                LOG(INFO) << "d_peak " << d_peak; 
+                                LOG(INFO) << "code phase " << rit->second.code_phase; 
                                 d_test_statistics = rit->first/ d_input_power; 
                                 d_gnss_synchro->Acq_delay_samples = rit->second.code_phase; 
                                 d_gnss_synchro->Acq_doppler_hz = rit->second.doppler; 

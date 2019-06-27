@@ -284,7 +284,12 @@ bool gps_l1_ca_telemetry_decoder_gs::decode_subframe()
     // NEW GPS SUBFRAME HAS ARRIVED!
     if (subframe_synchro_confirmation)
         {
-            int32_t subframe_ID = d_nav.subframe_decoder(subframe);  // decode the subframe
+            std::map<int32_t, Gps_Navigation_Message::Sbf> subframe_data = d_nav.subframe_decoder(subframe);  // decode the subframe
+
+            std::map<int32_t, Gps_Navigation_Message::Sbf>::iterator it = subframe_data.begin();
+
+            int32_t subframe_ID = it->first;  // decode the subframe
+            
             if (subframe_ID > 0 and subframe_ID < 6)
                 {
                     std::cout << "New GPS NAV message received in channel " << this->d_channel << ": "

@@ -229,7 +229,7 @@ int64_t Gps_Navigation_Message::read_navigation_signed(std::bitset<GPS_SUBFRAME_
 }
 
 
-int32_t Gps_Navigation_Message::subframe_decoder(char* subframe)
+std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_decoder(char* subframe)
 {
     int32_t subframe_ID = 0;
     uint32_t gps_word;
@@ -249,6 +249,8 @@ int32_t Gps_Navigation_Message::subframe_decoder(char* subframe)
 
     subframe_ID = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SUBFRAME_ID));
 
+    struct Gps_Navigation_Message::Sbf subframe_data;
+
     // Decode all 5 sub-frames
     switch (subframe_ID)
         {
@@ -260,32 +262,39 @@ int32_t Gps_Navigation_Message::subframe_decoder(char* subframe)
             // The transmitted TOW is actual TOW of the next subframe
             // (the variable subframe at this point contains bits of the last subframe).
             //TOW = bin2dec(subframe(31:47)) * 6;
+        
+            struct Gps_Navigation_Message::Sbf1 sbf;
+
             d_TOW_SF1 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             //we are in the first subframe (the transmitted TOW is the start time of the next subframe) !
             d_TOW_SF1 = d_TOW_SF1 * 6;
-            d_TOW = d_TOW_SF1;  // Set transmission time
-            b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
-            b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
-            b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
-            i_GPS_week = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, GPS_WEEK));
-            i_SV_accuracy = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SV_ACCURACY));  // (20.3.3.3.1.3)
-            i_SV_health = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SV_HEALTH));
-            b_L2_P_data_flag = read_navigation_bool(subframe_bits, L2_P_DATA_FLAG);  //
-            i_code_on_L2 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, CA_OR_P_ON_L2));
+            sbf.d_TOW = d_TOW = d_TOW_SF1;  // Set transmission time
+            sbf.b_integrity_status_flag = b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
+            sbf.b_alert_flag = b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
+            sbf.b_antispoofing_flag = b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
+            sbf.i_GPS_week = i_GPS_week = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, GPS_WEEK));
+            sbf.i_SV_accuracy = i_SV_accuracy = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SV_ACCURACY));  // (20.3.3.3.1.3)
+            sbf.i_SV_health = i_SV_health = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SV_HEALTH));
+            sbf.b_L2_P_data_flag = b_L2_P_data_flag = read_navigation_bool(subframe_bits, L2_P_DATA_FLAG);  //
+            sbf.i_code_on_L2 = i_code_on_L2 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, CA_OR_P_ON_L2));
             d_TGD = static_cast<double>(read_navigation_signed(subframe_bits, T_GD));
-            d_TGD = d_TGD * T_GD_LSB;
-            d_IODC = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, IODC));
+            sbf.d_TGD = d_TGD = d_TGD * T_GD_LSB;
+            sbf.d_IODC = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, IODC));
             d_Toc = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, T_OC));
-            d_Toc = d_Toc * T_OC_LSB;
-            d_A_f0 = static_cast<double>(read_navigation_signed(subframe_bits, A_F0));
-            d_A_f0 = d_A_f0 * A_F0_LSB;
-            d_A_f1 = static_cast<double>(read_navigation_signed(subframe_bits, A_F1));
-            d_A_f1 = d_A_f1 * A_F1_LSB;
-            d_A_f2 = static_cast<double>(read_navigation_signed(subframe_bits, A_F2));
-            d_A_f2 = d_A_f2 * A_F2_LSB;
+            sbf.d_Toc = d_Toc * T_OC_LSB;
+            sbf.d_A_f0 = d_A_f0 = static_cast<double>(read_navigation_signed(subframe_bits, A_F0));
+            sbf.d_A_f0 = d_A_f0 = d_A_f0 * A_F0_LSB;
+            sbf.d_A_f1 = d_A_f1 = static_cast<double>(read_navigation_signed(subframe_bits, A_F1));
+            sbf.d_A_f1 = d_A_f1 = d_A_f1 * A_F1_LSB;
+            sbf.d_A_f2 = d_A_f2 = static_cast<double>(read_navigation_signed(subframe_bits, A_F2));
+            sbf.d_A_f2 = d_A_f2 = d_A_f2 * A_F2_LSB;
+
+            subframe_data.sbf1 = sbf;
+
             break;
 
         case 2:  //--- It is subframe 2 -------------------
+            struct Gps_Navigation_Message::Sbf2 sbf2;
             d_TOW_SF2 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             d_TOW_SF2 = d_TOW_SF2 * 6;
             d_TOW = d_TOW_SF2;  // Set transmission time
@@ -312,6 +321,24 @@ int32_t Gps_Navigation_Message::subframe_decoder(char* subframe)
             b_fit_interval_flag = read_navigation_bool(subframe_bits, FIT_INTERVAL_FLAG);
             i_AODO = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, AODO));
             i_AODO = i_AODO * AODO_LSB;
+
+            sbf2.d_TOW = d_TOW;
+            sbf2.b_integrity_status_flag = b_integrity_status_flag;
+            sbf2.b_alert_flag = b_alert_flag;
+            sbf2.b_antispoofing_flag = b_antispoofing_flag;
+            sbf2.d_IODE_SF2 = d_IODE_SF2;
+            sbf2.d_Crs = d_Crs;
+            sbf2.d_Delta_n = d_Delta_n;
+            sbf2.d_M_0 = d_M_0;
+            sbf2.d_Cuc = d_Cuc;
+            sbf2.d_e_eccentricity = d_e_eccentricity;
+            sbf2.d_Cus = d_Cus;
+            sbf2.d_sqrt_A = d_sqrt_A;
+            sbf2.d_Toe = d_Toe;
+            sbf2.b_fit_interval_flag = b_fit_interval_flag;
+            sbf2.i_AODO = i_AODO;
+
+            subframe_data.sbf2 = sbf2;
             break;
 
         case 3:  // --- It is subframe 3 -------------------------------------
@@ -471,7 +498,11 @@ int32_t Gps_Navigation_Message::subframe_decoder(char* subframe)
             break;
         }  // switch subframeID ...
 
-    return subframe_ID;
+    std::map<int32_t, Gps_Navigation_Message::Sbf> sbf_return_map;
+
+    sbf_return_map[subframe_ID] = subframe_data;
+
+    return sbf_return_map;
 }
 
 

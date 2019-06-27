@@ -156,6 +156,17 @@ bool ChannelFsm::Event_failed_tracking_standby()
     return true;
 }
 
+bool ChannelFsm::Event_stop_tracking()
+{
+    if (d_state != 2)
+        {
+            return false;
+        }
+    stop_tracking();
+    d_state = 2;
+    return true;
+
+}
 
 void ChannelFsm::set_acquisition(std::shared_ptr<AcquisitionInterface> acquisition)
 {

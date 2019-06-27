@@ -1633,9 +1633,8 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             //only do it for channels that have received ephemeris
             if(channels_state_[who] != 2)
                 break;       
-            /*    std::cout << "No spoofing detected, restart acqusition on auxiliary channel: " << who << "  sat " << channels_.at(who)->get_signal().get_satellite().get_PRN()
+                std::cout << "No spoofing detected, restart acqusition on auxiliary channel: " << who << "  sat " << channels_.at(who)->get_signal().get_satellite().get_PRN()
                 << " acquired peak " << peak << std::endl; 
-            */
             PRN = channels_.at(who)->get_signal().get_satellite().get_PRN(); 
             AssignACQState(PRN, who);
             channels_.at(who)->stop_tracking();
@@ -2504,7 +2503,7 @@ void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
         //find highest peak that is not being tracked.
         nr_acquired_peaks[PRN] += 1;
         int peak = next_peak[PRN];
-        if(peak > 5)
+        if(peak > nr_acq)
             peak = 1;
         next_peak.at(PRN) = peak+1;
         channels_.at(who)->set_peak(peak);

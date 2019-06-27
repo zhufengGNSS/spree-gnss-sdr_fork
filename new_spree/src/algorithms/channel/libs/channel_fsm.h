@@ -66,6 +66,7 @@ public:
     bool Event_failed_acquisition_repeat();
     bool Event_failed_acquisition_no_repeat();
     bool Event_failed_tracking_standby();
+    bool Event_stop_tracking();
 
 private:
     void start_tracking();

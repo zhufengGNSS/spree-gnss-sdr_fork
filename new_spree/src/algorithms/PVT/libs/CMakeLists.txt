@@ -90,6 +90,7 @@ get_filename_component(PROTO_INCLUDE_HEADERS ${PROTO_HDRS} DIRECTORY)
 target_include_directories(pvt_libs
     PUBLIC
         ${CMAKE_SOURCE_DIR}/src/core/receiver
+        ${CMAKE_SOURCE_DIR}/src/core/system_parameters
         ${PROTO_INCLUDE_HEADERS}
 )
 

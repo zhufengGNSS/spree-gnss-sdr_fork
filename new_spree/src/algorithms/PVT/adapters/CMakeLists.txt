@@ -19,10 +19,12 @@
 
 set(PVT_ADAPTER_SOURCES
     rtklib_pvt.cc
+    #rtklib_pvt_sd.cc
 )
 
 set(PVT_ADAPTER_HEADERS
     rtklib_pvt.h
+    #rtklib_pvt_sd.h
 )
 
 source_group(Headers FILES ${PVT_ADAPTER_HEADERS})

@@ -34,6 +34,7 @@
 #include <gnuradio/io_signature.h>
 #include <iostream>
 #include <string>
+#include <glog/logging.h>
 
 gnss_sdr_time_counter::gnss_sdr_time_counter() : gr::block("time_counter",
                                                      gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
@@ -91,36 +92,38 @@ int gnss_sdr_time_counter::general_work(int noutput_items __attribute__((unused)
                 }
 
             if (flag_days)
-                {
-                    std::string day;
-                    if (current_days == 1)
-                        {
-                            day = " day ";
-                        }
-                    else
-                        {
-                            day = " days ";
-                        }
-                    std::cout << "Current receiver time: " << current_days << day << current_h << " h " << current_m << " min " << current_s << " s" << std::endl;
-                }
+            {
+                std::string day;
+                if (current_days == 1)
+                    {
+                        day = " day ";
+                    }
+                else
+                    {
+                        day = " days ";
+                    }
+                std::cout << "Current receiver time: " << current_days << day << current_h << " h " << current_m << " min " << current_s << " s" << std::endl;
+            }
             else
+            {
+                if (flag_h)
                 {
-                    if (flag_h)
-                        {
-                            std::cout << "Current receiver time: " << current_h << " h " << current_m << " min " << current_s << " s" << std::endl;
-                        }
-                    else
-                        {
-                            if (flag_m)
-                                {
-                                    std::cout << "Current receiver time: " << current_m << " min " << current_s << " s" << std::endl;
-                                }
-                            else
-                                {
-                                    std::cout << "Current receiver time: " << current_s << " s" << std::endl;
-                                }
-                        }
+                    std::cout << "Current receiver time: " << current_h << " h " << current_m << " min " << current_s << " s" << std::endl;
                 }
+                else
+                {
+                    if (flag_m)
+                    {
+                        std::cout << "Current receiver time: " << current_m << " min " << current_s << " s" << std::endl;
+                        LOG(ERROR) << "Current receiver time: " << current_m << " min " << current_s << " s" << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "Current receiver time: " << current_s << " s" << std::endl;
+                        LOG(ERROR) << "Current receiver time: " << current_s << " s" << std::endl;
+                    }
+                }
+            }
         }
     current_T_rx_ms++;
     consume_each(1);

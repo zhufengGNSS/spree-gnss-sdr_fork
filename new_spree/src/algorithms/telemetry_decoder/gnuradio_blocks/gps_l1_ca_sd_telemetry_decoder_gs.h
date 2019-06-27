@@ -134,9 +134,13 @@ private:
     std::string d_dump_filename;
     std::ofstream d_dump_file;
 
+    double d_rem_code_phase_samples;
+    
     void stop_tracking();
     unsigned int channel_state;
     Spoofing_Detector d_spoofing_detector;
+    unsigned int uid;
+    unsigned int i_peak;
 };
 
 #endif

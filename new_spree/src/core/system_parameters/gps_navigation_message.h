@@ -59,6 +59,51 @@ private:
     void print_gps_word_bytes(uint32_t GPS_word);
 
 public:
+    // Subframe struct for comparison
+    struct Sbf1
+    {
+        int32_t d_TOW;
+        bool b_integrity_status_flag;
+        bool b_alert_flag;
+        bool b_antispoofing_flag;
+        int32_t i_GPS_week;
+        int32_t i_SV_accuracy;
+        int32_t i_SV_health;
+        bool b_L2_P_data_flag;
+        int32_t i_code_on_L2;
+        double d_TGD;
+        int32_t d_IODC;
+        int32_t d_Toc;
+        double d_A_f0;
+        double d_A_f1;
+        double d_A_f2;
+    };
+
+    struct Sbf2
+    {
+        int32_t d_TOW;
+        bool b_integrity_status_flag;
+        bool b_alert_flag;
+        bool b_antispoofing_flag;
+        int32_t d_IODE_SF2;
+        double d_Crs;
+        double d_Delta_n;
+        double d_M_0;
+        double d_Cuc;
+        double d_e_eccentricity;
+        double d_Cus;
+        double d_sqrt_A;
+        int32_t d_Toe;
+        bool b_fit_interval_flag;
+        int32_t i_AODO;
+    };
+
+    struct Sbf
+    {
+        struct Sbf1 sbf1;
+        struct Sbf2 sbf2;
+    };
+
     bool b_valid_ephemeris_set_flag;  // flag indicating that this ephemeris set have passed the validation check
     // broadcast orbit 1
     int32_t d_TOW;      //!< Time of GPS Week of the ephemeris set (taken from subframes TOW) [s]
@@ -208,7 +253,7 @@ public:
     /*!
      * \brief Decodes the GPS NAV message
      */
-    int32_t subframe_decoder(char* subframe);
+    std::map<int32_t, Sbf> subframe_decoder(char* subframe);
 
     //for spoofing
     std::string get_subframe(int subframe_ID);

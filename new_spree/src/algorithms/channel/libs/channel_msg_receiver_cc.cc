@@ -84,6 +84,10 @@ void channel_msg_receiver_cc::msg_handler_events(pmt::pmt_t msg)
                 case 3:  // tracking loss of lock event
                     result = d_channel_fsm->Event_failed_tracking_standby();
                     break;
+                case 4: // stop tracking 
+                    DLOG(INFO) << "Channel stop tracking ";
+                    d_channel_fsm->Event_stop_tracking();
+                    break;
                 default:
                     LOG(WARNING) << "Default case, invalid message.";
                     break;

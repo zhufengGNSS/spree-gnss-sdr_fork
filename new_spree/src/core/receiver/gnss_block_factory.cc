@@ -1928,7 +1928,7 @@ std::unique_ptr<GNSSBlockInterface> GNSSBlockFactory::GetBlock(
         }
 
     // PVT -------------------------------------------------------------------------
-    else if ((implementation == "RTKLIB_PVT") || (implementation == "GPS_L1_CA_SD_PVT") || (implementation == "GPS_L1_CA_PVT") || (implementation == "Galileo_E1_PVT") || (implementation == "Hybrid_PVT"))
+    else if ((implementation == "RTKLIB_PVT") || (implementation == "GPS_L1_CA_PVT") || (implementation == "Galileo_E1_PVT") || (implementation == "Hybrid_PVT"))
         {
             std::unique_ptr<GNSSBlockInterface> block_(new Rtklib_Pvt(configuration.get(), role, in_streams,
                 out_streams));

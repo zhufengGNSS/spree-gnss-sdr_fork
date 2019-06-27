@@ -144,6 +144,7 @@ void Channel::connect(gr::top_block_sptr top_block)
             top_block->msg_connect(acq_->get_right_block(), pmt::mp("events"), channel_msg_rx, pmt::mp("events"));
         }
     top_block->msg_connect(trk_->get_right_block(), pmt::mp("events"), channel_msg_rx, pmt::mp("events"));
+    //top_block->msg_connect(nav_->get_right_block(), pmt::mp("events"), channel_msg_rx, pmt::mp("events"));
 
     connected_ = true;
 }
