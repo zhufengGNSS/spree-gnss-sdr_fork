@@ -306,7 +306,7 @@ bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe()
                               << Gnss_Satellite(std::string("GPS"), d_nav.i_satellite_PRN) 
                               << " peak " << i_peak << " id: " << uid << std::endl;
 
-                    d_spoofing_detector.New_subframe(subframe_ID, d_nav.i_satellite_PRN, d_nav, (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(2000000) * 1000.0); //FS_IN is hardcoded right now
+                    d_spoofing_detector.New_subframe(subframe_ID, d_nav.i_satellite_PRN, d_nav, d_preamble_time_ms * 1000.0); //FS_IN is hardcoded right now
                     
 
                     switch (subframe_ID)
@@ -422,7 +422,7 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
     // 1. Copy the current tracking output
     Gnss_Synchro current_symbol = in[0][0];
 
-    d_rem_code_phase_samples = current_symbol.Code_phase_samples;
+    d_preamble_time_ms = current_symbol.Tracking_timestamp_secs;
     // SD - Set peak and uid for sub-frames
     i_peak = in[0][0].peak;
     d_nav.i_peak = i_peak;

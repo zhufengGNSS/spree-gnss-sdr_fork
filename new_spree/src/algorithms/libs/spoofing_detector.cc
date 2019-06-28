@@ -1165,7 +1165,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
 
     if(spoofed)
         {
-            double distance = std::abs(largest_t-smallest_t)*GPS_C_M_S/1e3; 
+            double distance = std::abs(largest_t-smallest_t)*GPS_C_M_S/1e3*1e6;
             std::stringstream s;
             std::stringstream sr;
             s << "Auxiliary peak detected for satellite " << PRN << "\n";
@@ -1178,7 +1178,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
             msg.description = s.str();
 
             sr << "At " << largest_t/1e3 << " s an auxiliary peak was detected for satellite " << PRN
-               << " with peak seperation of " << std::setprecision(16) << std::abs(largest_t-smallest_t) << " [ns] which translates to a" 
+               << " with peak seperation of " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns] which translates to a" 
                << " pseudorange change of " << std::setprecision(16) << distance <<" [m]. "
                << "SPREE is configured to raise an alarm if a peak seperation of more than " << d_APT_max_rx_discrepancy*1e6 << " [ns] is detected.\n"; 
             
@@ -1283,8 +1283,8 @@ void Spoofing_Detector::check_APT_subframe(unsigned int uid, unsigned int subfra
         if( subframeB.PRN != subframeA.PRN)
             continue;
 
-        LOG(INFO) << "subframeB " << subframeB.subframe_id << " " << idB << " " << subframeB.PRN;
-        LOG(INFO) <<  (subframeB.subframe_id != subframe_id) << " " << (idB == idA);
+        LOG(ERROR) << "subframeB " << subframeB.subframe_id << " " << idB << " " << subframeB.PRN;
+        LOG(ERROR) <<  (subframeB.subframe_id != subframe_id) << " " << (idB == idA);
         if(subframeB.subframe_id != subframe_id || idB == idA)
             continue;
         

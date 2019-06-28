@@ -1574,6 +1574,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
     auto **out = reinterpret_cast<Gnss_Synchro **>(&output_items[0]);
     Gnss_Synchro current_synchro_data = Gnss_Synchro();
 
+    current_synchro_data.Tracking_timestamp_secs = (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(trk_parameters.fs_in);
     if (d_pull_in_transitory == true)
         {
             if (trk_parameters.pull_in_time_s < (d_sample_counter - d_acq_sample_stamp) / static_cast<int>(trk_parameters.fs_in))

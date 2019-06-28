@@ -134,7 +134,7 @@ private:
     std::string d_dump_filename;
     std::ofstream d_dump_file;
 
-    double d_rem_code_phase_samples;
+    double d_preamble_time_ms;
     
     void stop_tracking();
     unsigned int channel_state;
