@@ -42,6 +42,8 @@
 #include "tracking_interface.h"
 #include <gnuradio/msg_queue.h>
 #include <gtest/gtest.h>
+#include "spoofing_message.h"
+
 
 TEST(GNSSFlowgraph /*unused*/, InstantiateConnectStartStopOldNotation /*unused*/)
 {

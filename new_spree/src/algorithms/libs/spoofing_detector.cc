@@ -863,7 +863,7 @@ double get_cov(boost::circular_buffer<double> a, boost::circular_buffer<double> 
     double sum = 0;
     if(a.size() != b.size())
         {
-            DLOG(ERROR) << "vectors are not same length, can't calculate convariance";
+            DLOG(WARNING) << "vectors are not same length, can't calculate convariance";
             return 0;
         }
     if( a.size() == 0)
@@ -1146,7 +1146,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
     bool spoofed = false;
     int diff = 0;
 
-    LOG(ERROR) << "Diff "  << std::abs(largest_t-smallest_t) << " : Time- " << d_APT_max_rx_discrepancy;
+    LOG(WARNING) << "Diff "  << std::abs(largest_t-smallest_t) << " : Time- " << d_APT_max_rx_discrepancy;
     if(std::abs(largest_t-smallest_t) >= d_APT_max_rx_discrepancy)
         {
             if(largest.subframe_id != smallest.subframe_id)
@@ -1154,22 +1154,24 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
                     diff = largest.subframe_id-smallest.subframe_id;
                     if(std::abs(largest_t-smallest_t)/std::fmod(diff, 5) > 6001) 
                         {
-                            spoofed = true;
+                            //spoofed = true;
                         }
                 }
             else
                 {
+                    std::cout << std::endl << "PRN: " << PRN << "; Largest: " << largest_t << ", smallest: " << smallest_t << std::endl;
                     spoofed = true;
                 }
         }
 
     if(spoofed)
         {
-            double distance = std::abs(largest_t-smallest_t)*GPS_C_M_S/1e3*1e6;
+            double distance = std::abs(largest_t-smallest_t)*GPS_C_M_S/1e3;
             std::stringstream s;
             std::stringstream sr;
+            std::cout << std::endl << "Distance: " << distance;
             s << "Auxiliary peak detected for satellite " << PRN << "\n";
-            s << "Peak seperation: " << std::setprecision(16) << std::abs(largest_t-smallest_t) << " [ns]\n"; 
+            s << "Peak seperation: " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns]\n"; 
             s << "Pseudorange change: " << std::setprecision(16) << distance <<" [m]\n"; 
             Spoofing_Message msg;
             msg.spoofing_case = 1;
@@ -1283,8 +1285,8 @@ void Spoofing_Detector::check_APT_subframe(unsigned int uid, unsigned int subfra
         if( subframeB.PRN != subframeA.PRN)
             continue;
 
-        LOG(ERROR) << "subframeB " << subframeB.subframe_id << " " << idB << " " << subframeB.PRN;
-        LOG(ERROR) <<  (subframeB.subframe_id != subframe_id) << " " << (idB == idA);
+        LOG(WARNING) << "subframeB " << subframeB.subframe_id << " " << idB << " " << subframeB.PRN;
+        LOG(WARNING) <<  (subframeB.subframe_id != subframe_id) << " " << (idB == idA);
         if(subframeB.subframe_id != subframe_id || idB == idA)
             continue;
         
@@ -2356,16 +2358,16 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, Gps_Navigation_Me
     global_subframe_map.add((int)uid, subframe);
 
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
-    LOG(ERROR) << "New subframe: " << uid;
+    LOG(WARNING) << "New subframe: " << uid;
     for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
     {
         subframe = it->second;
-        LOG(ERROR) << "uid: " << it->first << " sub: " << subframe.subframe_id ;
+        LOG(WARNING) << "uid: " << it->first << " sub: " << subframe.subframe_id ;
     }
 
     if( d_APT )
         {
-            LOG(ERROR) << "check APT";
+            LOG(WARNING) << "check APT";
             check_RX_time(PRN);
             check_APT_subframe(uid, subframe_ID);
         }

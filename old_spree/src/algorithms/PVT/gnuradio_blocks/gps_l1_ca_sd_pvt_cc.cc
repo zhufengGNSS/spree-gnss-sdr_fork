@@ -318,45 +318,45 @@ gps_l1_ca_sd_pvt_cc::gps_l1_ca_sd_pvt_cc(unsigned int nchannels,
     d_PPE_sampling = spoofing_detector.get_PPE_sampling();
     bool d_spoofing_report = true;
     if(d_spoofing_report)
+    {
+    if (d_spoofing_report_file.is_open() == false)
         {
-        if (d_spoofing_report_file.is_open() == false)
+            try
             {
-                try
-                {
-                    boost::posix_time::ptime t = boost::posix_time::second_clock::universal_time();
-                    std::stringstream spoofing_report_filename;
-                    std::stringstream spoofing_report_filename_full;
-                    spoofing_report_filename << "spoofing_report-"
-                    << boost::posix_time::to_iso_string(t)
-                    << ".txt";
-                    spoofing_report_filename_full <<  FLAGS_log_dir << spoofing_report_filename.str();
-                    d_spoofing_report_file.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-                    d_spoofing_report_file.open(spoofing_report_filename_full.str(), std::ios::out );
+                boost::posix_time::ptime t = boost::posix_time::second_clock::universal_time();
+                std::stringstream spoofing_report_filename;
+                std::stringstream spoofing_report_filename_full;
+                spoofing_report_filename << "spoofing_report-"
+                << boost::posix_time::to_iso_string(t)
+                << ".txt";
+                spoofing_report_filename_full <<  FLAGS_log_dir << spoofing_report_filename.str();
+                d_spoofing_report_file.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+                d_spoofing_report_file.open(spoofing_report_filename_full.str(), std::ios::out );
 
-                    
-                    std::stringstream spoofing_report_symlink;
-                    spoofing_report_symlink <<  FLAGS_log_dir
-                    << "spoofing_report"
-                    << ".txt";
-                    int us = unlink(spoofing_report_symlink.str().c_str());
-                    if(us != 0)
-                        {
-                            DLOG(INFO)  << "Unable to unlink last spoofing report ", strerror(errno);
-                        }
-                    int s =  symlink(spoofing_report_filename.str().c_str(), spoofing_report_symlink.str().c_str());
-                    if(s != 0)
-                        {
-                            LOG(WARNING)  << "Unable to create symlink for spoofing report ", strerror(errno);
-                        }
+                
+                std::stringstream spoofing_report_symlink;
+                spoofing_report_symlink <<  FLAGS_log_dir
+                << "spoofing_report"
+                << ".txt";
+                int us = unlink(spoofing_report_symlink.str().c_str());
+                if(us != 0)
+                    {
+                        DLOG(INFO)  << "Unable to unlink last spoofing report ", strerror(errno);
+                    }
+                int s =  symlink(spoofing_report_filename.str().c_str(), spoofing_report_symlink.str().c_str());
+                if(s != 0)
+                    {
+                        LOG(WARNING)  << "Unable to create symlink for spoofing report ", strerror(errno);
+                    }
 
-                    LOG(INFO) << "Spoofing report enabled, " << " file: " << spoofing_report_filename_full.str() << std::endl;
-                }
-                catch (std::ifstream::failure e)
-                {
-                    LOG(WARNING) << " Exception opening spoofing report file " << e.what() << std::endl;
-                }
+                LOG(INFO) << "Spoofing report enabled, " << " file: " << spoofing_report_filename_full.str() << std::endl;
+            }
+            catch (std::ifstream::failure e)
+            {
+                LOG(WARNING) << " Exception opening spoofing report file " << e.what() << std::endl;
             }
         }
+    }
 }
 
 
@@ -484,7 +484,6 @@ int gps_l1_ca_sd_pvt_cc::general_work (int noutput_items __attribute__((unused))
         }
     }
     
-
     // ############ 2 COMPUTE THE PVT ################################
     if (gnss_pseudoranges_map.size() > 0 and d_ls_pvt->gps_ephemeris_map.size() > 0)
         {

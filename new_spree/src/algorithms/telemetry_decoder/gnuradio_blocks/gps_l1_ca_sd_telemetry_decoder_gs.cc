@@ -66,6 +66,7 @@ gps_l1_ca_sd_telemetry_decoder_gs::gps_l1_ca_sd_telemetry_decoder_gs(
     this->message_port_register_out(pmt::mp("telemetry"));
     // Control messages to tracking block
     this->message_port_register_out(pmt::mp("telemetry_to_trk"));
+    this->message_port_register_out(pmt::mp("events"));
     d_last_valid_preamble = 0;
     d_sent_tlm_failed_msg = false;
 
@@ -303,10 +304,11 @@ bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe()
                     std::cout << "New GPS NAV message received in channel " << this->d_channel << ": "
                               << "subframe "
                               << subframe_ID << " from satellite "
-                              << Gnss_Satellite(std::string("GPS"), d_nav.i_satellite_PRN) 
+                              << Gnss_Satellite(std::string("GPS"), d_nav.i_satellite_PRN)
+                              << " at " << d_preamble_time_ms
                               << " peak " << i_peak << " id: " << uid << std::endl;
 
-                    d_spoofing_detector.New_subframe(subframe_ID, d_nav.i_satellite_PRN, d_nav, d_preamble_time_ms * 1000.0); //FS_IN is hardcoded right now
+                    d_spoofing_detector.New_subframe(subframe_ID, d_nav.i_satellite_PRN, d_nav, d_preamble_time_ms); //FS_IN is hardcoded right now
                     
 
                     switch (subframe_ID)
@@ -646,7 +648,7 @@ void gps_l1_ca_sd_telemetry_decoder_gs::stop_tracking(unsigned int uid)
             global_subframe_check.remove(uid);
             channel_state = 2; 
             DLOG(INFO) << "send stop tracking " << uid; 
-            //this->message_port_pub(pmt::mp("events"), pmt::from_long(4));//4 -> stop tracking
+            this->message_port_pub(pmt::mp("events"), pmt::from_long(4));//4 -> stop tracking
         }
 }
 

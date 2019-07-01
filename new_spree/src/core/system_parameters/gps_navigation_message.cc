@@ -268,26 +268,45 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
             d_TOW_SF1 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             //we are in the first subframe (the transmitted TOW is the start time of the next subframe) !
             d_TOW_SF1 = d_TOW_SF1 * 6;
-            sbf.d_TOW = d_TOW = d_TOW_SF1;  // Set transmission time
-            sbf.b_integrity_status_flag = b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
-            sbf.b_alert_flag = b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
-            sbf.b_antispoofing_flag = b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
-            sbf.i_GPS_week = i_GPS_week = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, GPS_WEEK));
-            sbf.i_SV_accuracy = i_SV_accuracy = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SV_ACCURACY));  // (20.3.3.3.1.3)
-            sbf.i_SV_health = i_SV_health = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SV_HEALTH));
-            sbf.b_L2_P_data_flag = b_L2_P_data_flag = read_navigation_bool(subframe_bits, L2_P_DATA_FLAG);  //
-            sbf.i_code_on_L2 = i_code_on_L2 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, CA_OR_P_ON_L2));
+            d_TOW = d_TOW_SF1;  // Set transmission time
+            b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
+            b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
+            b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
+            i_GPS_week = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, GPS_WEEK));
+            i_SV_accuracy = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SV_ACCURACY));  // (20.3.3.3.1.3)
+            i_SV_health = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, SV_HEALTH));
+            b_L2_P_data_flag = read_navigation_bool(subframe_bits, L2_P_DATA_FLAG);  //
+            i_code_on_L2 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, CA_OR_P_ON_L2));
             d_TGD = static_cast<double>(read_navigation_signed(subframe_bits, T_GD));
-            sbf.d_TGD = d_TGD = d_TGD * T_GD_LSB;
-            sbf.d_IODC = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, IODC));
+            d_TGD = d_TGD * T_GD_LSB;
+            d_IODC = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, IODC));
             d_Toc = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, T_OC));
-            sbf.d_Toc = d_Toc * T_OC_LSB;
-            sbf.d_A_f0 = d_A_f0 = static_cast<double>(read_navigation_signed(subframe_bits, A_F0));
-            sbf.d_A_f0 = d_A_f0 = d_A_f0 * A_F0_LSB;
-            sbf.d_A_f1 = d_A_f1 = static_cast<double>(read_navigation_signed(subframe_bits, A_F1));
-            sbf.d_A_f1 = d_A_f1 = d_A_f1 * A_F1_LSB;
-            sbf.d_A_f2 = d_A_f2 = static_cast<double>(read_navigation_signed(subframe_bits, A_F2));
-            sbf.d_A_f2 = d_A_f2 = d_A_f2 * A_F2_LSB;
+            d_Toc * T_OC_LSB;
+            d_A_f0 = static_cast<double>(read_navigation_signed(subframe_bits, A_F0));
+            d_A_f0 = d_A_f0 * A_F0_LSB;
+            d_A_f1 = static_cast<double>(read_navigation_signed(subframe_bits, A_F1));
+            d_A_f1 = d_A_f1 * A_F1_LSB;
+            d_A_f2 = static_cast<double>(read_navigation_signed(subframe_bits, A_F2));
+            d_A_f2 = d_A_f2 * A_F2_LSB;
+
+            sbf.d_TOW = 0; 
+            sbf.b_integrity_status_flag = 0; 
+            sbf.b_alert_flag = 0; 
+            sbf.b_antispoofing_flag = 0; 
+            sbf.i_GPS_week = 0; 
+            sbf.i_SV_accuracy = 0; 
+            sbf.i_SV_health = 0; 
+            sbf.b_L2_P_data_flag = 0; 
+            sbf.i_code_on_L2 = 0;
+            sbf.d_TGD = 0;
+            sbf.d_IODC = 0;
+            sbf.d_Toc = 0;
+            sbf.d_A_f0 = 0;
+            sbf.d_A_f0 = 0;
+            sbf.d_A_f1 = 0;
+            sbf.d_A_f1 = 0;
+            sbf.d_A_f2 = 0;
+            sbf.d_A_f2 = 0;
 
             subframe_data.sbf1 = sbf;
 
@@ -671,7 +690,8 @@ bool Gps_Navigation_Message::satellite_validation()
     // First Step:
     // check Issue Of Ephemeris Data (IODE IODC..) to find a possible interrupted reception
     // and check if the data have been filled (!=0)
-    if (d_TOW_SF1 != 0.0 and d_TOW_SF2 != 0.0 and d_TOW_SF3 != 0.0)
+    //std::cout << std::endl << "1: " << d_TOW_SF1 << ": 2:" << d_TOW_SF2 << ": 3: " << d_TOW_SF3 << std::endl;
+    if (d_TOW_SF1 != 0.0 or d_TOW_SF2 != 0.0 or d_TOW_SF3 != 0.0)
         {
             if (d_IODE_SF2 == d_IODE_SF3 and d_IODC == d_IODE_SF2 and d_IODC != -1.0)
                 {
@@ -679,6 +699,8 @@ bool Gps_Navigation_Message::satellite_validation()
                     b_valid_ephemeris_set_flag = true;
                 }
         }
+
+    std::cout << std::endl << "Sat val: " << flag_data_valid;
     return flag_data_valid;
 }
 

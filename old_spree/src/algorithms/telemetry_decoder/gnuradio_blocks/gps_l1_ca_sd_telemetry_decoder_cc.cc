@@ -209,73 +209,73 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items __attribu
 
     //******* frame sync ******************
     if (abs(corr_value) == GPS_CA_PREAMBLE_LENGTH_SYMBOLS)
+    {
+        //TODO: Rewrite with state machine
+        if (d_stat == 0)
         {
-            //TODO: Rewrite with state machine
-            if (d_stat == 0)
-                {
-                    d_GPS_FSM.Event_gps_word_preamble();
-                    //record the preamble sample stamp
-                    d_preamble_time_seconds = in[0][0].Tracking_timestamp_secs; // record the preamble sample stamp
-                    DLOG(INFO)  << "Preamble detection for SAT " << this->d_satellite << "in[0][0].Tracking_timestamp_secs=" << round(in[0][0].Tracking_timestamp_secs * 1000.0);
-                    //sync the symbol to bits integrator
-                    d_symbol_accumulator = 0;                    d_symbol_accumulator_counter = 0;
-                    d_frame_bit_index = 0;
-                    d_stat = 1; // enter into frame pre-detection status
-                }
-            else if (d_stat == 1) //check 6 seconds of preamble separation
-                {
-                    preamble_diff_ms = round((in[0][0].Tracking_timestamp_secs - d_preamble_time_seconds) * 1000.0);
-                    if (abs(preamble_diff_ms - GPS_SUBFRAME_MS) < 1)
-                        {
-                            DLOG(INFO) << "Preamble confirmation for SAT " << this->d_satellite  << "in[0][0].Tracking_timestamp_secs=" << round(in[0][0].Tracking_timestamp_secs * 1000.0);
-                            d_GPS_FSM.Event_gps_word_preamble();
-                            d_flag_preamble = true;
-                            d_preamble_time_seconds = in[0][0].Tracking_timestamp_secs;// - d_preamble_duration_seconds; //record the PRN start sample index associated to the preamble
-
-                            if (!d_flag_frame_sync)
-                                {
-                                    // send asynchronous message to tracking to inform of frame sync and extend correlation time
-                                    pmt::pmt_t value = pmt::from_double(d_preamble_time_seconds - 0.001);
-                                    this->message_port_pub(pmt::mp("preamble_timestamp_s"), value);
-                                    d_flag_frame_sync = true;
-                                    if (corr_value < 0)
-                                        {
-                                            flag_PLL_180_deg_phase_locked = true; // PLL is locked to opposite phase!
-                                            DLOG(INFO)  << " PLL in opposite phase for Sat "<< this->d_satellite.get_PRN();
-                                        }
-                                    else
-                                        {
-                                            flag_PLL_180_deg_phase_locked = false;
-                                        }
-                                    DLOG(INFO)  << " Frame sync SAT " << this->d_satellite << " with preamble start at " << d_preamble_time_seconds << " [s]";
-                                }
-                        }
-                }
+            d_GPS_FSM.Event_gps_word_preamble();
+            //record the preamble sample stamp
+            d_preamble_time_seconds = in[0][0].Tracking_timestamp_secs; // record the preamble sample stamp
+            DLOG(INFO)  << "Preamble detection for SAT " << this->d_satellite << "in[0][0].Tracking_timestamp_secs=" << round(in[0][0].Tracking_timestamp_secs * 1000.0);
+            //sync the symbol to bits integrator
+            d_symbol_accumulator = 0;                    d_symbol_accumulator_counter = 0;
+            d_frame_bit_index = 0;
+            d_stat = 1; // enter into frame pre-detection status
         }
-    else
+        else if (d_stat == 1) //check 6 seconds of preamble separation
         {
             preamble_diff_ms = round((in[0][0].Tracking_timestamp_secs - d_preamble_time_seconds) * 1000.0);
-            if (d_stat == 1)
-                {
-                    if (preamble_diff_ms > GPS_SUBFRAME_MS+1)
-                        {
-                            DLOG(INFO) << "Lost of frame sync SAT " << this->d_satellite << " preamble_diff= " << preamble_diff_ms;
-                            d_stat = 0; //lost of frame sync
-                            d_flag_frame_sync = false;
-                            flag_TOW_set = false;
-                        }
-                }
-            
-            //Tracking test are not losing lock but gnss-sdr is trakcing noise or unable to find NAV message
-            //Send stop tracking to tracking module
-            else if (preamble_diff_ms > GPS_SUBFRAME_MS+1000)
-                {
-                    DLOG(INFO) << "No frame sync SAT: " <<  this->d_satellite << " preamble_diff= " << preamble_diff_ms << "\n"
-                               << "Send stop tracking to tracking module for sat " << this->d_satellite << " ch: " << d_channel;
-                    stop_tracking(uid);
-                }
+            if (abs(preamble_diff_ms - GPS_SUBFRAME_MS) < 1)
+            {
+                DLOG(INFO) << "Preamble confirmation for SAT " << this->d_satellite  << "in[0][0].Tracking_timestamp_secs=" << round(in[0][0].Tracking_timestamp_secs * 1000.0);
+                d_GPS_FSM.Event_gps_word_preamble();
+                d_flag_preamble = true;
+                d_preamble_time_seconds = in[0][0].Tracking_timestamp_secs;// - d_preamble_duration_seconds; //record the PRN start sample index associated to the preamble
 
+                if (!d_flag_frame_sync)
+                {
+                    // send asynchronous message to tracking to inform of frame sync and extend correlation time
+                    pmt::pmt_t value = pmt::from_double(d_preamble_time_seconds - 0.001);
+                    this->message_port_pub(pmt::mp("preamble_timestamp_s"), value);
+                    d_flag_frame_sync = true;
+                    if (corr_value < 0)
+                    {
+                        flag_PLL_180_deg_phase_locked = true; // PLL is locked to opposite phase!
+                        DLOG(INFO)  << " PLL in opposite phase for Sat "<< this->d_satellite.get_PRN();
+                    }
+                    else
+                    {
+                        flag_PLL_180_deg_phase_locked = false;
+                    }
+                    DLOG(INFO)  << " Frame sync SAT " << this->d_satellite << " with preamble start at " << d_preamble_time_seconds << " [s]";
+                }
+            }
         }
+    }
+    else
+    {
+        preamble_diff_ms = round((in[0][0].Tracking_timestamp_secs - d_preamble_time_seconds) * 1000.0);
+        if (d_stat == 1)
+            {
+                if (preamble_diff_ms > GPS_SUBFRAME_MS+1)
+                    {
+                        DLOG(INFO) << "Lost of frame sync SAT " << this->d_satellite << " preamble_diff= " << preamble_diff_ms;
+                        d_stat = 0; //lost of frame sync
+                        d_flag_frame_sync = false;
+                        flag_TOW_set = false;
+                    }
+            }
+        
+        //Tracking test are not losing lock but gnss-sdr is trakcing noise or unable to find NAV message
+        //Send stop tracking to tracking module
+        else if (preamble_diff_ms > GPS_SUBFRAME_MS+1000)
+            {
+                DLOG(INFO) << "No frame sync SAT: " <<  this->d_satellite << " preamble_diff= " << preamble_diff_ms << "\n"
+                            << "Send stop tracking to tracking module for sat " << this->d_satellite << " ch: " << d_channel;
+                stop_tracking(uid);
+            }
+
+    }
 
     //******* SYMBOL TO BIT *******
     if (in[0][0].Flag_valid_symbol_output == true)
