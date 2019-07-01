@@ -43,6 +43,21 @@
 #include <gnuradio/msg_queue.h>
 #include <gtest/gtest.h>
 #include "spoofing_message.h"
+#include "concurrent_map.h" 
+
+struct Subframe{
+    std::string subframe;
+    int id;
+    double timestamp;
+};
+extern Concurrent_Map<Subframe> global_subframe_map;
+struct GPS_time_t{
+    int week;
+    double TOW;
+    int subframe_id;
+};
+extern Concurrent_Map<GPS_time_t> global_gps_time;
+extern Concurrent_Map<std::map<unsigned int, unsigned int>> global_subframe_check;
 
 
 TEST(GNSSFlowgraph /*unused*/, InstantiateConnectStartStopOldNotation /*unused*/)

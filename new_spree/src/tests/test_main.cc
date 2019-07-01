@@ -159,12 +159,12 @@ Concurrent_Map<Gps_Acq_Assist> global_gps_acq_assist_map;
 
 
 //For spoofing detection
-struct GPS_time_t{
-    int week;
-    double TOW;
-    double timestamp;    
-    int subframe_id;
-};
+// struct GPS_time_t{
+//     int week;
+//     double TOW;
+//     double timestamp;    
+//     int subframe_id;
+// };
 
 struct sEph{
     Gps_Ephemeris ephemeris;
@@ -177,14 +177,14 @@ Concurrent_Map<sEph> global_sEph_map;
 Concurrent_Map<double> global_last_gps_time;
 Concurrent_Map<bool> global_spoofing_status;  //spoofing has been detected for the satellite
 
-struct Subframe{
-    std::string subframe;
-    unsigned int subframe_id;
-    unsigned int PRN;
-    double timestamp;
-    unsigned int toa;
-    unsigned int uid;
-};
+// struct Subframe{
+//     std::string subframe;
+//     unsigned int subframe_id;
+//     unsigned int PRN;
+//     double timestamp;
+//     unsigned int toa;
+//     unsigned int uid;
+// };
 
 Concurrent_Map<Subframe> global_subframe_map;
 Concurrent_Map<std::map<unsigned int, unsigned int>> global_subframe_check;

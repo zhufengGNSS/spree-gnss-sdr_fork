@@ -1127,7 +1127,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
         if(subframe.PRN != PRN)
             continue;
 
-        LOG(ERROR) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
+        DLOG(WARNING) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
     
         if(smallest.timestamp > subframe.timestamp) 
         {

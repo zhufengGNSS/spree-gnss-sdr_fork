@@ -281,7 +281,7 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
             d_TGD = d_TGD * T_GD_LSB;
             d_IODC = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, IODC));
             d_Toc = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, T_OC));
-            d_Toc * T_OC_LSB;
+            d_Toc = d_Toc * T_OC_LSB;
             d_A_f0 = static_cast<double>(read_navigation_signed(subframe_bits, A_F0));
             d_A_f0 = d_A_f0 * A_F0_LSB;
             d_A_f1 = static_cast<double>(read_navigation_signed(subframe_bits, A_F1));
@@ -699,8 +699,6 @@ bool Gps_Navigation_Message::satellite_validation()
                     b_valid_ephemeris_set_flag = true;
                 }
         }
-
-    std::cout << std::endl << "Sat val: " << flag_data_valid;
     return flag_data_valid;
 }
 

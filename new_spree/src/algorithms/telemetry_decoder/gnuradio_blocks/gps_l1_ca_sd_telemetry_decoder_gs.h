@@ -96,6 +96,7 @@ private:
 
     bool gps_word_parityCheck(uint32_t gpsword);
     bool decode_subframe();
+    Gps_Ephemeris compare_eph(Gps_Ephemeris shrd_eph);
 
     int32_t d_bits_per_preamble;
     int32_t d_samples_per_preamble;

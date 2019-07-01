@@ -43,12 +43,14 @@
 #include <exception>  // for exception
 #include <iostream>   // for cout
 #include <memory>     // for shared_ptr
+#include "display.h"
 
 
 #ifndef _rotl
 #define _rotl(X, N) (((X) << (N)) ^ ((X) >> (32 - (N))))  // Used in the parity check algorithm
 #endif
 
+Concurrent_Map<Gps_Ephemeris> eph_map;
 
 gps_l1_ca_sd_telemetry_decoder_gs_sptr
 gps_l1_ca_make_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector)
@@ -208,6 +210,174 @@ void gps_l1_ca_sd_telemetry_decoder_gs::set_channel(int32_t channel)
         }
 }
 
+Gps_Ephemeris gps_l1_ca_sd_telemetry_decoder_gs::compare_eph(Gps_Ephemeris shrd_eph)
+{
+    int sv = shrd_eph.i_satellite_PRN;
+    Gps_Ephemeris eph;
+    bool is_same = true;
+    if(eph_map.read(sv, eph))
+    {
+        if(
+        eph.d_TOW  == shrd_eph.d_TOW
+        and eph.d_Crs == shrd_eph.d_Crs
+        and eph.d_Delta_n == shrd_eph.d_Delta_n
+        and eph.d_M_0 == shrd_eph.d_M_0
+        and eph.d_Cuc == shrd_eph.d_Cuc
+        and eph.d_e_eccentricity == shrd_eph.d_e_eccentricity
+        and eph.d_Cus == shrd_eph.d_Cus
+        and eph.d_sqrt_A == shrd_eph.d_sqrt_A
+        and eph.d_Toe == shrd_eph.d_Toe
+        and eph.d_Toc == shrd_eph.d_Toc
+        and eph.d_Cic == shrd_eph.d_Cic
+        and eph.d_OMEGA0 == shrd_eph.d_OMEGA0
+        and eph.d_Cis == shrd_eph.d_Cis
+        and eph.d_i_0 == shrd_eph.d_i_0
+        and eph.d_Crc == shrd_eph.d_Crc
+        and eph.d_OMEGA == shrd_eph.d_OMEGA
+        and eph.d_OMEGA_DOT == shrd_eph.d_OMEGA_DOT
+        and eph.d_IDOT == shrd_eph.d_IDOT
+        and eph.i_code_on_L2 == shrd_eph.i_code_on_L2
+        and eph.i_GPS_week == shrd_eph.i_GPS_week
+        and eph.b_L2_P_data_flag == shrd_eph.b_L2_P_data_flag
+        and eph.i_SV_accuracy == shrd_eph.i_SV_accuracy
+        and eph.i_SV_health == shrd_eph.i_SV_health
+        and eph.d_TGD == shrd_eph.d_TGD
+        and eph.d_IODC == shrd_eph.d_IODC
+        and eph.d_IODE_SF2 == shrd_eph.d_IODE_SF2
+        and eph.d_IODE_SF3 == shrd_eph.d_IODE_SF3
+        and eph.i_AODO == shrd_eph.i_AODO
+        and eph.b_fit_interval_flag == shrd_eph.b_fit_interval_flag
+        and eph.d_spare1 == shrd_eph.d_spare1
+        and eph.d_spare2 == shrd_eph.d_spare2
+        and eph.d_A_f0 == shrd_eph.d_A_f0
+        and eph.d_A_f1 == shrd_eph.d_A_f1
+        and eph.d_A_f2 == shrd_eph.d_A_f2
+        and eph.b_integrity_status_flag == shrd_eph.b_integrity_status_flag
+        and eph.b_alert_flag == shrd_eph.b_alert_flag
+        and eph.b_antispoofing_flag == shrd_eph.b_antispoofing_flag
+        and eph.d_satClkDrift == shrd_eph.d_satClkDrift
+        and eph.d_dtr == shrd_eph.d_dtr
+        and eph.d_satpos_X == shrd_eph.d_satpos_X
+        and eph.d_satpos_Y == shrd_eph.d_satpos_Y
+        and eph.d_satpos_Z == shrd_eph.d_satpos_Z
+        and eph.d_satvel_X == shrd_eph.d_satvel_X
+        and eph.d_satvel_Y == shrd_eph.d_satvel_Y
+        and eph.d_satvel_Z == shrd_eph.d_satvel_Z)
+        {
+            is_same = true;
+            std::cout << std::endl << TEXT_BOLD_YELLOW << "Same subframe detected for SV: " << sv << TEXT_RESET << std::endl;
+        }   
+        else
+        {   
+            std::cout << std::endl << TEXT_BOLD_RED << "Different subframe detected for SV: " << sv << TEXT_RESET << std::endl;
+            std::cout << "Subframe 1 SV: " << eph.i_satellite_PRN
+                << ": " << eph.d_Crs
+                << ": " << eph.d_Delta_n
+                << ": " << eph.d_M_0
+                << ": " << eph.d_Cuc
+                << ": " << eph.d_e_eccentricity
+                << ": " << eph.d_Cus
+                << ": " << eph.d_sqrt_A
+                << ": " << eph.d_Toe
+                << ": " << eph.d_Toc
+                << ": " << eph.d_Cic
+                << ": " << eph.d_OMEGA0
+                << ": " << eph.d_Cis
+                << ": " << eph.d_i_0
+                << ": " << eph.d_Crc
+                << ": " << eph.d_OMEGA
+                << ": " << eph.d_OMEGA_DOT
+                << ": " << eph.d_IDOT
+                << ": " << eph.i_code_on_L2
+                << ": " << eph.i_GPS_week
+                << ": " << eph.b_L2_P_data_flag
+                << ": " << eph.i_SV_accuracy
+                << ": " << eph.i_SV_health
+                << ": " << eph.d_TGD
+                << ": " << eph.d_IODC
+                << ": " << eph.d_IODE_SF2
+                << ": " << eph.d_IODE_SF3
+                << ": " << eph.i_AODO
+                << ": " << eph.b_fit_interval_flag
+                << ": " << eph.d_spare1
+                << ": " << eph.d_spare2
+                << ": " << eph.d_A_f0
+                << ": " << eph.d_A_f1
+                << ": " << eph.d_A_f2
+                << ": " << eph.b_integrity_status_flag
+                << ": " << eph.b_alert_flag
+                << ": " << eph.b_antispoofing_flag
+                << ": " << eph.d_satClkDrift
+                << ": " << eph.d_dtr
+                << ": " << eph.d_satpos_X
+                << ": " << eph.d_satpos_Y
+                << ": " << eph.d_satpos_Z
+                << ": " << eph.d_satvel_X
+                << ": " << eph.d_satvel_Y
+                << ": " << eph.d_satvel_Z;
+
+            std::cout << std::endl << "Subframe 2 SV: " << sv
+                << ": " << shrd_eph.d_Crs
+                << ": " << shrd_eph.d_Delta_n
+                << ": " << shrd_eph.d_M_0
+                << ": " << shrd_eph.d_Cuc
+                << ": " << shrd_eph.d_e_eccentricity
+                << ": " << shrd_eph.d_Cus
+                << ": " << shrd_eph.d_sqrt_A
+                << ": " << shrd_eph.d_Toe
+                << ": " << shrd_eph.d_Toc
+                << ": " << shrd_eph.d_Cic
+                << ": " << shrd_eph.d_OMEGA0
+                << ": " << shrd_eph.d_Cis
+                << ": " << shrd_eph.d_i_0
+                << ": " << shrd_eph.d_Crc
+                << ": " << shrd_eph.d_OMEGA
+                << ": " << shrd_eph.d_OMEGA_DOT
+                << ": " << shrd_eph.d_IDOT
+                << ": " << shrd_eph.i_code_on_L2
+                << ": " << shrd_eph.i_GPS_week
+                << ": " << shrd_eph.b_L2_P_data_flag
+                << ": " << shrd_eph.i_SV_accuracy
+                << ": " << shrd_eph.i_SV_health
+                << ": " << shrd_eph.d_TGD
+                << ": " << shrd_eph.d_IODC
+                << ": " << shrd_eph.d_IODE_SF2
+                << ": " << shrd_eph.d_IODE_SF3
+                << ": " << shrd_eph.i_AODO
+                << ": " << shrd_eph.b_fit_interval_flag
+                << ": " << shrd_eph.d_spare1
+                << ": " << shrd_eph.d_spare2
+                << ": " << shrd_eph.d_A_f0
+                << ": " << shrd_eph.d_A_f1
+                << ": " << shrd_eph.d_A_f2
+                << ": " << shrd_eph.b_integrity_status_flag
+                << ": " << shrd_eph.b_alert_flag
+                << ": " << shrd_eph.b_antispoofing_flag
+                << ": " << shrd_eph.d_satClkDrift
+                << ": " << shrd_eph.d_dtr
+                << ": " << shrd_eph.d_satpos_X
+                << ": " << shrd_eph.d_satpos_Y
+                << ": " << shrd_eph.d_satpos_Z
+                << ": " << shrd_eph.d_satvel_X
+                << ": " << shrd_eph.d_satvel_Y
+                << ": " << shrd_eph.d_satvel_Z
+                << TEXT_RESET << std::endl;
+            is_same = false;
+        }
+        eph_map.remove(sv);
+    }
+    eph_map.add(sv, shrd_eph);
+
+    if(!is_same)
+    {
+        return eph;
+    }
+    else
+    {
+        return shrd_eph;
+    }
+    
+}
 
 bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe()
 {
@@ -313,60 +483,64 @@ bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe()
 
                     switch (subframe_ID)
                     {
-                        // case 1:
-                        //     LOG(ERROR)  << std::endl
-                        //                 << "==========================================================================================================================="
-                        //                 << std::endl 
-                        //                   << it->second.sbf1.d_TOW << " : "
-                        //                   << it->second.sbf1.b_integrity_status_flag << " : "
-                        //                   << it->second.sbf1.b_alert_flag << " : "
-                        //                   << it->second.sbf1.b_antispoofing_flag << " : "
-                        //                   << it->second.sbf1.i_GPS_week << " : "
-                        //                   << it->second.sbf1.i_SV_accuracy << " : "
-                        //                   << it->second.sbf1.i_SV_health << " : "
-                        //                   << it->second.sbf1.b_L2_P_data_flag << " : "
-                        //                   << it->second.sbf1.i_code_on_L2 << " : "
-                        //                   << it->second.sbf1.d_TGD << " : "
-                        //                   << it->second.sbf1.d_IODC << " : "
-                        //                   << it->second.sbf1.d_Toc << " : "
-                        //                   << it->second.sbf1.d_A_f0 << " : "
-                        //                   << it->second.sbf1.d_A_f0 << " : "
-                        //                   << it->second.sbf1.d_A_f1 << " : "
-                        //                   << it->second.sbf1.d_A_f1 << " : "
-                        //                   << it->second.sbf1.d_A_f2 << " : "
-                        //                   << it->second.sbf1.d_A_f2 << std::endl
-                        //                   <<"Subframe 1: PRN " << d_nav.i_satellite_PRN
-                        //                   << " Peak " << i_peak << " id: " << uid
-                        //                   << " Channel " << this->d_channel 
-                        //                   << std::endl
-                        //                   << "==========================================================================================================================="
-                        //                   << std::endl;
-                        // case 2:
-                        //     LOG(ERROR)  << std::endl
-                        //                   << it->second.sbf2.d_TOW << " : "
-                        //                   << it->second.sbf2.b_integrity_status_flag << " : "
-                        //                   << it->second.sbf2.b_alert_flag << " : "
-                        //                   << it->second.sbf2.b_antispoofing_flag << " : "
-                        //                   << it->second.sbf2.d_IODE_SF2 << " : "
-                        //                   << it->second.sbf2.d_Crs << " : "
-                        //                   << it->second.sbf2.d_Delta_n << " : "
-                        //                   << it->second.sbf2.d_M_0 << " : "
-                        //                   << it->second.sbf2.d_Cuc << " : "
-                        //                   << it->second.sbf2.d_e_eccentricity << " : "
-                        //                   << it->second.sbf2.d_Cus << " : "
-                        //                   << it->second.sbf2.d_sqrt_A << " : "
-                        //                   << it->second.sbf2.d_Toe << " : "
-                        //                   << it->second.sbf2.b_fit_interval_flag << " : "
-                        //                   << it->second.sbf2.i_AODO << " : "  << std::endl
-                        //                   <<"Subframe 2: PRN " << d_nav.i_satellite_PRN
-                        //                   << " Peak " << i_peak << " id: " << uid
-                        //                   << " Channel " << this->d_channel << std::endl;
-
                         case 3:  // we have a new set of ephemeris data for the current SV
                             if (d_nav.satellite_validation() == true)
                                 {
                                     // get ephemeris object for this SV (mandatory)
-                                    std::shared_ptr<Gps_Ephemeris> tmp_obj = std::make_shared<Gps_Ephemeris>(d_nav.get_ephemeris());
+                                    //Gps_Ephemeris tmp_eph = d_nav.get_ephemeris();
+                                    
+                                    std::shared_ptr<Gps_Ephemeris> tmp_obj = std::make_shared<Gps_Ephemeris>(compare_eph(d_nav.get_ephemeris()));
+                                    {
+                                        // /std::cout << std::endl << "Different subframe detected for SV " <<  d_nav.i_satellite_PRN <<std::endl;
+                                    }
+                                    // std::cout << std::endl << "Ephemeris for SV " << d_nav.i_satellite_PRN << std::endl
+
+                                    //         << " : " << h.d_TOW
+                                    //         << " : " << h.d_Crs
+                                    //         << " : " << h.d_Delta_n
+                                    //         << " : " << h.d_M_0
+                                    //         << " : " << h.d_Cuc
+                                    //         << " : " << h.d_e_eccentricity
+                                    //         << " : " << h.d_Cus
+                                    //         << " : " << h.d_sqrt_A
+                                    //         << " : " << h.d_Toe
+                                    //         << " : " << h.d_Toc
+                                    //         << " : " << h.d_Cic
+                                    //         << " : " << h.d_OMEGA0
+                                    //         << " : " << h.d_Cis
+                                    //         << " : " << h.d_i_0
+                                    //         << " : " << h.d_Crc
+                                    //         << " : " << h.d_OMEGA
+                                    //         << " : " << h.d_OMEGA_DOT
+                                    //         << " : " << h.d_IDOT
+                                    //         << " : " << h.i_code_on_L2
+                                    //         << " : " << h.i_GPS_week
+                                    //         << " : " << h.b_L2_P_data_flag
+                                    //         << " : " << h.i_SV_accuracy
+                                    //         << " : " << h.i_SV_health
+                                    //         << " : " << h.d_TGD
+                                    //         << " : " << h.d_IODC
+                                    //         << " : " << h.d_IODE_SF2
+                                    //         << " : " << h.d_IODE_SF3
+                                    //         << " : " << h.i_AODO
+                                    //         << " : " << h.b_fit_interval_flag
+                                    //         << " : " << h.d_spare1
+                                    //         << " : " << h.d_spare2
+                                    //         << " : " << h.d_A_f0
+                                    //         << " : " << h.d_A_f1
+                                    //         << " : " << h.d_A_f2
+                                    //         << " : " << h.b_integrity_status_flag
+                                    //         << " : " << h.b_alert_flag
+                                    //         << " : " << h.b_antispoofing_flag
+                                    //         << " : " << h.d_satClkDrift
+                                    //         << " : " << h.d_dtr
+                                    //         << " : " << h.d_satpos_X
+                                    //         << " : " << h.d_satpos_Y
+                                    //         << " : " << h.d_satpos_Z
+                                    //         << " : " << h.d_satvel_X
+                                    //         << " : " << h.d_satvel_Y
+                                    //         << " : " << h.d_satvel_Z
+                                    //         << std::endl;
                                     this->message_port_pub(pmt::mp("telemetry"), pmt::make_any(tmp_obj));
                                 }
                             break;
