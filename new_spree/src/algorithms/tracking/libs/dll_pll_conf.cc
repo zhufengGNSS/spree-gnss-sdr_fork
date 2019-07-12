@@ -38,7 +38,7 @@ Dll_Pll_Conf::Dll_Pll_Conf()
     /* DLL/PLL tracking configuration */
     high_dyn = false;
     smoother_length = 10;
-    fs_in = 0.0;
+    fs_in = 0L;
     vector_length = 0U;
     dump = false;
     dump_mat = true;

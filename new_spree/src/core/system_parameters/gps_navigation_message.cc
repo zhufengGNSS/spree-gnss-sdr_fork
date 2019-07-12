@@ -35,7 +35,11 @@ m * \file gps_navigation_message.cc
 #include <cmath>     // for fmod, abs, floor
 #include <cstring>   // for memcpy
 #include <iostream>  // for operator<<, cout, endl
+#include "concurrent_map.h"
+#include "display.h"
 
+extern Concurrent_Map<int> tracking_sats;
+extern Concurrent_Map<int> tow_offset;
 
 void Gps_Navigation_Message::reset()
 {
@@ -234,6 +238,21 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
     int32_t subframe_ID = 0;
     uint32_t gps_word;
 
+    //tow_offset = 0;//-320;//-186;
+    tracking_sats.write(i_satellite_PRN, tracking_sats.size());
+
+    std::map<int, int> offset = tow_offset.get_map_copy();
+
+    std::map<int, int>::reverse_iterator it;
+    
+    int i_tow_offset = 0;
+    for(it=offset.rbegin(); it!=offset.rend();++it)
+    {
+        i_tow_offset = it->first;
+        std::cout << std::endl << TEXT_BOLD_YELLOW << "TOW offset = " << it->first << ": " << it->second  << std::endl << TEXT_RESET;
+        break;
+    }
+    i_tow_offset = 0;
     // UNPACK BYTES TO BITS AND REMOVE THE CRC REDUNDANCE
     std::bitset<GPS_SUBFRAME_BITS> subframe_bits;
     std::bitset<GPS_WORD_BITS + 2> word_bits;
@@ -268,7 +287,8 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
             d_TOW_SF1 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             //we are in the first subframe (the transmitted TOW is the start time of the next subframe) !
             d_TOW_SF1 = d_TOW_SF1 * 6;
-            d_TOW = d_TOW_SF1;  // Set transmission time
+            // Set transmission time
+            d_TOW = d_TOW_SF1+i_tow_offset;
             b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
             b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
             b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
@@ -316,7 +336,8 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
             struct Gps_Navigation_Message::Sbf2 sbf2;
             d_TOW_SF2 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             d_TOW_SF2 = d_TOW_SF2 * 6;
-            d_TOW = d_TOW_SF2;  // Set transmission time
+// Set transmission time
+            d_TOW = d_TOW_SF2+i_tow_offset;
             b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
             b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
             b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
@@ -364,6 +385,9 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
             d_TOW_SF3 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             d_TOW_SF3 = d_TOW_SF3 * 6;
             d_TOW = d_TOW_SF3;  // Set transmission time
+
+            d_TOW = d_TOW_SF3+i_tow_offset;
+
             b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
             b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
             b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
@@ -391,7 +415,8 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
             int32_t SV_page;
             d_TOW_SF4 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             d_TOW_SF4 = d_TOW_SF4 * 6;
-            d_TOW = d_TOW_SF4;  // Set transmission time
+            // Set transmission time
+            d_TOW = d_TOW_SF4+i_tow_offset;
             b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
             b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
             b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);
@@ -468,7 +493,8 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
             int32_t SV_page_5;
             d_TOW_SF5 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             d_TOW_SF5 = d_TOW_SF5 * 6;
-            d_TOW = d_TOW_SF5;  // Set transmission time
+           
+            d_TOW = d_TOW_SF5+i_tow_offset;  // Set transmission time
             b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
             b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);
             b_antispoofing_flag = read_navigation_bool(subframe_bits, ANTI_SPOOFING_FLAG);

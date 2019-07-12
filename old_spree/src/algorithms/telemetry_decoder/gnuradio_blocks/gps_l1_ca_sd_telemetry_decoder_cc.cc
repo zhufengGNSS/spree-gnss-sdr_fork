@@ -216,6 +216,7 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items __attribu
             d_GPS_FSM.Event_gps_word_preamble();
             //record the preamble sample stamp
             d_preamble_time_seconds = in[0][0].Tracking_timestamp_secs; // record the preamble sample stamp
+            
             DLOG(INFO)  << "Preamble detection for SAT " << this->d_satellite << "in[0][0].Tracking_timestamp_secs=" << round(in[0][0].Tracking_timestamp_secs * 1000.0);
             //sync the symbol to bits integrator
             d_symbol_accumulator = 0;                    d_symbol_accumulator_counter = 0;
@@ -276,6 +277,8 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items __attribu
             }
 
     }
+
+    //LOG(WARNING) << "time: " << d_preamble_time_seconds;
 
     //******* SYMBOL TO BIT *******
     if (in[0][0].Flag_valid_symbol_output == true)

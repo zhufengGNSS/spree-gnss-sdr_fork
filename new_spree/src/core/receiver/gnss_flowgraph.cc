@@ -91,6 +91,7 @@ struct GPS_time_t{
 
 extern Concurrent_Map<GPS_time_t> global_gps_time;
 extern Concurrent_Map<std::map<unsigned int, unsigned int>> global_subframe_check;
+extern Concurrent_Map<int> tracking_sats;
 
 
 GNSSFlowgraph::GNSSFlowgraph(std::shared_ptr<ConfigurationInterface> configuration, const gr::msg_queue::sptr queue)  // NOLINT(performance-unnecessary-value-param)
@@ -1126,9 +1127,11 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
     switch (what)
         {
         case 0:
+            
             DLOG(INFO) << "Channel " << who << " ACQ FAILED satellite " << channels_[who]->get_signal().get_satellite() << ", Signal " << channels_[who]->get_signal().get_signal_str();
             
             lost_PRN =  channels_.at(who)->get_signal().get_satellite().get_PRN();
+            tracking_sats.remove(lost_PRN);
             channels_.at(who)->set_state(2);
 
             if(spoofing_detection)
@@ -1237,6 +1240,8 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
         case 1:
             LOG(INFO) << "Channel " << who << " ACQ SUCCESS satellite " << channels_[who]->get_signal().get_satellite();
 
+            //tracking_sats.add(channels_[who]->get_signal().get_satellite().get_PRN(), tracking_sats.size());
+
             DLOG(INFO) << "peak " << channel_to_peak.at(who);
 
             channels_.at(who)->set_state(0);
@@ -1339,6 +1344,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             break;
 
         case 2:
+            tracking_sats.remove(channels_[who]->get_signal().get_satellite().get_PRN());
             LOG(INFO) << "Channel " << who << " TRK FAILED satellite " << channels_[who]->get_signal().get_satellite();
             LOG(INFO) << "Number of channels in acquisition = " << acq_channels_count_;
             //srand (time(NULL));

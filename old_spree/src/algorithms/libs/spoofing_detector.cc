@@ -1127,7 +1127,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
         if(subframe.PRN != PRN)
             continue;
 
-    //    DLOG(INFO) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
+        //DLOG(WARNING) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
     
         if(smallest.timestamp > subframe.timestamp) 
         {
@@ -1154,6 +1154,29 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
                     if(std::abs(largest_t-smallest_t)/std::fmod(diff, 5) > 6001) 
                         {
                             spoofed = true;
+                            LOG(WARNING) << "*Time between subframes is: " << std::abs(largest_t-smallest_t)/std::fmod(diff, 5);
+                        }
+                }
+            else
+                {
+                    LOG(WARNING) << "*PRN: " << PRN << "; Largest: " << largest_t << ", smallest: " << smallest_t << std::endl;
+                    spoofed = true;
+                }
+        }
+
+    if(spoofed)
+        {
+            LOG(WARNING) << "*Diff "  << std::abs(largest_t-smallest_t) << " : Time- " << d_APT_max_rx_discrepancy;
+        }
+        
+    if(std::abs(largest_t-smallest_t) >= d_APT_max_rx_discrepancy)
+        {
+            if(largest.subframe_id != smallest.subframe_id)
+                {
+                    diff = largest.subframe_id-smallest.subframe_id;
+                    if(std::abs(largest_t-smallest_t)/std::fmod(diff, 5) > 6001) 
+                        {
+                            spoofed = true;
                         }
                 }
             else
@@ -1164,6 +1187,8 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
 
     if(spoofed)
         {
+            LOG(WARNING) << "Diff "  << std::abs(largest_t-smallest_t) << " : Time- " << d_APT_max_rx_discrepancy;
+            //DLOG(WARNING) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
             double distance = std::abs(largest_t-smallest_t)*GPS_C_m_s/1e3; 
             std::stringstream s;
             std::stringstream sr;

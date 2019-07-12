@@ -12,3 +12,7 @@ thirdparty/
 /.DS_Store
 
 new_spree/src/\.vscode/
+
+new_spree/file_sources/
+
+old_spree/\.vscode/

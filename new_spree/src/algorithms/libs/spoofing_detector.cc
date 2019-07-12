@@ -48,6 +48,7 @@
 extern Concurrent_Map<bool> global_spoofing_status;
 extern Concurrent_Map<Subframe> global_subframe_map;
 extern Concurrent_Map<sEph> global_sEph_map;
+extern Concurrent_Map<int> tow_offset;
 
 struct RX_time{
     unsigned int subframe_id;
@@ -259,6 +260,7 @@ void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week,
     if( new_TOW == 0 )
         return;
 
+    int tow_diff = 0;
     std::map<int, double> old_GPS_time;
     old_GPS_time = global_last_gps_time.get_map_copy();
     //LOG(INFO) << "TOW " << new_TOW << " " << new_week << " " << old_GPS_time.size();
@@ -299,12 +301,19 @@ void Spoofing_Detector::check_new_TOW(double current_timestamp_ms, int new_week,
                 msg.description = s.str();
                 msg.spoofing_report = sr.str();
                 spoofing_detected(msg);
+                tow_diff = new_gps_time-old_gps_time;
+                std::cout << std::endl << tow_diff << std::endl;
+                tow_offset.write(std::abs(std::abs(new_gps_time-old_gps_time)-duration), tow_offset.size());
             }
     }
 
     global_last_gps_time.write(0, new_week);
     global_last_gps_time.write(1, new_TOW);
     global_last_gps_time.write(2, current_timestamp_ms);
+
+    
+
+    return;
 }
 
 /*!
@@ -1127,7 +1136,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
         if(subframe.PRN != PRN)
             continue;
 
-        DLOG(WARNING) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
+        //DLOG(WARNING) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
     
         if(smallest.timestamp > subframe.timestamp) 
         {
@@ -1146,7 +1155,24 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
     bool spoofed = false;
     int diff = 0;
 
-    LOG(WARNING) << "Diff "  << std::abs(largest_t-smallest_t) << " : Time- " << d_APT_max_rx_discrepancy;
+    
+    // if(std::abs(largest_t-smallest_t) >= d_APT_max_rx_discrepancy)
+    //     {
+    //         if(largest.subframe_id != smallest.subframe_id)
+    //             {
+    //                 diff = largest.subframe_id-smallest.subframe_id;
+    //                 if(std::abs(largest_t-smallest_t)/std::fmod(diff, 5) > 6001) 
+    //                     {
+    //                         spoofed = true;
+    //                         LOG(WARNING) << "Time between subframes is: " << std::abs(largest_t-smallest_t)/std::fmod(diff, 5);
+    //                     }
+    //             }
+    //         else
+    //             {
+    //                 LOG(WARNING) << "PRN: " << PRN << "; Largest: " << largest_t << ", smallest: " << smallest_t << std::endl;
+    //                 spoofed = true;
+    //             }
+    //     }
     if(std::abs(largest_t-smallest_t) >= d_APT_max_rx_discrepancy)
         {
             if(largest.subframe_id != smallest.subframe_id)
@@ -1154,18 +1180,19 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
                     diff = largest.subframe_id-smallest.subframe_id;
                     if(std::abs(largest_t-smallest_t)/std::fmod(diff, 5) > 6001) 
                         {
-                            //spoofed = true;
+                            spoofed = true;
                         }
                 }
             else
                 {
-                    std::cout << std::endl << "PRN: " << PRN << "; Largest: " << largest_t << ", smallest: " << smallest_t << std::endl;
                     spoofed = true;
                 }
         }
 
     if(spoofed)
         {
+            LOG(WARNING) << "Diff "  << std::abs(largest_t-smallest_t) << " : Time- " << d_APT_max_rx_discrepancy;
+            //DLOG(WARNING) << "id: " << it->first << " subframe: " << subframe.subframe_id << " timestamp " << std::setprecision(10)<< subframe.timestamp;
             double distance = std::abs(largest_t-smallest_t)*GPS_C_M_S/1e3;
             std::stringstream s;
             std::stringstream sr;

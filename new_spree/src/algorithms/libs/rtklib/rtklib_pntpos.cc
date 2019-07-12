@@ -55,6 +55,7 @@
 #include "rtklib_ionex.h"
 #include "rtklib_sbas.h"
 #include <cstring>
+#include <iostream>   // for cout
 
 /* pseudorange measurement error variance ------------------------------------*/
 double varerr(const prcopt_t *opt, double el, int sys)
@@ -678,7 +679,6 @@ int estpos(const obsd_t *obs, int n, const double *rs, const double *dts,
                     free(v);
                     free(H);
                     free(var);
-
                     return stat;
                 }
         }

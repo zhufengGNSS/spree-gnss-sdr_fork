@@ -561,7 +561,6 @@ void dll_pll_veml_tracking::msg_handler_telemetry_to_trk(const pmt::pmt_t &msg)
         }
 }
 
-
 void dll_pll_veml_tracking::start_tracking()
 {
     gr::thread::scoped_lock l(d_setlock);
@@ -1569,12 +1568,16 @@ void dll_pll_veml_tracking::stop_tracking()
 int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)), gr_vector_int &ninput_items,
     gr_vector_const_void_star &input_items, gr_vector_void_star &output_items)
 {
+    //std::cout << std::endl << "Input: " << noutput_items;
+
     gr::thread::scoped_lock l(d_setlock);
     const auto *in = reinterpret_cast<const gr_complex *>(input_items[0]);
     auto **out = reinterpret_cast<Gnss_Synchro **>(&output_items[0]);
     Gnss_Synchro current_synchro_data = Gnss_Synchro();
 
     current_synchro_data.Tracking_timestamp_secs = (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(trk_parameters.fs_in);
+    //std::cout << std::endl << current_synchro_data.Tracking_timestamp_secs << std::endl;
+
     if (d_pull_in_transitory == true)
         {
             if (trk_parameters.pull_in_time_s < (d_sample_counter - d_acq_sample_stamp) / static_cast<int>(trk_parameters.fs_in))
@@ -1746,7 +1749,7 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
                         current_synchro_data.Flag_valid_symbol_output = true;
                         current_synchro_data.correlation_length_ms = d_correlation_length_ms;
                         current_synchro_data.Tracking_timestamp_secs = (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(trk_parameters.fs_in);
-
+                        //std::cout << std::endl << current_synchro_data.Tracking_timestamp_secs << std::endl;
 
                         if (next_state)
                             {  // reset extended correlator
@@ -1927,8 +1930,12 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
             current_synchro_data.Tracking_sample_counter = d_sample_counter;
             *out[0] = current_synchro_data;
             current_synchro_data.Tracking_timestamp_secs = (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(trk_parameters.fs_in);
-
             return 1;
         }
+    LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs;
+    LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
+    LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
+    LOG(WARNING) << "FS in: " << static_cast<double>(trk_parameters.fs_in);
+
     return 0;
 }

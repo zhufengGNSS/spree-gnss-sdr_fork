@@ -105,6 +105,8 @@ Concurrent_Map<GPS_time_t> global_gps_time;
 Concurrent_Map<sEph> global_sEph_map;
 Concurrent_Map<double> global_last_gps_time;
 Concurrent_Map<bool> global_spoofing_status;  //spoofing has been detected for the satellite
+Concurrent_Map<int> tracking_sats; // Shared map of currently tracking SVs
+Concurrent_Map<int> tow_offset; // Shared map of currently tracking SVs
 
 struct Subframe{
     std::string subframe;

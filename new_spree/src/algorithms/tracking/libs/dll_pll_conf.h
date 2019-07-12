@@ -48,7 +48,7 @@ public:
     int pll_filter_order;
     int dll_filter_order;
 
-    double fs_in;
+    long fs_in;
     uint32_t vector_length;
     bool dump;
     bool dump_mat;

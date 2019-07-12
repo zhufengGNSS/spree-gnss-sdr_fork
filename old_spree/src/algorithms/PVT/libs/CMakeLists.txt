@@ -42,6 +42,7 @@ include_directories(
      ${ARMADILLO_INCLUDE_DIRS}
      ${GFlags_INCLUDE_DIRS}
      ${GLOG_INCLUDE_DIRS}
+     ${GNURADIO_RUNTIME_INCLUDE_DIRS}
 )
 file(GLOB PVT_LIB_HEADERS "*.h")
 list(SORT PVT_LIB_HEADERS)

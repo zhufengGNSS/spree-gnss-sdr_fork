@@ -133,3 +133,6 @@ set_property(TARGET core_system_parameters
     APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
+include_directories(
+    ${CMAKE_SOURCE_DIR}/src/core/receiver
+)

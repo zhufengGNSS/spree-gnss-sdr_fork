@@ -632,6 +632,39 @@ bool Rtklib_Solver::get_PVT(const std::map<int, Gnss_Synchro> &gnss_observables_
                                     {
                                         // convert ephemeris from GNSS-SDR class to RTKLIB structure
                                         eph_data[valid_obs] = eph_to_rtklib(gps_ephemeris_iter->second);
+
+                                        // Temp print out rtk conversion
+                                        // LOG(ERROR) << std::endl
+                                        //             << "OBS: " << valid_obs << "; SV: " << eph_data[valid_obs].sat 
+                                        //             << " ; A : " <<  eph_data[valid_obs].A 
+                                        //             << " ; M0 : " <<  eph_data[valid_obs].M0 
+                                        //             << " ; deln : " <<  eph_data[valid_obs].deln 
+                                        //             << " ; OMG0 : " <<  eph_data[valid_obs].OMG0 
+                                        //             << " ; OMGd : " <<  eph_data[valid_obs].OMGd 
+                                        //             << " ; omg : " <<  eph_data[valid_obs].omg 
+                                        //             << " ; i0 : " <<  eph_data[valid_obs].i0 
+                                        //             << " ; idot : " <<  eph_data[valid_obs].idot 
+                                        //             << " ; e : " <<  eph_data[valid_obs].e 
+                                        //             << " ; Adot : " <<  eph_data[valid_obs].Adot 
+                                        //             << " ; ndot : " <<  eph_data[valid_obs].ndot 
+                                        //             << " ; week : " <<  eph_data[valid_obs].week 
+                                        //             << " ; cic : " <<  eph_data[valid_obs].cic 
+                                        //             << " ; cis : " <<  eph_data[valid_obs].cis 
+                                        //             << " ; cuc : " <<  eph_data[valid_obs].cuc 
+                                        //             << " ; cus : " <<  eph_data[valid_obs].cus 
+                                        //             << " ; crc : " <<  eph_data[valid_obs].crc 
+                                        //             << " ; crs : " <<  eph_data[valid_obs].crs 
+                                        //             << " ; f0 : " <<  eph_data[valid_obs].f0 
+                                        //             << " ; f1 : " <<  eph_data[valid_obs].f1 
+                                        //             << " ; f2 : " <<  eph_data[valid_obs].f2 
+                                        //             << " ; tgd[0] : " <<  eph_data[valid_obs].tgd[0]
+                                        //             << " ; tgd[1] : " <<  eph_data[valid_obs].tgd[1]
+                                        //             << " ; tgd[2] : " <<  eph_data[valid_obs].tgd[2]
+                                        //             << " ; tgd[3] : " <<  eph_data[valid_obs].tgd[3]
+                                        //             // << " ; toes : " << eph_data[valid_obs].toe
+                                        //             // << " ; toc : " <<  eph_data[valid_obs].toc
+                                        //             // << " ; ttr : " <<  eph_data[valid_obs].ttr
+                                        //            << std::endl;
                                         // convert observation from GNSS-SDR class to RTKLIB structure
                                         obsd_t newobs = {{0, 0}, '0', '0', {}, {}, {}, {}, {}, {}};
                                         obs_data[valid_obs + glo_valid_obs] = insert_obs_to_rtklib(newobs,

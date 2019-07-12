@@ -324,6 +324,10 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
                     acq_trk_shif_correction_samples = d_current_prn_length_samples - fmod(static_cast<float>(acq_to_trk_delay_samples), static_cast<float>(d_current_prn_length_samples));
                     samples_offset = round(d_acq_code_phase_samples + acq_trk_shif_correction_samples);
                     current_synchro_data.Tracking_timestamp_secs = (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(d_fs_in);
+                    //LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs;
+                    //LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
+                    //LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
+                    //LOG(WARNING) << "FS in: " << static_cast<double>(d_fs_in);                    
                     d_sample_counter = d_sample_counter + samples_offset; //count for the processed samples
                     d_pull_in = false;
                     *out[0] = current_synchro_data;
@@ -428,6 +432,10 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
 
             // Tracking_timestamp_secs is aligned with the CURRENT PRN start sample (Hybridization OK!, but some glitches??)
             current_synchro_data.Tracking_timestamp_secs = (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(d_fs_in);
+            //LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs;
+            //LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
+            //LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
+            //LOG(WARNING) << "FS in: " << static_cast<double>(d_fs_in);
             //compute remnant code phase samples AFTER the Tracking timestamp
             d_rem_code_phase_samples = K_blk_samples - d_current_prn_length_samples; //rounding error < 1 sample
 
@@ -474,6 +482,10 @@ int Gps_L1_Ca_Dll_Pll_Tracking_cc::general_work (int noutput_items __attribute__
                 }
 
             current_synchro_data.Tracking_timestamp_secs = (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(d_fs_in);
+            //LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs;
+            //LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
+            //LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
+            //LOG(WARNING) << "FS in: " << static_cast<double>(d_fs_in);
             current_synchro_data.System = {'G'};
         }
 
