@@ -76,6 +76,7 @@ struct Subframe{
     double timestamp;
     unsigned int toa;
     unsigned int uid;
+    bool checked = false;
 };
 
 struct SatBuff{
@@ -139,7 +140,7 @@ public:
     Spoofing_Detector();
     Spoofing_Detector(ConfigurationInterface* configuration);
 
-    void New_subframe(int subframe_ID, int PRN, Gps_Navigation_Message nav, double time);
+    void New_subframe(int subframe_ID, int PRN, Gps_Navigation_Message nav, double time, unsigned int uid);
     std::map<unsigned int, Satpos> Satpos_map;
     void check_position(double lat, double lng, double alt, double sample_counter);
     void check_satpos(unsigned int sat, double time, double x, double y, double z); 

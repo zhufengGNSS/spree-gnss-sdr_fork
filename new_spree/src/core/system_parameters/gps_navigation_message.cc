@@ -336,7 +336,7 @@ std::map<int32_t, Gps_Navigation_Message::Sbf> Gps_Navigation_Message::subframe_
             struct Gps_Navigation_Message::Sbf2 sbf2;
             d_TOW_SF2 = static_cast<int32_t>(read_navigation_unsigned(subframe_bits, TOW));
             d_TOW_SF2 = d_TOW_SF2 * 6;
-// Set transmission time
+            // Set transmission time
             d_TOW = d_TOW_SF2+i_tow_offset;
             b_integrity_status_flag = read_navigation_bool(subframe_bits, INTEGRITY_STATUS_FLAG);
             b_alert_flag = read_navigation_bool(subframe_bits, ALERT_FLAG);

@@ -729,12 +729,12 @@ void GNSSFlowgraph::connect()
     for (unsigned int i = 0; i < channels_count_; i++)
         {
             LOG(INFO) << "Channel " << i << " assigned to " << channels_.at(i)->get_signal();
-            AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), i);
-            available_GPS_1C_signals_.pop_front();
+            //AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), i);
+            //available_GPS_1C_signals_.pop_front();
             if (channels_state_[i] == 1)
                 {
                     channels_.at(i)->start_acquisition();
-                    available_GPS_1C_signals_.pop_front();
+                    //available_GPS_1C_signals_.pop_front();
                     LOG(INFO) << "Channel " << i << " assigned to " << available_GPS_1C_signals_.front();
                     LOG(INFO) << "Channel " << i << " connected to observables and ready for acquisition";
                 }
@@ -1138,13 +1138,14 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             {
                 next_peak.at(PRN) = 1; 
                 nr_acquired_peaks.at(lost_PRN) -= 1;
-                channels_.at(who)->set_peak(0);
+                channels_.at(who)->set_peak(PRN, 0);
 
                 //remove cannel from spoofing detection queues
                 uid = channels_.at(who)->get_uid();
                 global_subframe_map.remove(uid);
                 global_subframe_check.remove(uid);
                 global_gps_time.remove(uid);
+                LOG(WARNING) << "Removed uid: " << uid << "; Channel: " << who;
             }
 
             if (sat == 0)
@@ -1351,7 +1352,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             //int iSecret;
 
             //iSecret = rand() % 100000 + 1;
-            channels_.at(who)->set_state(2);
+            //channels_.at(who)->set_state(2);
             PRN = channels_[who]->get_signal().get_satellite().get_PRN();
             
             if(spoofing_detection)
@@ -1362,12 +1363,13 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                 global_subframe_check.remove(uid);
 
                 nr_acquired_peaks.at(PRN) -= 1;
-                channels_.at(who)->set_peak(0);
+                channels_.at(who)->set_peak(PRN, 0);
 
                 //remove cannel from spoofing detection queues
                 uid = channels_.at(who)->get_uid();
                 global_subframe_map.remove(uid);
                 global_gps_time.remove(uid);
+                LOG(WARNING) << "Removed uid: " << uid << "; Channel: " << who;
             }
 
             if (acq_channels_count_ < max_acq_channels_)
@@ -1828,7 +1830,7 @@ void GNSSFlowgraph::init()
 
             // Set initial peak to track
             std::shared_ptr<ChannelInterface> chan = std::dynamic_pointer_cast<ChannelInterface>(chan_);
-            chan->set_peak(0);
+            chan->set_peak(0, 0);
         }
 
     top_block_ = gr::make_top_block("GNSSFlowgraph");
@@ -2007,7 +2009,7 @@ void GNSSFlowgraph::set_signals_list()
 
     if (configuration_->property("Channels_1C.count", 0) > 0)
         {
-            // Loop to create GPS L1 C/A signals
+            // Loop to create GPS L1 C/A signals // Look into this
             DLOG(INFO) << "MULTI "<< (double)channels_count_/available_gps_prn.size();
             int multiple = std::ceil((double)channels_count_/available_gps_prn.size());
 
@@ -2210,11 +2212,12 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
         {
         case evGPS_1C:
             result = available_GPS_1C_signals_.front();
-            available_GPS_1C_signals_.pop_front();
+            //
             if(spoofing_detection)
             {
                 AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), channel_id);
             }
+            available_GPS_1C_signals_.pop_front();
             if (!pop)
                 {
                     available_GPS_1C_signals_.push_back(result);
@@ -2502,18 +2505,20 @@ Gnss_Signal GNSSFlowgraph::search_next_signal(const std::string& searched_signal
 // Assigns which peak a channel should acquire
 void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
 {
-    LOG(INFO) << "assign peak ";
-    LOG(INFO) << "nr acq peak " << nr_acquired_peaks[PRN];
+    LOG(WARNING) << "assign peak ";
+    LOG(WARNING) << "nr acq peak " << nr_acquired_peaks[PRN];
     if(nr_acquired_peaks[PRN] < nr_acq )
     {
         //find highest peak that is not being tracked.
         nr_acquired_peaks[PRN] += 1;
         int peak = next_peak[PRN];
-        if(peak > nr_acq)
+        if(peak > 5)
             peak = 1;
         next_peak.at(PRN) = peak+1;
-        channels_.at(who)->set_peak(peak);
+        LOG(WARNING) << "PRN before set_peak " << PRN;
+        channels_.at(who)->set_peak(PRN, peak);
         channel_to_peak[who] = peak;
+        LOG(WARNING) << "Channel: " << who << "; New UID: " << channels_.at(who)->get_uid() << "; PRN: " << PRN << "; Peak; " << peak;
     }
     else
     {
@@ -2521,4 +2526,6 @@ void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
         LOG(INFO) << nr_acquired_peaks.at(PRN); 
 
     }
+    
+
 }

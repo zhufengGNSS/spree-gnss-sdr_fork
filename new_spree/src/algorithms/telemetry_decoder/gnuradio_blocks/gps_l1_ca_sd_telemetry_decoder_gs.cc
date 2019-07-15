@@ -52,7 +52,7 @@
 
 Concurrent_Map<Gps_Ephemeris> eph_map;
 extern Concurrent_Map<int> tracking_sats;
-extern Concurrent_Map<int> global_subframe_map;
+extern Concurrent_Map<Subframe> global_subframe_map;
 
 gps_l1_ca_sd_telemetry_decoder_gs_sptr
 gps_l1_ca_make_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector)
@@ -471,7 +471,7 @@ bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe()
             if (subframe_ID > 0 and subframe_ID < 6)
                 {
                     d_preamble_time_ms = d_preamble_time_ms *1000;
-                    d_spoofing_detector.New_subframe(subframe_ID, d_nav.i_satellite_PRN, d_nav, d_preamble_time_ms ); //FS_IN is hardcoded right now
+                    d_spoofing_detector.New_subframe(subframe_ID, d_nav.i_satellite_PRN, d_nav, d_preamble_time_ms, uid); //FS_IN is hardcoded right now
                   
                     std::map<int, int> sats = tracking_sats.get_map_copy();
 
@@ -577,6 +577,7 @@ bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe()
                               << Gnss_Satellite(std::string("GPS"), d_nav.i_satellite_PRN)
                               << " at " << d_preamble_time_ms
                               << " peak " << i_peak << " id: " << uid << std::endl;
+                    //global_subframe_map.clear();
                     return true;
                 }
             else
@@ -620,6 +621,7 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
     uid = in[0][0].uid;
     d_nav.uid = uid;
 
+    //LOG(WARNING) << "Setting UID in nav_message: " << uid << "; PRN: " << in[0][0].PRN << "; Channel: " << in[0][0].Channel_ID << "; Peak: " << i_peak;
     // add new symbol to the symbol queue
     d_symbol_history.push_back(current_symbol.Prompt_I);
     d_sample_counter++;  // count for the processed symbols
@@ -794,6 +796,8 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
         global_subframe_map.remove((int)unique_id);
         global_subframe_check.remove((int)unique_id);
         global_gps_time.remove((int)unique_id);
+        //LOG(WARNING) << "Removed uid: " << uid << "; Channel: " << d_channel;
+
     }
 
     if (flag_TOW_set == true)
@@ -845,6 +849,7 @@ void gps_l1_ca_sd_telemetry_decoder_gs::stop_tracking(unsigned int uid)
             channel_state = 2; 
             DLOG(INFO) << "send stop tracking " << uid; 
             this->message_port_pub(pmt::mp("events"), pmt::from_long(4));//4 -> stop tracking
+            LOG(WARNING) << "Removed uid: " << uid << "; Channel: " << d_channel;
         }
 }
 

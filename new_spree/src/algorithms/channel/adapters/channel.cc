@@ -215,6 +215,7 @@ void Channel::set_signal(const Gnss_Signal& gnss_signal)
     gnss_synchro_.Signal[2] = 0;                                    // make sure that string length is only two characters
     gnss_synchro_.PRN = gnss_signal_.get_satellite().get_PRN();
     gnss_synchro_.System = gnss_signal_.get_satellite().get_system_short().c_str()[0];
+    //uid = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak)+"0"+std::to_string(channel_));
     gnss_synchro_.uid = uid;
     gnss_synchro_.peak = peak;
     LOG(WARNING) << "PEAK: " << peak;
@@ -261,11 +262,12 @@ void Channel::start_acquisition()
     DLOG(INFO) << "Channel start_acquisition()";
 }
 
-void Channel::set_peak(unsigned int peak_)
+void Channel::set_peak(int PRN, unsigned int peak_)
 {
     peak = peak_;
-    unsigned int PRN = gnss_signal_.get_satellite().get_PRN();
+    //unsigned int PRN = gnss_signal_.get_satellite().get_PRN();
     uid = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak_)+"0"+std::to_string(channel_));
+    LOG(WARNING) << "UID Assigned: Channel: " << channel_ << "; UID: "  << uid << "; Peak: " << peak << "; PRN: " << PRN;
 }
 
 unsigned int Channel::get_uid()

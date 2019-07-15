@@ -111,6 +111,13 @@ public:
         the_map.erase(key);
         lock.unlock();
     }
+
+    void clear()
+    {
+        boost::mutex::scoped_lock lock(the_mutex);
+        the_map.clear();
+        lock.unlock();
+    }
 };
 
 #endif

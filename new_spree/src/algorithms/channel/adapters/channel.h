@@ -92,7 +92,7 @@ public:
     void msg_handler_events(pmt::pmt_t msg);
 
     void stop_tracking();
-    void set_peak(unsigned int peak_); //!< set whether the satellite of this channel is already acquired
+    void set_peak(int PRN, unsigned int peak_); //!< set whether the satellite of this channel is already acquired
     void set_state(unsigned int state_); //!< set the state of the channel 
     unsigned int get_state(); //!< get the state of the signal 
     unsigned int get_uid();
