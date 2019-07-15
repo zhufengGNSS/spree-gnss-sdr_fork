@@ -2380,12 +2380,14 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, Gps_Navigation_Me
     global_subframe_map.add((int)uid, subframe);
 
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
-    DLOG(INFO) << "New subframe: " << uid;
+    LOG(WARNING) << "============ PRN: " << PRN << "; New subframe: " << uid << " ============";
     for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
     {
         subframe = it->second;
-        DLOG(INFO) << "uid: " << it->first << " sub: " << subframe.subframe_id ;
+        LOG(WARNING) << "uid: " << it->first << " sub: " << subframe.subframe_id ;
     }
+    LOG(WARNING) << "================================================";
+
 
     if( d_APT )
         {
