@@ -2397,7 +2397,9 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, Gps_Navigation_Me
     subframe.subframe = nav.get_subframe(subframe_ID); 
     subframe.toa = nav.i_Toa;
     subframe.uid = uid;
-    global_subframe_map.add((int)uid, subframe);
+
+    if (uid != 0)
+    {global_subframe_map.add((int)uid, subframe);}
     LOG(WARNING) << "New_subframe added, UID Assigned: " << "; UID: "  << uid << "; PRN: " << PRN;
 
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();

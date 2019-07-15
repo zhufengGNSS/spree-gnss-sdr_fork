@@ -267,7 +267,8 @@ void Channel::set_peak(int PRN, unsigned int peak_)
     peak = peak_;
     //unsigned int PRN = gnss_signal_.get_satellite().get_PRN();
     uid = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak_)+"0"+std::to_string(channel_));
-    LOG(WARNING) << "UID Assigned: Channel: " << channel_ << "; UID: "  << uid << "; Peak: " << peak << "; PRN: " << PRN;
+    if (uid == 0)
+    {LOG(WARNING) << "UID Assigned: Channel: " << channel_ << "; UID: "  << uid << "; Peak: " << peak << "; PRN: " << PRN;}
 }
 
 unsigned int Channel::get_uid()

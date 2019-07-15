@@ -1456,7 +1456,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                         //     available_GPS_1C_signals_.push_back(available_GPS_1C_signals_.front());
                         available_GPS_1C_signals_.pop_front();
                         // }
-                        channels_[who]->set_signal(search_next_signal(channels_[who]->get_signal().get_signal_str(), who, false));
+                        channels_[who]->set_signal(search_next_signal(channels_[who]->get_signal().get_signal_str(), who, true));
                         //available_GPS_1C_signals_.pop_front();
                         
                         //printf("\n[ELSE] %d: NOPE\n %d", applied_actions_+1, who);
