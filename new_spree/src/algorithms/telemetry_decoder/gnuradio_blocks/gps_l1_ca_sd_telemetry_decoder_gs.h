@@ -95,7 +95,7 @@ private:
     gps_l1_ca_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector);
 
     bool gps_word_parityCheck(uint32_t gpsword);
-    bool decode_subframe();
+    bool decode_subframe(double doppler, double code_phase);
     Gps_Ephemeris compare_eph(Gps_Ephemeris shrd_eph);
 
     int32_t d_bits_per_preamble;

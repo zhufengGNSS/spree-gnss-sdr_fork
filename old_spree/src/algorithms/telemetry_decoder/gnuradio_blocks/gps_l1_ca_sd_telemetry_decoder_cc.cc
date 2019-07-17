@@ -179,6 +179,8 @@ int gps_l1_ca_sd_telemetry_decoder_cc::general_work (int noutput_items __attribu
     const Gnss_Synchro **in = (const Gnss_Synchro **)  &input_items[0]; //Get the input samples pointer
     d_GPS_FSM.i_peak= in[0][0].peak;
     d_GPS_FSM.uid = in[0][0].uid;
+    d_GPS_FSM.doppler = in[0][0].Acq_doppler_hz;
+    d_GPS_FSM.delay = in[0][0].Acq_delay_samples;
 
     if( channel_state == 2)
     {

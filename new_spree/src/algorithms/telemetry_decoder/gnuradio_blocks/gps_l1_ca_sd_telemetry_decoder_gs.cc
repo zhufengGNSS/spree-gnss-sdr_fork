@@ -378,7 +378,7 @@ Gps_Ephemeris gps_l1_ca_sd_telemetry_decoder_gs::compare_eph(Gps_Ephemeris shrd_
     return shrd_eph;
 }
 
-bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe()
+bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe(double doppler, double code_phase)
 {
     char subframe[GPS_SUBFRAME_LENGTH];
 
@@ -576,7 +576,7 @@ bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe()
                               << subframe_ID << " from satellite "
                               << Gnss_Satellite(std::string("GPS"), d_nav.i_satellite_PRN)
                               << " at " << d_preamble_time_ms
-                              << " peak " << i_peak << " id: " << uid << std::endl;
+                              << " peak " << i_peak << " id: " << uid << "[Doppler: " << doppler << "; Code delay: " << code_phase << "]" << std::endl;
                     //global_subframe_map.clear();
                     return true;
                 }
@@ -620,6 +620,9 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
 
     uid = in[0][0].uid;
     d_nav.uid = uid;
+
+    double doppler = current_symbol.Acq_doppler_hz; 
+    double code_phase = current_symbol.Acq_delay_samples;
 
     //LOG(WARNING) << "Setting UID in nav_message: " << uid << "; PRN: " << in[0][0].PRN << "; Channel: " << in[0][0].Channel_ID << "; Peak: " << i_peak;
     // add new symbol to the symbol queue
@@ -733,7 +736,7 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
                     // 0. fetch the symbols into an array
                     d_preamble_index = d_sample_counter;  // record the preamble sample stamp (t_P)
 
-                    if (decode_subframe())
+                    if (decode_subframe(doppler, code_phase))
                     {
                         d_CRC_error_counter = 0;
                         d_flag_preamble = true;  // valid preamble indicator (initialized to false every work())

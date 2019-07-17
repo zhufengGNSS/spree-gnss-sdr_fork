@@ -626,6 +626,7 @@ void GNSSFlowgraph::connect()
                             gnss_system = "GPS";
                             signal_value = Gnss_Signal(Gnss_Satellite(gnss_system, sat), gnss_signal);
                             available_GPS_1C_signals_.remove(signal_value);
+                            AssignACQState(available_GPS_1C_signals_.front().get_satellite().get_PRN(), i);
                             break;
 
                         case evGPS_2S:
@@ -684,6 +685,7 @@ void GNSSFlowgraph::connect()
                             break;
                         }
 
+                    
                     channels_.at(i)->set_signal(signal_value);
                 }
         }
@@ -1222,7 +1224,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                             channels_state_[ch_index] = 1;
                             if (sat_ == 0)
                                 {
-                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), ch_index, true));
+                                    channels_[ch_index]->set_signal(search_next_signal(channels_[ch_index]->get_signal().get_signal_str(), ch_index, false));
                                 }
                             acq_channels_count_++;
                             DLOG(INFO) << "Channel " << ch_index << " Starting acquisition " << channels_[ch_index]->get_signal().get_satellite() << ", Signal " << channels_[ch_index]->get_signal().get_signal_str();
