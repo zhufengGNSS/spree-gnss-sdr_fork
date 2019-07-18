@@ -790,7 +790,9 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
     if(!(d_flag_frame_sync == true and d_flag_parity == true))
     {
         std::string tmp = std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel);
-        int unique_id = std::stoi(tmp);
+        
+        int unique_id = std::stoi(std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel));
+        LOG(WARNING) << " This is the problem " << unique_id;
         // DLOG(INFO) << "flag valid word: remove " << (int)unique_id << " "
         //<< d_flag_frame_sync << " " << d_flag_parity << " " <<  flag_TOW_set;
         global_subframe_map.remove((int)unique_id);

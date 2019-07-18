@@ -130,81 +130,81 @@ void GNSSFlowgraph::connect()
      */
     LOG(INFO) << "Connecting flowgraph";
     if (connected_)
-        {
-            LOG(WARNING) << "flowgraph already connected";
-            return;
-        }
+    {
+        LOG(WARNING) << "flowgraph already connected";
+        return;
+    }
 
     for (int i = 0; i < sources_count_; i++)
-        {
-            try
-            {
-                    sig_source_.at(i)->connect(top_block_);
-            }
-            catch (std::exception& e)
-            {
-                    LOG(INFO) << "Can't connect signal source block " << i << " internally";
-                    LOG(ERROR) << e.what();
-                    top_block_->disconnect_all();
-                    return;
-            }
-        }
-
-    // Signal Source > Signal conditioner >
-    for (unsigned int i = 0; i < sig_conditioner_.size(); i++)
-        {
-            try
-            {
-                    sig_conditioner_.at(i)->connect(top_block_);
-            }
-            catch (std::exception& e)
-            {
-                    LOG(INFO) << "Can't connect signal conditioner block " << i << " internally";
-                    LOG(ERROR) << e.what();
-                    top_block_->disconnect_all();
-                    return;
-            }
-        }
-
-    for (unsigned int i = 0; i < channels_count_; i++)
-        {
-            try
-            {
-                    channels_.at(i)->connect(top_block_);
-                    acquired_state[i] = 0;
-            }
-            catch (std::exception& e)
-            {
-                    LOG(WARNING) << "Can't connect channel " << i << " internally";
-                    LOG(ERROR) << e.what();
-                    top_block_->disconnect_all();
-                    return;
-            }
-        }
-
-    try
     {
-            observables_->connect(top_block_);
-    }
-    catch (std::exception& e)
-    {
-            LOG(WARNING) << "Can't connect observables block internally";
+        try
+        {
+            sig_source_.at(i)->connect(top_block_);
+        }
+        catch (std::exception& e)
+        {
+            LOG(INFO) << "Can't connect signal source block " << i << " internally";
             LOG(ERROR) << e.what();
             top_block_->disconnect_all();
             return;
+        }
+    }
+
+    // Signal Source > Signal conditioner >
+    for (unsigned int i = 0; i < sig_conditioner_.size(); i++)
+    {
+        try
+        {
+            sig_conditioner_.at(i)->connect(top_block_);
+        }
+        catch (std::exception& e)
+        {
+            LOG(INFO) << "Can't connect signal conditioner block " << i << " internally";
+            LOG(ERROR) << e.what();
+            top_block_->disconnect_all();
+            return;
+        }
+    }
+
+    for (unsigned int i = 0; i < channels_count_; i++)
+    {
+        try
+        {
+            channels_.at(i)->connect(top_block_);
+            acquired_state[i] = 0;
+        }
+        catch (std::exception& e)
+        {
+            LOG(WARNING) << "Can't connect channel " << i << " internally";
+            LOG(ERROR) << e.what();
+            top_block_->disconnect_all();
+            return;
+        }
+    }
+
+    try
+    {
+        observables_->connect(top_block_);
+    }
+    catch (std::exception& e)
+    {
+        LOG(WARNING) << "Can't connect observables block internally";
+        LOG(ERROR) << e.what();
+        top_block_->disconnect_all();
+        return;
     }
 
     // Signal Source > Signal conditioner >> Channels >> Observables > PVT
     try
     {
-            pvt_->connect(top_block_);
+        pvt_->connect(top_block_);
     }
     catch (std::exception& e)
     {
-            LOG(WARNING) << "Can't connect PVT block internally";
-            LOG(ERROR) << e.what();
-            top_block_->disconnect_all();
-            return;
+        LOG(WARNING) << "Can't connect PVT block internally";
+        LOG(ERROR) << e.what();
+        top_block_->disconnect_all();
+        return;
     }
 
     DLOG(INFO) << "blocks connected internally";
@@ -460,9 +460,9 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
 
         PRN = available_GNSS_signals_.front().get_satellite().get_PRN();
         if(spoofing_detection)
-            {
-                AssignACQState(PRN, who);
-            }
+        {
+            AssignACQState(PRN, who);
+        }
 
         channels_.at(who)->set_signal(available_GNSS_signals_.front());
         available_GNSS_signals_.pop_front();

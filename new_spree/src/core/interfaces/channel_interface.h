@@ -60,7 +60,7 @@ public:
     virtual void stop_channel() = 0;
     virtual void set_signal(const Gnss_Signal&) = 0;
     virtual void stop_tracking() = 0;
-    virtual void set_peak(int PRN, unsigned int) = 0;
+    virtual void set_peak(unsigned int) = 0;
     virtual void set_state(unsigned int) = 0;
 
     virtual unsigned int get_state() = 0;
