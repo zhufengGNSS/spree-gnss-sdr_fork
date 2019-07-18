@@ -758,9 +758,9 @@ void pcps_acquisition::acquisition_core(uint64_t samp_count)
                         }
                     // Record results to file if required
                     if (d_dump and d_channel == d_dump_channel)
-                        {
-                            memcpy(grid_.colptr(doppler_index), d_magnitude_grid[doppler_index], sizeof(float) * effective_fft_size);
-                        }
+                    {
+                        memcpy(grid_.colptr(doppler_index), d_magnitude_grid[doppler_index], sizeof(float) * effective_fft_size);
+                    }
                 }
 
             // Compute the test statistic

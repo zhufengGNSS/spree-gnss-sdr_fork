@@ -281,7 +281,8 @@ void GpsL1CaSdSubframeFsm::gps_sd_subframe_to_nav_msg()
         << " at time: " << this->d_preamble_time_ms
         << " in channel: " << i_channel_ID 
         << " id: "  << d_nav.uid 
-        << "peak: "  << d_nav.i_peak << std::endl << std::endl; 
+        << " peak: "  << d_nav.i_peak 
+        << " [Doppler: " << this->doppler << " Code delay: " << this->delay << "]" << std::endl << std::endl; 
         //<<  "subframe: " << d_nav.get_subframe(d_subframe_ID) << std::endl << std::endl;
         
     spoofing_detector.New_subframe(d_subframe_ID, i_satellite_PRN, d_nav, this->d_preamble_time_ms);
