@@ -1086,7 +1086,7 @@ void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
         next_peak.at(PRN) = peak+1;
         channels_.at(who)->set_peak(peak);
         channel_to_peak[who] = peak;
-        LOG(ERROR) << "Channel: " << who << "; New UID: " << channels_.at(who)->get_uid() << "; PRN: " << PRN << "; Peak; " << peak;
+        LOG(WARNING) << "Channel: " << who << "; New UID: " << channels_.at(who)->get_uid() << "; PRN: " << PRN << "; Peak; " << peak;
     }
     else
     {
