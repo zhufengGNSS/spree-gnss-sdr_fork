@@ -1209,8 +1209,8 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN)
             std::stringstream sr;
             std::cout << std::endl << "Distance: " << distance;
             s << "Auxiliary peak detected for satellite " << PRN << "\n Subframe: " << subframe.subframe_id;
-            s << "Peak seperation: " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns]\n"; 
-            s << "Pseudorange change: " << std::setprecision(16) << distance <<" [m]\n"; 
+            s << " Peak seperation: " << std::setprecision(16) << std::abs(largest_t-smallest_t)*1e6 << " [ns]\n"; 
+            s << " Pseudorange change: " << std::setprecision(16) << distance <<" [m]\n"; 
             Spoofing_Message msg;
             msg.spoofing_case = 1;
             std::set<unsigned int> sats = {PRN};
@@ -2400,6 +2400,7 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, Gps_Navigation_Me
 
     if (uid != 0)
     {global_subframe_map.add((int)uid, subframe);}
+    
     LOG(WARNING) << "New_subframe added, UID Assigned: " << "; UID: "  << uid << "; PRN: " << PRN;
 
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();

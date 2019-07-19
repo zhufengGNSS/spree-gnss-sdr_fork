@@ -754,7 +754,7 @@ void dll_pll_veml_tracking::start_tracking()
     d_code_loop_filter.initialize();                                                 // initialize the code filter
 
     // DEBUG OUTPUT
-    std::cout << "Tracking of " << systemName << " " << signal_pretty_name << " signal started on channel " << d_channel << " for satellite " << Gnss_Satellite(systemName, d_acquisition_gnss_synchro->PRN) << "; UID: " << d_acquisition_gnss_synchro->uid << std::endl;
+    std::cout << "Tracking of " << systemName << " " << signal_pretty_name << " signal started on channel " << d_channel << " for satellite " << Gnss_Satellite(systemName, d_acquisition_gnss_synchro->PRN) << "; UID: " << d_acquisition_gnss_synchro->uid << " [Doppler: " << d_acq_carrier_doppler_hz << "; Code delay: " << d_acq_code_phase_samples << "]" << std::endl;
     DLOG(INFO) << "Starting tracking of satellite " << Gnss_Satellite(systemName, d_acquisition_gnss_synchro->PRN) << " on channel " << d_channel;
 
     // enable tracking pull-in
@@ -1930,12 +1930,16 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
             current_synchro_data.Tracking_sample_counter = d_sample_counter;
             *out[0] = current_synchro_data;
             current_synchro_data.Tracking_timestamp_secs = (static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(trk_parameters.fs_in);
+            LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs * 1000.0000000;
+            LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
+            LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
+            LOG(WARNING) << "FS in: " << static_cast<double>(trk_parameters.fs_in);
             return 1;
+            
         }
-    LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs;
+    LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs * 1000.0000000;
     LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
     LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
     LOG(WARNING) << "FS in: " << static_cast<double>(trk_parameters.fs_in);
-
     return 0;
 }

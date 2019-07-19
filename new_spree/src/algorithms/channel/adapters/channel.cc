@@ -216,8 +216,8 @@ void Channel::set_signal(const Gnss_Signal& gnss_signal)
     gnss_synchro_.PRN = gnss_signal_.get_satellite().get_PRN();
     gnss_synchro_.System = gnss_signal_.get_satellite().get_system_short().c_str()[0];
     //uid = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak)+"0"+std::to_string(channel_));
-    gnss_synchro_.uid = get_uid();
-    LOG(ERROR) << gnss_synchro_.uid;
+    gnss_synchro_.uid = uid;
+    //LOG(ERROR) << uid;
     gnss_synchro_.peak = peak;
     LOG(WARNING) << "PEAK: " << peak;
     acq_->set_local_code();

@@ -571,12 +571,12 @@ bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe(double doppler, double c
                             break;
                     }
 
-                    std::cout << "New GPS NAV message received in channel " << this->d_channel << ": "
+                    std::cout << TEXT_BOLD_BLUE << "New GPS NAV message received in channel " << this->d_channel << ": "
                               << "subframe "
                               << subframe_ID << " from satellite "
                               << Gnss_Satellite(std::string("GPS"), d_nav.i_satellite_PRN)
                               << " at " << d_preamble_time_ms
-                              << " peak " << i_peak << " id: " << uid << "[Doppler: " << doppler << "; Code delay: " << code_phase << "]" << std::endl;
+                              << " peak " << i_peak << " id: " << uid << "[Doppler: " << doppler << "; Code delay: " << code_phase << "]" << TEXT_RESET << std::endl;
                     //global_subframe_map.clear();
                     return true;
                 }
@@ -794,8 +794,7 @@ int gps_l1_ca_sd_telemetry_decoder_gs::general_work(int noutput_items __attribut
     {
         std::string tmp = std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel);
         
-        int unique_id = std::stoi(std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel));
-        LOG(WARNING) << " This is the problem " << unique_id;
+        int unique_id = in[0][0].uid; //std::stoi(std::to_string(d_satellite.get_PRN())+ "0" + std::to_string(in[0][0].peak)+"0"+std::to_string(d_channel));
         // DLOG(INFO) << "flag valid word: remove " << (int)unique_id << " "
         //<< d_flag_frame_sync << " " << d_flag_parity << " " <<  flag_TOW_set;
         global_subframe_map.remove((int)unique_id);
