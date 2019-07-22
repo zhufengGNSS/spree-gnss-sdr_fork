@@ -65,7 +65,7 @@ struct GPS_time_t{
 extern Concurrent_Map<GPS_time_t> global_gps_time;
 
 gps_l1_ca_sd_telemetry_decoder_gs_sptr
-gps_l1_ca_make_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector);
+gps_l1_ca_make_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector, int64_t fs_in);
 /*!
  * \brief This class implements a block that decodes the NAV data defined in IS-GPS-200E
  *
@@ -90,9 +90,9 @@ public:
 
 private:
     friend gps_l1_ca_sd_telemetry_decoder_gs_sptr
-    gps_l1_ca_make_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector);
+    gps_l1_ca_make_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector, int64_t fs_in);
 
-    gps_l1_ca_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector);
+    gps_l1_ca_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector, int64_t fs_in);
 
     bool gps_word_parityCheck(uint32_t gpsword);
     bool decode_subframe(double doppler, double code_phase);
@@ -142,6 +142,8 @@ private:
     Spoofing_Detector d_spoofing_detector;
     unsigned int uid;
     unsigned int i_peak;
+
+    int64_t d_fs_in;
 };
 
 #endif

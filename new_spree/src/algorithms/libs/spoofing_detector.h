@@ -140,7 +140,7 @@ public:
     Spoofing_Detector();
     Spoofing_Detector(ConfigurationInterface* configuration);
 
-    void New_subframe(int subframe_ID, int PRN, Gps_Navigation_Message nav, double time, unsigned int uid);
+    void New_subframe(int subframe_ID, int PRN, Gps_Navigation_Message nav, double time, unsigned int uid, int64_t fs_in);
     std::map<unsigned int, Satpos> Satpos_map;
     void check_position(double lat, double lng, double alt, double sample_counter);
     void check_satpos(unsigned int sat, double time, double x, double y, double z); 
@@ -244,7 +244,7 @@ private:
     void check_GPS_time();
     void check_inter_satellite_subframe(unsigned int uid, unsigned int subframe_id);
     void check_APT_subframe(unsigned int uid, unsigned int subframe_id);
-    void check_RX_time(unsigned int PRN);
+    void check_RX_time(unsigned int PRN, int64_t fs_in);
     void check_external_almanac(std::map<int,Gps_Almanac> internal, double timestamp);
     void check_external_gps_time(int internal_week, int internal_TOW, double timestamp);
     void check_external_ephemeris(Gps_Ephemeris internal, unsigned int PRN, double timestamp);

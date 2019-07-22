@@ -47,11 +47,12 @@ GpsL1CaSdTelemetryDecoder::GpsL1CaSdTelemetryDecoder(ConfigurationInterface* con
     dump_ = configuration->property(role + ".dump", false);
     dump_filename_ = configuration->property(role + ".dump_filename", default_dump_filename);
 
+    fs_in = configuration->property("GNSS-SDR.internal_fs_sps",2e6);
     //Spoofing detection
     Spoofing_Detector *spoofing_detector = new Spoofing_Detector(configuration);
     
     // make telemetry decoder object
-    telemetry_decoder_ = gps_l1_ca_make_sd_telemetry_decoder_gs(satellite_, dump_, *spoofing_detector);  // TODO fix me
+    telemetry_decoder_ = gps_l1_ca_make_sd_telemetry_decoder_gs(satellite_, dump_, *spoofing_detector, fs_in);  // TODO fix me
     DLOG(INFO) << "telemetry_decoder(" << telemetry_decoder_->unique_id() << ")";
     channel_ = 0;
     if (in_streams_ > 1)

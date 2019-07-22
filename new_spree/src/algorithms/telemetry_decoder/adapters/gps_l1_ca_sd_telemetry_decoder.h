@@ -93,6 +93,7 @@ private:
     bool dump_;
     std::string dump_filename_;
     std::string role_;
+    int64_t fs_in;
     unsigned int in_streams_;
     unsigned int out_streams_;
 };

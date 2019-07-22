@@ -55,15 +55,15 @@ extern Concurrent_Map<int> tracking_sats;
 extern Concurrent_Map<Subframe> global_subframe_map;
 
 gps_l1_ca_sd_telemetry_decoder_gs_sptr
-gps_l1_ca_make_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector)
+gps_l1_ca_make_sd_telemetry_decoder_gs(const Gnss_Satellite &satellite, bool dump, Spoofing_Detector spoofing_detector, int64_t fs_in)
 {
-    return gps_l1_ca_sd_telemetry_decoder_gs_sptr(new gps_l1_ca_sd_telemetry_decoder_gs(satellite, dump, spoofing_detector));
+    return gps_l1_ca_sd_telemetry_decoder_gs_sptr(new gps_l1_ca_sd_telemetry_decoder_gs(satellite, dump, spoofing_detector, fs_in));
 }
 
 
 gps_l1_ca_sd_telemetry_decoder_gs::gps_l1_ca_sd_telemetry_decoder_gs(
     const Gnss_Satellite &satellite,
-    bool dump, Spoofing_Detector spoofing_detector) : gr::block("gps_navigation_gs", gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
+    bool dump, Spoofing_Detector spoofing_detector, int64_t fs_in) : gr::block("gps_navigation_gs", gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)),
                      gr::io_signature::make(1, 1, sizeof(Gnss_Synchro)))
 {
     // Ephemeris data port out
@@ -77,6 +77,7 @@ gps_l1_ca_sd_telemetry_decoder_gs::gps_l1_ca_sd_telemetry_decoder_gs(
 
     // initialize internal vars
     d_dump = dump;
+    d_fs_in = fs_in;
     d_satellite = Gnss_Satellite(satellite.get_system(), satellite.get_PRN());
     DLOG(INFO) << "Initializing GPS L1 TELEMETRY DECODER";
 
@@ -470,8 +471,8 @@ bool gps_l1_ca_sd_telemetry_decoder_gs::decode_subframe(double doppler, double c
 
             if (subframe_ID > 0 and subframe_ID < 6)
                 {
-                    d_preamble_time_ms = d_preamble_time_ms *1000;
-                    d_spoofing_detector.New_subframe(subframe_ID, d_nav.i_satellite_PRN, d_nav, d_preamble_time_ms, uid); //FS_IN is hardcoded right now
+                    //d_preamble_time_ms = d_preamble_time_ms *1000;
+                    d_spoofing_detector.New_subframe(subframe_ID, d_nav.i_satellite_PRN, d_nav, d_preamble_time_ms, uid, d_fs_in); //FS_IN is hardcoded right now
                   
                     std::map<int, int> sats = tracking_sats.get_map_copy();
 
