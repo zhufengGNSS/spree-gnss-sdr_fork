@@ -263,10 +263,10 @@ void Channel::start_acquisition()
     DLOG(INFO) << "Channel start_acquisition()";
 }
 
-void Channel::set_peak(unsigned int peak_)
+void Channel::set_peak(unsigned int peak_, unsigned int PRN=0)
 {
     peak = peak_;
-    unsigned int PRN = gnss_signal_.get_satellite().get_PRN();
+    //unsigned int PRN = gnss_signal_.get_satellite().get_PRN();
     uid = std::stoi(std::to_string(PRN)+"0"+std::to_string(peak_)+"0"+std::to_string(channel_));
     //if (uid == 0)
     //std::cout << "\nUID Assigned: Channel: " << channel_ << "; UID: "  << uid << "; Peak: " << peak << "; PRN: " << PRN;

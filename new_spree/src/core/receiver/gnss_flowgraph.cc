@@ -1095,7 +1095,7 @@ void GNSSFlowgraph::AssignACQState(int PRN, unsigned int who)
         if(peak > 5)
             peak = 1;
         next_peak.at(PRN) = peak+1;
-        channels_.at(who)->set_peak(peak);
+        channels_.at(who)->set_peak(peak, PRN);
         channel_to_peak[who] = peak;
         LOG(WARNING) << "Channel: " << who << "; New UID: " << channels_.at(who)->get_uid() << "; PRN: " << PRN << "; Peak; " << peak;
     }
@@ -1169,7 +1169,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
             {
                 next_peak.at(PRN) = 1; 
                 nr_acquired_peaks.at(lost_PRN) -= 1;
-                channels_.at(who)->set_peak(0);
+                channels_.at(who)->set_peak(0, PRN);
 
                 //remove cannel from spoofing detection queues
                 uid = channels_.at(who)->get_uid();
@@ -1400,7 +1400,7 @@ void GNSSFlowgraph::apply_action(unsigned int who, unsigned int what)
                 global_subframe_check.remove(uid);
 
                 nr_acquired_peaks.at(PRN) -= 1;
-                channels_.at(who)->set_peak(0);
+                channels_.at(who)->set_peak(0, PRN);
 
                 //remove cannel from spoofing detection queues
                 uid = channels_.at(who)->get_uid();
@@ -1858,7 +1858,7 @@ void GNSSFlowgraph::init()
             channels_.push_back(std::dynamic_pointer_cast<ChannelInterface>(chan_));
             // Set initial peak to track
             std::shared_ptr<ChannelInterface> chan = std::dynamic_pointer_cast<ChannelInterface>(chan_);
-            chan->set_peak(0);
+            chan->set_peak(0, 0);
         }
 
     top_block_ = gr::make_top_block("GNSSFlowgraph");

@@ -737,7 +737,7 @@ void GNSSFlowgraph::set_signals_list()
                     11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
                     29, 30, 31, 32 };
     
-//    std::set<unsigned int> available_gps_prn = { 7,7,7,7,7,  7,7,7,7,7,  7,7,7,7,7, 7,7,7,7,7,  7,7,7,7,7,  7,7,7,7,7, 7, 7 };
+    //    std::set<unsigned int> available_gps_prn = { 7,7,7,7,7,  7,7,7,7,7,  7,7,7,7,7, 7,7,7,7,7,  7,7,7,7,7,  7,7,7,7,7, 7, 7 };
 
     std::set<unsigned int> available_sbas_prn = {120, 124, 126};
 
