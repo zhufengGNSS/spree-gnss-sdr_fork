@@ -158,6 +158,7 @@ private:
     bool d_dump;
     std::string d_dump_filename;
     unsigned int d_peak;
+    unsigned int d_dump_sv;
 
 public:
     ~pcps_sd_acquisition();

@@ -178,6 +178,7 @@ pcps_sd_acquisition::pcps_sd_acquisition(const Acq_Conf& conf_) : gr::block("pcp
         }
     d_dump_number = 0LL;
     d_dump_channel = acq_parameters.dump_channel;
+    d_dump_sv = acq_parameters.dump_sv;
     d_dump = acq_parameters.dump;
     d_dump_filename = acq_parameters.dump_filename;
     if (d_dump)
@@ -980,6 +981,10 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
                                 d_dump_file.close();
                             }
                         */
+                        if (d_dump and d_gnss_synchro->PRN == d_dump_sv)
+                        {
+                            memcpy(grid_.colptr(doppler_index), &d_magnitude_grid[indext], sizeof(float) * effective_fft_size);
+                        }
                     }
 
                 bool found_peak = false;
@@ -1171,7 +1176,7 @@ void pcps_sd_acquisition::acquisition_core(uint64_t samp_count)
         if ((d_num_noncoherent_integrations_counter == acq_parameters.max_dwells) or (d_positive_acq == 1))
         {
             // Record results to file if required
-            if (d_dump and d_channel == d_dump_channel)
+            if (d_dump and d_gnss_synchro->PRN == d_dump_sv)
                 {
                     pcps_sd_acquisition::dump_results(effective_fft_size);
                 }

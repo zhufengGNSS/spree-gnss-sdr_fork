@@ -64,7 +64,7 @@ public:
     std::string dump_filename;
     uint32_t dump_channel;
     size_t it_size;
-
+    unsigned int dump_sv;
     Acq_Conf();
 };
 

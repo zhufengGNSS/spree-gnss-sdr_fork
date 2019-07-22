@@ -16,3 +16,5 @@ new_spree/src/\.vscode/
 new_spree/file_sources/
 
 old_spree/\.vscode/
+
+new_spree/conf/file_source_apt_t\.conf

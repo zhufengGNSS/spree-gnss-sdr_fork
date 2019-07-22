@@ -59,6 +59,8 @@ GpsL1CaPcpsAcquisition::GpsL1CaPcpsAcquisition(
 
     item_type_ = configuration_->property(role + ".item_type", default_item_type);
     int64_t fs_in_deprecated = configuration_->property("GNSS-SDR.internal_fs_hz", 2048000);
+    acq_parameters_.dump_sv = configuration_->property(role + ".dump_sv", 1);
+    std::cout << "\nDumping acq data for SV: " << acq_parameters_.dump_sv;
     fs_in_ = configuration_->property("GNSS-SDR.internal_fs_sps", fs_in_deprecated);
     acq_parameters_.fs_in = fs_in_;
     dump_ = configuration_->property(role + ".dump", false);
@@ -131,7 +133,7 @@ GpsL1CaPcpsAcquisition::GpsL1CaPcpsAcquisition(
         {
             item_size_ = sizeof(gr_complex);
         }
-
+    
     acq_parameters_.it_size = item_size_;
     acq_parameters_.blocking_on_standby = configuration_->property(role + ".blocking_on_standby", false);
     acquisition_ = pcps_make_acquisition(acq_parameters_);

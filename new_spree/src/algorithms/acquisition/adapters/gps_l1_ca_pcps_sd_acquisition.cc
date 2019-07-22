@@ -71,6 +71,9 @@ GpsL1CaPcpsSdAcquisition::GpsL1CaPcpsSdAcquisition(
         {
             doppler_max_ = FLAGS_doppler_max;
         }
+    
+    acq_parameters_.dump_sv = configuration_->property(role + ".dump_sv", 1);
+
     acq_parameters_.doppler_max = doppler_max_;
     sampled_ms_ = configuration_->property(role + ".coherent_integration_time_ms", 1);
     acq_parameters_.sampled_ms = sampled_ms_;
