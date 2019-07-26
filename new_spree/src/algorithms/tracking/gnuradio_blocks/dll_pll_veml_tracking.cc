@@ -1930,16 +1930,18 @@ int dll_pll_veml_tracking::general_work(int noutput_items __attribute__((unused)
             current_synchro_data.Tracking_sample_counter = d_sample_counter;
             *out[0] = current_synchro_data;
             current_synchro_data.Tracking_timestamp_secs = d_sample_counter;//(static_cast<double>(d_sample_counter) + static_cast<double>(d_rem_code_phase_samples)) / static_cast<double>(trk_parameters.fs_in);
-            LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs * 1000.0000000;
-            LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
-            LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
-            LOG(WARNING) << "FS in: " << static_cast<double>(trk_parameters.fs_in);
+            // LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs * 1000.0000000;
+            // LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
+            // LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
+            // LOG(WARNING) << "FS in: " << static_cast<double>(trk_parameters.fs_in);
+            usleep(90);
             return 1;
             
         }
-    LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs * 1000.0000000;
-    LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
-    LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
-    LOG(WARNING) << "FS in: " << static_cast<double>(trk_parameters.fs_in);
+    // LOG(WARNING) << "time: " << current_synchro_data.Tracking_timestamp_secs * 1000.0000000;
+    // LOG(WARNING) << "d_sample_counter: " << static_cast<double>(d_sample_counter);
+    // LOG(WARNING) << "d_rem_code_phase_samples: " << static_cast<double>(d_rem_code_phase_samples);
+    // LOG(WARNING) << "FS in: " << static_cast<double>(trk_parameters.fs_in);
+    //usleep(80);
     return 0;
 }

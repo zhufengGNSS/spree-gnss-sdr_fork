@@ -554,6 +554,7 @@ void hybrid_observables_gs::compute_pranges(std::vector<Gnss_Synchro> &data)
                         }
                     it->RX_time = current_T_rx_TOW_s;
                     it->Pseudorange_m = traveltime_ms * SPEED_OF_LIGHT_MS;
+                    LOG(WARNING) << "Rx time " << traveltime_ms << " Channel " << it->Channel_ID << " SV " << it->PRN;
                     it->Flag_valid_pseudorange = true;
                     // debug code
                     //

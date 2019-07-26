@@ -1196,7 +1196,7 @@ void Spoofing_Detector::check_RX_time(unsigned int PRN, int64_t fs_in)
 
     std::cout << TEXT_RED << "\nSubframe a " << largest_uid << " : " << std::setprecision(16) << largest_t* 1e9/ fs_in
               << "\nSubframe b " << smallest_uid << ": "<< std::setprecision(16) << smallest_t* 1e9/ fs_in
-              << "\nDifference: " << std::abs((largest_t* 1e9/ fs_in) - (smallest_t* 1e9/ fs_in)) << TEXT_RESET;
+              << "\nDifference: " << std::abs((largest_t* 1e9/ fs_in) - (smallest_t* 1e9/ fs_in)) << std::endl << TEXT_RESET;
 
     if(spoofed)
         {
@@ -2400,19 +2400,34 @@ void Spoofing_Detector::New_subframe(int subframe_ID, int PRN, Gps_Navigation_Me
     subframe.toa = nav.i_Toa;
     subframe.uid = uid;
 
-    if (uid != 0)
-    {global_subframe_map.add((int)uid, subframe);}
+    //if (uid != 0)
     
+    global_subframe_map.add((int)uid, subframe);
+    bool check = false;
+    while(!check)
+    {
+        if(global_subframe_map.is_exists(uid))
+        {
+            check = true;
+        }
+        else
+        {
+            global_subframe_map.add((int)uid, subframe);
+        }
+        
+    }
     LOG(WARNING) << "New_subframe added, UID Assigned: " << "; UID: "  << uid << "; PRN: " << PRN;
 
     std::map<int, Subframe> subframes = global_subframe_map.get_map_copy();
-    LOG(WARNING) << "============ PRN: " << PRN << "; New subframe: " << uid << " ============";
-    for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
-    {
-        subframe = it->second;
-        LOG(WARNING) << "uid: " << it->first << "; " << subframe.uid <<  " sub: " << subframe.subframe_id << "; PRN: " << subframe.PRN ;
-    }
-    LOG(WARNING) << "================================================";
+    // LOG(WARNING) << "============ PRN: " << PRN << "; New subframe: " << uid << " ============";
+    // for (std::map<int, Subframe>::iterator it = subframes.begin(); it!= subframes.end(); ++it)
+    // {
+    //     subframe = it->second;
+    //     LOG(WARNING) << "uid: " << it->first << "; " << subframe.uid <<  " sub: " << subframe.subframe_id << "; PRN: " << subframe.PRN ;
+    // }
+    // LOG(WARNING) << "================================================";
+
+    std::cout << "Size: " << subframes.size() << std::endl;
 
     if( d_APT )
         {

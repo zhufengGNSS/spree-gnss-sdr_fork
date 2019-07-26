@@ -18,3 +18,7 @@ new_spree/file_sources/
 old_spree/\.vscode/
 
 new_spree/conf/file_source_apt_t\.conf
+
+new_spree/src/gnss_sdr_pvt\.nmea
+
+new_spree/src/gps_ephemeris\.xml

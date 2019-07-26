@@ -111,6 +111,20 @@ public:
         the_map.erase(key);
         lock.unlock();
     }
+
+    bool is_exists(int key)
+    {
+        boost::mutex::scoped_lock lock(the_mutex);
+        Data_iterator data_iter;
+        data_iter = the_map.find(key);
+        if (data_iter != the_map.end())
+            {
+                lock.unlock();
+                return true;
+            }
+        lock.unlock();
+        return false;
+    }
 };
 
 #endif
